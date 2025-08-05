@@ -1,0 +1,160 @@
+const express = require('express');
+const router = express.Router();
+const MpesaService = require('../services/mpesaService');
+const Payment = require('../models/Payment');
+const { authenticate, authorize } = require('../middleware/auth');
+const {
+  validateSubscriptionPayment,
+  validatePaymentRetry,
+  validatePaymentQuery,
+  validateDirectPayment,
+  validatePaymentHistory,
+  validateMpesaCallback,
+  normalizePhoneNumber,
+  checkMpesaConfig
+} = require('../middleware/paymentValidation');
+const { createCashPayment, confirmPayment, getAllPayments } = require('../controllers/paymentController');
+
+const mpesaService = new MpesaService();
+
+// Admin: Get all payments (with pagination and filters)
+// In paymentRoutes.js - update the admin route to handle the corrected parameter
+router.get('/', authenticate, authorize(['admin']), (req, res, next) => {
+  // Log the request for debugging
+  console.log('Admin payments request:', {
+    user: req.user?.id,
+    role: req.user?.role,
+    query: req.query
+  });
+  next();
+  
+}, getAllPayments);
+
+// POST /api/payments/mpesa/initiate - Initiate M-Pesa payment
+router.post(
+  '/mpesa/initiate',
+  authenticate,
+  checkMpesaConfig,
+  normalizePhoneNumber,
+  validateSubscriptionPayment,
+  async (req, res) => {
+    try {
+      const { phoneNumber, amount, accountReference, transactionDesc } = req.body;
+      
+      // Add validation
+      if (!phoneNumber || !amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Phone number and amount are required'
+        });
+      }
+
+      const response = await mpesaService.initiateSTKPush({
+        phoneNumber,
+        amount,
+        accountReference: accountReference || `ISP-${Date.now()}`,
+        transactionDesc: transactionDesc || "ISP Service Payment"
+      });
+
+      res.json({
+        success: true,
+        data: response
+      });
+    } catch (error) {
+      console.error('M-Pesa initiation error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to initiate M-Pesa payment'
+      });
+    }
+  }
+);
+
+// POST /api/payments/mpesa/callback - M-Pesa callback handler
+router.post('/mpesa/callback', async (req, res) => {
+  try {
+    const result = mpesaService.processCallback(req.body);
+    await Payment.handleMpesaCallback(result);
+    res.json({ ResultCode: 0, ResultDesc: 'Success' });
+  } catch (error) {
+    console.error('Callback error:', error);
+    res.json({ ResultCode: 1, ResultDesc: 'Error processing callback' });
+  }
+});
+
+// GET /api/payments/history - Payment history for current user
+router.get('/history', authenticate, async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    console.log('Fetching payment history for:', req.user); // 👈 Add this
+
+    const payments = await Payment.findAndCountAll({
+      where: { userId: req.user.id },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['initiatedAt', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      data: payments.rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(payments.count / limit),
+        totalItems: payments.count
+      }
+    });
+  } catch (error) {
+    console.error('🔴 Error in /api/payments/history:', error); // 👈 Print full error
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch payment history',
+      error: error.message
+    });
+  }
+});
+
+
+// GET /api/payments/stats - Payment statistics
+router.get('/stats', authenticate, async (req, res) => {
+  try {
+    const stats = await Payment.getPaymentStats(req.user.id);
+    res.json({ success: true, stats });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get payment statistics'
+    });
+  }
+});
+
+router.get('/mpesa/test-auth', async (req, res) => {
+  try {
+    const token = await mpesaService.getAccessToken();
+    res.json({
+      success: true,
+      message: 'M-Pesa auth successful',
+      environment: process.env.MPESA_ENV,
+      tokenAvailable: !!token
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'M-Pesa auth failed',
+      error: error.message,
+      environment: process.env.MPESA_ENV
+    });
+  }
+});
+
+
+
+// Admin: Create cash payment
+router.post('/cash', authenticate, authorize(['admin']), createCashPayment);
+
+// Admin: Confirm pending payment
+router.put('/:paymentId/confirm', authenticate, authorize(['admin']), confirmPayment);
+
+module.exports = router;

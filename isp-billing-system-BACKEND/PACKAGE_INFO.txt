@@ -1,0 +1,46 @@
+ISP Billing System - Deployment Package
+========================================
+
+Package Name: isp-billing-system-1.0.0-20250709_062040
+Version: 1.0.0
+Created: Wed Jul  9 06:20:40 EDT 2025
+Node.js Version Required: >= 16.0.0
+Database: MySQL 8.0+
+
+Contents:
+- Application source code (src/)
+- Documentation (docs/)
+- Configuration files
+- Deployment scripts
+- SSL setup script
+- Nginx configuration template
+- PM2 ecosystem configuration
+
+System Requirements:
+- Ubuntu 20.04+ or CentOS 8+
+- Node.js 16+ and npm
+- MySQL 8.0+
+- PM2 (for process management)
+- Nginx (recommended for reverse proxy)
+
+Security Features:
+- JWT authentication
+- Input validation
+- SQL injection protection
+- Rate limiting
+- CORS configuration
+- Security headers
+- Password hashing with bcrypt
+
+Features:
+- User registration and authentication
+- Data plan management
+- Subscription management
+- M-Pesa payment integration
+- Invoice generation and billing
+- Real-time data usage tracking
+- Comprehensive API documentation
+- Admin dashboard capabilities
+- Logging and monitoring
+
+For detailed deployment instructions, see DEPLOYMENT_INSTRUCTIONS.md
