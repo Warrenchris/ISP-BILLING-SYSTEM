@@ -1,6 +1,7 @@
 {
   "name": "isp-billing-frontend",
   "version": "0.1.0",
+  "proxy": "http://isp-backend:3000",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -23,10 +24,9 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^3.4.17"
   },
   "scripts": {
     "start": "react-scripts start",

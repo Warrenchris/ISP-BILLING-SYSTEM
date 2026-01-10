@@ -1,0 +1,197 @@
+import React from 'react';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Button,
+    Typography,
+    Avatar,
+    CircularProgress,
+    Autocomplete,
+    Grid,
+    Box
+} from '@mui/material';
+import { MonetizationOn as CashIcon } from '@mui/icons-material';
+
+const CashPaymentDialog = ({
+    open,
+    onClose,
+    onPay,
+    processing,
+    users,
+    selectedUser,
+    setSelectedUser,
+    userSearchLoading,
+    loadingSubscription,
+    userSubscription,
+    cashAmount,
+    setCashAmount,
+    cashReference,
+    setCashReference,
+    cashDescription,
+    setCashDescription
+}) => {
+    return (
+        <Dialog
+            open={open}
+            onClose={onClose}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    background: 'rgba(26, 26, 46, 0.95)',
+                    backdropFilter: 'blur(30px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '20px',
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+                    color: 'white'
+                },
+            }}
+        >
+            <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+                <Avatar
+                    sx={{
+                        width: 64,
+                        height: 64,
+                        background: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)', // Blue-ish for Cash
+                        margin: '0 auto 16px',
+                    }}
+                >
+                    <CashIcon sx={{ fontSize: 32 }} />
+                </Avatar>
+                <Typography variant="h5" fontWeight={600}>
+                    Record Cash Payment
+                </Typography>
+            </DialogTitle>
+            <DialogContent sx={{ pt: 2 }}>
+                <Typography variant="body2" color="gray" sx={{ mb: 3, textAlign: 'center' }}>
+                    Manually record a cash payment received from a customer.
+                </Typography>
+
+                <Autocomplete
+                    options={users}
+                    getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.email})`}
+                    value={selectedUser}
+                    onChange={(event, newValue) => setSelectedUser(event, newValue)}
+                    loading={userSearchLoading}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Select Customer"
+                            placeholder="Search by name or email"
+                            sx={{ mb: 3 }}
+                            InputLabelProps={{ style: { color: '#aaa' } }}
+                            InputProps={{
+                                ...params.InputProps,
+                                style: { color: 'white' },
+                                endAdornment: (
+                                    <React.Fragment>
+                                        {userSearchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </React.Fragment>
+                                ),
+                            }}
+                        />
+                    )}
+                    sx={{ mb: 3 }}
+                />
+
+                {loadingSubscription && (
+                    <Box display="flex" justifyContent="center" mb={2}>
+                        <CircularProgress size={20} />
+                    </Box>
+                )}
+
+                {userSubscription && (
+                    <Box
+                        sx={{
+                            p: 2,
+                            mb: 3,
+                            borderRadius: '12px',
+                            background: 'rgba(0, 212, 170, 0.1)',
+                            border: '1px solid rgba(0, 212, 170, 0.2)',
+                        }}
+                    >
+                        <Typography variant="subtitle2" gutterBottom sx={{ color: '#00d4aa' }}>
+                            Active Subscription Found
+                        </Typography>
+                        <Typography variant="body2" color="gray">
+                            {userSubscription.DataPlan?.name || 'Subscription'} -
+                            KSh {userSubscription.DataPlan?.price || userSubscription.amount || 0}
+                        </Typography>
+                    </Box>
+                )}
+
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            fullWidth
+                            label="Amount (KSh)"
+                            type="number"
+                            value={cashAmount}
+                            onChange={(e) => setCashAmount(e.target.value)}
+                            placeholder="1000"
+                            sx={{ mb: 2 }}
+                            InputLabelProps={{ style: { color: '#aaa' } }}
+                            InputProps={{ style: { color: 'white' } }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            fullWidth
+                            label="Reference Number"
+                            value={cashReference}
+                            onChange={(e) => setCashReference(e.target.value)}
+                            placeholder="CASH-001"
+                            sx={{ mb: 2 }}
+                            InputLabelProps={{ style: { color: '#aaa' } }}
+                            InputProps={{ style: { color: 'white' } }}
+                        />
+                    </Grid>
+                </Grid>
+
+                <TextField
+                    fullWidth
+                    label="Description (Optional)"
+                    multiline
+                    rows={2}
+                    value={cashDescription}
+                    onChange={(e) => setCashDescription(e.target.value)}
+                    placeholder="Payment description..."
+                    InputLabelProps={{ style: { color: '#aaa' } }}
+                    InputProps={{ style: { color: 'white' } }}
+                />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
+                <Button
+                    onClick={onClose}
+                    disabled={processing}
+                    variant="outlined"
+                    sx={{ color: 'gray', borderColor: 'gray' }}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={onPay}
+                    disabled={processing || !selectedUser || !cashAmount || !cashReference}
+                    sx={{
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)',
+                        color: 'white',
+                        px: 4,
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #8bc6ff 0%, #74b9ff 100%)',
+                        }
+                    }}
+                >
+                    {processing ? <CircularProgress size={20} color="inherit" /> : 'Record Payment'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
+export default CashPaymentDialog;

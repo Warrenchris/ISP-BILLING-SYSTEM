@@ -182,3 +182,5 @@ Subscription.findByUser = function (userId) {
     order: [['created_at', 'DESC']]
   });
 };
+
+module.exports = Subscription;

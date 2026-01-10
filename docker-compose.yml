@@ -19,6 +19,9 @@ services:
       - JWT_EXPIRES_IN=7d
     depends_on:
       - mysql_db
+    volumes:
+      - ./isp-billing-system-BACKEND:/app
+      - /app/node_modules
     restart: unless-stopped
     networks:
       - isp-network
@@ -26,11 +29,17 @@ services:
   frontend:
     build:
       context: ./isp-billing-frontend
-      args:
-        - REACT_APP_API_URL=/api
+      dockerfile: Dockerfile.dev
     container_name: isp-frontend
     ports:
-      - "80:80"
+      - "3001:3000"
+    volumes:
+      - ./isp-billing-frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=/api
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
     depends_on:
       - backend
     restart: unless-stopped
