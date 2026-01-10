@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+const { DataUsageStatus } = require('../config/constants');
 
 const DataUsage = sequelize.define('DataUsage', {
   id: {
@@ -93,9 +94,14 @@ const DataUsage = sequelize.define('DataUsage', {
     comment: 'Connection quality metrics (speed, latency, etc.)'
   },
   status: {
-    type: DataTypes.ENUM('active', 'completed', 'terminated', 'error'),
+    type: DataTypes.ENUM(
+      DataUsageStatus.ACTIVE,
+      DataUsageStatus.COMPLETED,
+      DataUsageStatus.TERMINATED,
+      DataUsageStatus.ERROR
+    ),
     allowNull: false,
-    defaultValue: 'active',
+    defaultValue: DataUsageStatus.ACTIVE,
     comment: 'Current status of the usage session'
   },
   terminationReason: {
@@ -114,14 +120,14 @@ const DataUsage = sequelize.define('DataUsage', {
 });
 
 // Instance methods
-DataUsage.prototype.getDurationMinutes = function() {
+DataUsage.prototype.getDurationMinutes = function () {
   if (!this.endTime) {
     return Math.floor((new Date() - this.startTime) / (1000 * 60));
   }
   return Math.floor((this.endTime - this.startTime) / (1000 * 60));
 };
 
-DataUsage.prototype.getFormattedDataUsage = function() {
+DataUsage.prototype.getFormattedDataUsage = function () {
   const totalMB = this.totalBytes / (1024 * 1024);
   if (totalMB < 1024) {
     return `${totalMB.toFixed(2)} MB`;
@@ -130,32 +136,32 @@ DataUsage.prototype.getFormattedDataUsage = function() {
   return `${totalGB.toFixed(2)} GB`;
 };
 
-DataUsage.prototype.getAverageSpeed = function() {
+DataUsage.prototype.getAverageSpeed = function () {
   const durationMinutes = this.getDurationMinutes();
   if (durationMinutes === 0) return 0;
-  
+
   const totalMB = this.totalBytes / (1024 * 1024);
   return (totalMB / durationMinutes).toFixed(2); // MB per minute
 };
 
-DataUsage.prototype.endSession = async function(reason = 'completed') {
+DataUsage.prototype.endSession = async function (reason = 'completed') {
   this.endTime = new Date();
-  this.status = 'completed';
+  this.status = DataUsageStatus.COMPLETED;
   this.terminationReason = reason;
   await this.save();
   return this;
 };
 
 // Static methods
-DataUsage.getTotalUsageForUser = async function(userId, startDate = null, endDate = null) {
+DataUsage.getTotalUsageForUser = async function (userId, startDate = null, endDate = null) {
   const whereClause = { userId };
-  
+
   if (startDate && endDate) {
     whereClause.startTime = {
       [require('sequelize').Op.between]: [startDate, endDate]
     };
   }
-  
+
   const result = await this.findAll({
     where: whereClause,
     attributes: [
@@ -166,19 +172,19 @@ DataUsage.getTotalUsageForUser = async function(userId, startDate = null, endDat
     ],
     raw: true
   });
-  
+
   return result[0];
 };
 
-DataUsage.getUsageBySubscription = async function(subscriptionId, startDate = null, endDate = null) {
+DataUsage.getUsageBySubscription = async function (subscriptionId, startDate = null, endDate = null) {
   const whereClause = { subscriptionId };
-  
+
   if (startDate && endDate) {
     whereClause.startTime = {
       [require('sequelize').Op.between]: [startDate, endDate]
     };
   }
-  
+
   return await this.findAll({
     where: whereClause,
     order: [['startTime', 'DESC']],
@@ -186,13 +192,14 @@ DataUsage.getUsageBySubscription = async function(subscriptionId, startDate = nu
   });
 };
 
-DataUsage.getActiveSessionsCount = async function() {
+DataUsage.getActiveSessionsCount = async function () {
   return await this.count({
     where: {
-      status: 'active'
+      status: DataUsageStatus.ACTIVE
     }
   });
 };
 
 module.exports = DataUsage;
+
 

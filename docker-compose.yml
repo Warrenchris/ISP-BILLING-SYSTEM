@@ -1,0 +1,57 @@
+# version: '3.8' (Obsolete in newer Docker Compose)
+
+services:
+  backend:
+    build:
+      context: ./isp-billing-system-BACKEND
+    container_name: isp-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DB_HOST=mysql_db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=isp_billing_db
+      - JWT_SECRET=isp_billing_secure_secret_key_2025
+      - JWT_EXPIRES_IN=7d
+    depends_on:
+      - mysql_db
+    restart: unless-stopped
+    networks:
+      - isp-network
+
+  frontend:
+    build:
+      context: ./isp-billing-frontend
+      args:
+        - REACT_APP_API_URL=/api
+    container_name: isp-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - isp-network
+
+  mysql_db:
+    image: mysql:8.0
+    container_name: isp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: isp_billing_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - isp-network
+    restart: unless-stopped
+
+networks:
+  isp-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

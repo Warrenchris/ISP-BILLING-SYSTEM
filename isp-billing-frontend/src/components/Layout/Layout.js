@@ -105,14 +105,10 @@ const Layout = ({ children }) => {
   const drawer = (
     <Box>
       <Toolbar>
-        <Box display="flex" alignItems="center" width="100%">
+        <Box className="flex items-center w-full">
           <Avatar
-            sx={{
-              bgcolor: 'primary.main',
-              width: 40,
-              height: 40,
-              mr: 2,
-            }}
+            className="w-10 h-10 mr-4"
+            sx={{ bgcolor: 'primary.main' }}
           >
             ISP
           </Avatar>
@@ -190,16 +186,14 @@ const Layout = ({ children }) => {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box className="flex">
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          bgcolor: 'white',
-          color: 'text.primary',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         }}
+        className="bg-white text-gray-900 shadow-sm"
       >
         <Toolbar>
           <IconButton
@@ -211,10 +205,10 @@ const Layout = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" noWrap component="div" className="flex-grow font-semibold">
             {menuItems.find(item => item.path === location.pathname)?.text || 'ISP Billing System'}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box className="flex items-center gap-2">
             <Tooltip title="Notifications">
               <IconButton color="inherit">
                 <Badge badgeContent={3} color="error">
@@ -230,15 +224,11 @@ const Layout = ({ children }) => {
             <Tooltip title="Profile">
               <IconButton
                 onClick={handleProfileMenuOpen}
-                sx={{ ml: 1 }}
+                className="ml-2"
               >
                 <Avatar
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    bgcolor: 'primary.main',
-                    fontSize: '0.875rem',
-                  }}
+                  className="w-8 h-8 text-sm"
+                  sx={{ bgcolor: 'primary.main' }}
                 >
                   {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                 </Avatar>
@@ -285,12 +275,9 @@ const Layout = ({ children }) => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          minHeight: '100vh',
-          bgcolor: 'background.default',
         }}
+        className="flex-grow p-6 min-h-screen bg-background text-text-primary"
       >
         <Toolbar />
         {children}

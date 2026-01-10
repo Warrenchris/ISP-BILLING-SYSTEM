@@ -1,5 +1,6 @@
 const { DataTypes, Op } = require('sequelize');
 const { sequelize } = require('../config/database');
+const { SubscriptionStatus } = require('../config/constants');
 
 const Subscription = sequelize.define('Subscription', {
   id: {
@@ -21,8 +22,13 @@ const Subscription = sequelize.define('Subscription', {
     unique: true
   },
   status: {
-    type: DataTypes.ENUM('active', 'expired', 'suspended', 'cancelled'),
-    defaultValue: 'active'
+    type: DataTypes.ENUM(
+      SubscriptionStatus.ACTIVE,
+      SubscriptionStatus.EXPIRED,
+      SubscriptionStatus.SUSPENDED,
+      SubscriptionStatus.CANCELLED
+    ),
+    defaultValue: SubscriptionStatus.ACTIVE
   },
   startDate: {
     type: DataTypes.DATE,
@@ -61,54 +67,54 @@ const Subscription = sequelize.define('Subscription', {
     beforeUpdate: (sub) => {
       if (sub.changed('status')) {
         const now = new Date();
-        if (sub.status === 'active') sub.activatedAt = now;
-        if (sub.status === 'suspended') sub.suspendedAt = now;
-        if (sub.status === 'cancelled') sub.cancelledAt = now;
+        if (sub.status === SubscriptionStatus.ACTIVE) sub.activatedAt = now;
+        if (sub.status === SubscriptionStatus.SUSPENDED) sub.suspendedAt = now;
+        if (sub.status === SubscriptionStatus.CANCELLED) sub.cancelledAt = now;
       }
     }
   }
 });
 
 // Associations
-Subscription.associate = function(models) {
+Subscription.associate = function (models) {
   Subscription.belongsTo(models.User, { foreignKey: 'userId', as: 'User' });
   Subscription.belongsTo(models.DataPlan, { foreignKey: 'planId', as: 'plan' });
   Subscription.hasMany(models.Payment, { foreignKey: 'subscriptionId', as: 'payments' });
 };
 
 // Instance Methods
-Subscription.prototype.isActive = function() {
-  return this.status === 'active' && new Date() <= new Date(this.endDate);
+Subscription.prototype.isActive = function () {
+  return this.status === SubscriptionStatus.ACTIVE && new Date() <= new Date(this.endDate);
 };
 
-Subscription.prototype.isExpired = function() {
+Subscription.prototype.isExpired = function () {
   return new Date() > new Date(this.endDate);
 };
 
-Subscription.prototype.getDaysRemaining = function() {
+Subscription.prototype.getDaysRemaining = function () {
   const days = Math.ceil((new Date(this.endDate) - new Date()) / (1000 * 60 * 60 * 24));
   return Math.max(0, days);
 };
 
-Subscription.prototype.getDataUsagePercentage = function() {
+Subscription.prototype.getDataUsagePercentage = function () {
   if (!this.plan) return 0;
   const total = parseInt(this.plan.dataLimit);
   return Math.min(100, (parseInt(this.dataUsed) / total) * 100);
 };
 
-Subscription.prototype.getFormattedDataUsed = function() {
+Subscription.prototype.getFormattedDataUsed = function () {
   return this.dataUsed >= 1024
     ? `${(this.dataUsed / 1024).toFixed(2)} GB`
     : `${this.dataUsed} MB`;
 };
 
-Subscription.prototype.getFormattedDataRemaining = function() {
+Subscription.prototype.getFormattedDataRemaining = function () {
   return this.dataRemaining >= 1024
     ? `${(this.dataRemaining / 1024).toFixed(2)} GB`
     : `${this.dataRemaining} MB`;
 };
 
-Subscription.prototype.updateDataUsage = async function(usedMB) {
+Subscription.prototype.updateDataUsage = async function (usedMB) {
   const totalLimit = parseInt(this.plan.dataLimit);
   const newUsed = this.dataUsed + usedMB;
   const newRemaining = Math.max(0, totalLimit - newUsed);
@@ -116,13 +122,13 @@ Subscription.prototype.updateDataUsage = async function(usedMB) {
   await this.update({ dataUsed: newUsed, dataRemaining: newRemaining });
 
   if (newUsed >= totalLimit) {
-    await this.update({ status: 'expired' });
+    await this.update({ status: SubscriptionStatus.EXPIRED });
   }
 
   return this;
 };
 
-Subscription.prototype.activateSubscription = async function() {
+Subscription.prototype.activateSubscription = async function () {
   const { DataPlan } = require('./index');
   const plan = await DataPlan.findByPk(this.planId);
   if (!plan) throw new Error('Plan not found');
@@ -139,7 +145,7 @@ Subscription.prototype.activateSubscription = async function() {
   }
 
   await this.update({
-    status: 'active',
+    status: SubscriptionStatus.ACTIVE,
     activatedAt: now,
     endDate,
     dataUsed: 0,
@@ -150,20 +156,21 @@ Subscription.prototype.activateSubscription = async function() {
 };
 
 // Class Methods
-Subscription.findActiveByUser = function(userId) {
+Subscription.findActiveByUser = function (userId) {
   const { DataPlan } = require('./index');
   return this.findAll({
     where: {
       userId,
-      status: 'active',
+      status: SubscriptionStatus.ACTIVE,
       endDate: { [Op.gt]: new Date() }
     },
     include: [{ model: DataPlan, as: 'plan' }],
-    order: [['createdAt', 'DESC']]
+    // Use DB column name to match underscored timestamps
+    order: [['created_at', 'DESC']]
   });
 };
 
-Subscription.findByUser = function(userId) {
+Subscription.findByUser = function (userId) {
   const { DataPlan, User } = require('./index');
   return this.findAll({
     where: { userId },
@@ -171,39 +178,7 @@ Subscription.findByUser = function(userId) {
       { model: DataPlan, as: 'plan' },
       { model: User, as: 'User' }
     ],
-    order: [['createdAt', 'DESC']]
+    // Use DB column name to match underscored timestamps
+    order: [['created_at', 'DESC']]
   });
 };
-
-Subscription.findExpiring = function(days = 3) {
-  const { DataPlan, User } = require('./index');
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-
-  return this.findAll({
-    where: {
-      status: 'active',
-      endDate: { [Op.lte]: date }
-    },
-    include: [
-      { model: User, as: 'User' },
-      { model: DataPlan, as: 'plan' }
-    ]
-  });
-};
-
-Subscription.findExpired = function() {
-  const { DataPlan, User } = require('./index');
-  return this.findAll({
-    where: {
-      status: 'active',
-      endDate: { [Op.lt]: new Date() }
-    },
-    include: [
-      { model: User, as: 'User' },
-      { model: DataPlan, as: 'plan' }
-    ]
-  });
-};
-
-module.exports = Subscription;

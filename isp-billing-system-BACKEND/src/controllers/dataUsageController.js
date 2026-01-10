@@ -1,6 +1,7 @@
 const DataUsageService = require('../services/dataUsageService');
 const { DataUsage, Subscription, DataPlan } = require('../models');
 const { Op } = require('sequelize');
+const { DataUsageStatus } = require('../config/constants');
 
 /**
  * Start a new data usage session
@@ -177,13 +178,13 @@ const getUsageAnalytics = async (req, res) => {
 const getUsageHistory = async (req, res) => {
   try {
     const userId = req.userId;
-    const { 
-      page = 1, 
-      limit = 20, 
-      subscriptionId, 
-      startDate, 
+    const {
+      page = 1,
+      limit = 20,
+      subscriptionId,
+      startDate,
       endDate,
-      status 
+      status
     } = req.query;
 
     const offset = (page - 1) * limit;
@@ -206,8 +207,8 @@ const getUsageHistory = async (req, res) => {
     const { count, rows } = await DataUsage.findAndCountAll({
       where: whereClause,
       include: [
-        { 
-          model: Subscription, 
+        {
+          model: Subscription,
           as: 'Subscription',
           include: [{ model: DataPlan, as: 'DataPlan' }]
         }
@@ -270,11 +271,11 @@ const getActiveSessions = async (req, res) => {
     const sessions = await DataUsage.findAll({
       where: {
         userId,
-        status: 'active'
+        status: DataUsageStatus.ACTIVE
       },
       include: [
-        { 
-          model: Subscription, 
+        {
+          model: Subscription,
           as: 'Subscription',
           include: [{ model: DataPlan, as: 'DataPlan' }]
         }
@@ -346,7 +347,7 @@ const terminateSession = async (req, res) => {
     const { reason } = req.body;
 
     const session = await DataUsage.findOne({
-      where: { sessionId, status: 'active' }
+      where: { sessionId, status: DataUsageStatus.ACTIVE }
     });
 
     if (!session) {
@@ -357,7 +358,7 @@ const terminateSession = async (req, res) => {
     }
 
     await session.update({
-      status: 'terminated',
+      status: DataUsageStatus.TERMINATED,
       endTime: new Date(),
       terminationReason: reason || 'admin_terminated'
     });

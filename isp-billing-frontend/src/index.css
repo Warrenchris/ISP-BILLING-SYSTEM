@@ -1,5 +1,8 @@
 /* Modern Dark Theme with Glassmorphism - Global Styles */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Dark Theme Color Palette */
@@ -9,7 +12,7 @@
   --glass-bg: rgba(26, 26, 46, 0.4);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  
+
   /* Gradient Colors */
   --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -17,24 +20,24 @@
   --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   --purple-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --blue-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-  
+
   /* Text Colors */
   --text-primary: #ffffff;
   --text-secondary: #b8c5d6;
   --text-muted: #8892b0;
   --text-accent: #64ffda;
-  
+
   /* Interactive Colors */
   --hover-bg: rgba(255, 255, 255, 0.05);
   --active-bg: rgba(255, 255, 255, 0.1);
   --focus-ring: rgba(102, 126, 234, 0.4);
-  
+
   /* Status Colors */
   --success-color: #00d4aa;
   --warning-color: #ffb800;
   --error-color: #ff6b6b;
   --info-color: #74b9ff;
-  
+
   /* Spacing */
   --border-radius: 16px;
   --border-radius-sm: 8px;
@@ -69,9 +72,9 @@ body {
   line-height: 1.6;
   font-weight: 400;
   overflow-x: hidden;
-  
+
   /* Animated background */
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
@@ -126,7 +129,7 @@ body {
   -webkit-backdrop-filter: blur(25px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--border-radius);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -134,7 +137,7 @@ body {
 
 .glass-card:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.15);
@@ -191,7 +194,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
+  box-shadow:
     8px 8px 16px rgba(0, 0, 0, 0.3),
     -8px -8px 16px rgba(255, 255, 255, 0.05);
   position: relative;
@@ -199,14 +202,14 @@ body {
 }
 
 .neomorphic-button:hover {
-  box-shadow: 
+  box-shadow:
     12px 12px 24px rgba(0, 0, 0, 0.4),
     -12px -12px 24px rgba(255, 255, 255, 0.08);
   transform: translateY(-2px);
 }
 
 .neomorphic-button:active {
-  box-shadow: 
+  box-shadow:
     inset 4px 4px 8px rgba(0, 0, 0, 0.3),
     inset -4px -4px 8px rgba(255, 255, 255, 0.05);
   transform: translateY(0);
@@ -214,13 +217,13 @@ body {
 
 .neomorphic-button.primary {
   background: var(--primary-gradient);
-  box-shadow: 
+  box-shadow:
     8px 8px 16px rgba(102, 126, 234, 0.3),
     -8px -8px 16px rgba(118, 75, 162, 0.1);
 }
 
 .neomorphic-button.primary:hover {
-  box-shadow: 
+  box-shadow:
     12px 12px 24px rgba(102, 126, 234, 0.4),
     -12px -12px 24px rgba(118, 75, 162, 0.15);
 }
@@ -236,9 +239,12 @@ body {
 
 /* Floating Animation */
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -250,10 +256,13 @@ body {
 
 /* Pulse Animation */
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.05);
     opacity: 0.8;
@@ -266,7 +275,7 @@ body {
 
 /* Glow Effect */
 .glow {
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(102, 126, 234, 0.3),
     0 0 40px rgba(102, 126, 234, 0.2),
     0 0 60px rgba(102, 126, 234, 0.1);
@@ -277,18 +286,17 @@ body {
   0% {
     background-position: -200px 0;
   }
+
   100% {
     background-position: calc(200px + 100%) 0;
   }
 }
 
 .shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent);
   background-size: 200px 100%;
   animation: shimmer 2s infinite;
 }
@@ -329,46 +337,14 @@ code {
 }
 
 /* Enhanced Material-UI Integration */
-.MuiPaper-root {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid var(--glass-border) !important;
-}
 
-.MuiCard-root {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(25px) !important;
-  -webkit-backdrop-filter: blur(25px) !important;
-  border: 1px solid var(--glass-border) !important;
-  box-shadow: var(--glass-shadow) !important;
-}
-
-.MuiButton-root {
-  border-radius: var(--border-radius-sm) !important;
-  text-transform: none !important;
-  font-weight: 500 !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.MuiButton-contained {
-  background: var(--primary-gradient) !important;
-  box-shadow: var(--shadow-elevation-1) !important;
-}
-
-.MuiButton-contained:hover {
-  box-shadow: var(--shadow-elevation-2) !important;
-  transform: translateY(-1px) !important;
-}
 
 /* Loading States */
 .loading-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 25%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 75%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.05) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -378,12 +354,12 @@ code {
   body {
     font-size: 14px;
   }
-  
+
   .glass-card {
     margin: 8px;
     border-radius: var(--border-radius-sm);
   }
-  
+
   .neomorphic-button {
     padding: 12px 24px;
     font-size: 14px;
@@ -401,6 +377,7 @@ code {
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -409,4 +386,3 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
-

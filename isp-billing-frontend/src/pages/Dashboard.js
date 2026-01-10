@@ -29,6 +29,8 @@ import {
   DialogActions,
   Switch,
   FormControlLabel,
+  CircularProgress,
+  TextField,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -58,6 +60,12 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../contexts/ApiContext';
+import CustomCard from '../components/common/CustomCard';
+import StatCard from '../components/common/StatCard';
+import AdminStatsOverview from '../components/dashboard/AdminStatsOverview';
+import AdminPersonalAccount from '../components/dashboard/AdminPersonalAccount';
+import DashboardCharts from '../components/dashboard/DashboardCharts';
+import RecentUsersTable from '../components/dashboard/RecentUsersTable';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -66,20 +74,27 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Payment State
+  const [payDlgOpen, setPayDlgOpen] = useState(false);
+  const [payPhoneNumber, setPayPhoneNumber] = useState("");
+  const [paying, setPaying] = useState(false);
+  const [paymentPolling, setPaymentPolling] = useState(false);
+  const [payStatus, setPayStatus] = useState(null); // 'pending', 'completed', 'failed'
   const [adminPrivilegesOpen, setAdminPrivilegesOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  
+
   const showAlert = (message, severity = 'info') => {
     console.log(`[${severity.toUpperCase()}] ${message}`);
   };
-  
+
   const [dashboardData, setDashboardData] = useState({
     currentSubscription: null,
     recentPayments: [],
     pendingInvoices: [],
     usageHistory: [],
   });
-  
+
   // Admin-specific state
   const [adminStats, setAdminStats] = useState({
     totalUsers: 0,
@@ -99,120 +114,15 @@ const Dashboard = () => {
 
   const isAdmin = user?.role === 'admin';
 
-  // COMPONENT DEFINITIONS - MOVED TO TOP TO AVOID HOISTING ISSUES
-
-  // Modern Glass Card Component
-  const GlassCard = ({ children, sx = {}, ...props }) => (
-    <Card
-      sx={{
-        background: 'rgba(26, 26, 46, 0.6)',
-        backdropFilter: 'blur(25px)',
-        WebkitBackdropFilter: 'blur(25px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-        },
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-          borderColor: 'rgba(255, 255, 255, 0.15)',
-        },
-        ...sx,
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-
-  // Modern Stat Card Component
-  const StatCard = ({ icon, title, value, subtitle, color = '#667eea', trend }) => (
-    <GlassCard>
-      <CardContent sx={{ p: 3 }}>
-        <Box display="flex" alignItems="center" mb={2}>
-          <Avatar
-            sx={{
-              bgcolor: color,
-              mr: 2,
-              width: 48,
-              height: 48,
-              background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
-              boxShadow: `0 4px 12px ${alpha(color, 0.3)}`,
-            }}
-          >
-            {icon}
-          </Avatar>
-          <Box flex={1}>
-            <Typography
-              color="text.secondary"
-              variant="body2"
-              sx={{ fontWeight: 500, mb: 0.5 }}
-            >
-              {title}
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              {value}
-            </Typography>
-          </Box>
-        </Box>
-        {(subtitle || trend) && (
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            {subtitle && (
-              <Typography variant="body2" color="text.secondary">
-                {subtitle}
-              </Typography>
-            )}
-            {trend && (
-              <Box display="flex" alignItems="center">
-                <TrendingUpIcon
-                  sx={{
-                    fontSize: 16,
-                    color: trend > 0 ? '#00d4aa' : '#ff6b6b',
-                    mr: 0.5,
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: trend > 0 ? '#00d4aa' : '#ff6b6b',
-                    fontWeight: 500,
-                  }}
-                >
-                  {trend > 0 ? '+' : ''}{trend}%
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        )}
-      </CardContent>
-    </GlassCard>
-  );
+  // Component definitions removed (moved to common components)
 
   const TabPanel = ({ children, value, index }) => (
     <div hidden={value !== index}>
-      {value === index && <Box>{children}</Box>}
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
   );
+
+
 
   // UTILITY FUNCTIONS
 
@@ -235,11 +145,11 @@ const Dashboard = () => {
   const getUsagePercentage = () => {
     if (!dashboardData.currentSubscription) return 0;
     const subscription = dashboardData.currentSubscription;
-    
+
     if (subscription.dataUsagePercentage !== undefined) {
       return subscription.dataUsagePercentage;
     }
-    
+
     const dataLimit = subscription.DataPlan?.dataLimit || 1;
     const dataRemaining = subscription.dataRemaining || 0;
     const dataUsed = dataLimit - dataRemaining;
@@ -251,7 +161,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       const [subscriptionRes, paymentsRes, invoicesRes] = await Promise.allSettled([
         subscriptionsApi.getCurrent(),
         paymentsApi.getPaymentHistory({ limit: 5 }),
@@ -259,14 +169,14 @@ const Dashboard = () => {
       ]);
 
       const newData = {
-        currentSubscription: subscriptionRes.status === 'fulfilled' && subscriptionRes.value?.data?.success 
-          ? subscriptionRes.value.data.data.subscription 
+        currentSubscription: subscriptionRes.status === 'fulfilled' && subscriptionRes.value?.data?.success
+          ? subscriptionRes.value.data.data.subscription
           : null,
-        recentPayments: paymentsRes.status === 'fulfilled' && paymentsRes.value?.data?.success 
-          ? paymentsRes.value.data.data 
+        recentPayments: paymentsRes.status === 'fulfilled' && paymentsRes.value?.data?.success
+          ? paymentsRes.value.data.data
           : [],
-        pendingInvoices: invoicesRes.status === 'fulfilled' && invoicesRes.value?.data?.success 
-          ? invoicesRes.value.data.data.invoices 
+        pendingInvoices: invoicesRes.status === 'fulfilled' && invoicesRes.value?.data?.success
+          ? invoicesRes.value.data.data.invoices
           : [],
         usageHistory: generateMockUsageHistory(),
       };
@@ -285,14 +195,14 @@ const Dashboard = () => {
 
       const usersResponse = await adminApi.users.getAll();
       const users = usersResponse.data?.data?.users || [];
-      
+
       // Get ALL completed payments (not just current month)
       const paymentsResponse = await paymentsApi.getAllPayments({
         status: 'completed'
       });
-      
+
       const payments = paymentsResponse.data?.data?.payments || paymentsResponse.data?.data || [];
-      
+
       const subscriptionsResponse = await subscriptionsApi.getAll();
       const subscriptions = subscriptionsResponse.data?.data?.subscriptions || [];
 
@@ -300,24 +210,24 @@ const Dashboard = () => {
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const currentMonth = currentDate.getMonth() + 1;
-      
+
       const monthlyPayments = payments.filter(payment => {
         const paymentDate = new Date(payment.createdAt);
-        return paymentDate.getFullYear() === currentYear && 
-               paymentDate.getMonth() + 1 === currentMonth;
+        return paymentDate.getFullYear() === currentYear &&
+          paymentDate.getMonth() + 1 === currentMonth;
       });
 
       const totalUsers = users.length;
       const activeUsers = users.filter(u => u.status === 'active').length;
       const inactiveUsers = users.filter(u => u.status === 'inactive').length;
       const suspendedUsers = users.filter(u => u.status === 'suspended').length;
-      
+
       const totalSubscriptions = subscriptions.length;
       const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
       const expiredSubscriptions = subscriptions.filter(s => s.status === 'expired').length;
       const pendingSubscriptions = subscriptions.filter(s => s.status === 'pending').length;
       const suspendedSubscriptions = subscriptions.filter(s => s.status === 'suspended').length;
-      
+
       // Calculate total revenue from ALL completed payments (like in Payments page)
       const totalRevenue = payments.reduce((total, payment) => {
         const numericAmount = parseFloat(
@@ -325,7 +235,7 @@ const Dashboard = () => {
         );
         return total + (isNaN(numericAmount) ? 0 : numericAmount);
       }, 0);
-      
+
       // Calculate monthly revenue from current month payments only
       const monthlyRevenue = monthlyPayments.reduce((total, payment) => {
         const numericAmount = parseFloat(
@@ -388,11 +298,87 @@ const Dashboard = () => {
     }
   };
 
+  // --- Payment Logic Integration ---
+  const handlePayClick = () => {
+    setPayPhoneNumber(user?.phoneNumber || "");
+    setPayDlgOpen(true);
+    setPayStatus(null);
+  };
+
+  const pollPayment = async (paymentId) => {
+    setPaymentPolling(true);
+    setPayStatus('pending');
+
+    let attempts = 0;
+    const max = 20;
+
+    const check = async () => {
+      if (attempts >= max) {
+        setPaymentPolling(false);
+        setPayStatus('timeout');
+        showAlert("Payment check timed out. Please check status later.", "warning");
+        return;
+      }
+      try {
+        const res = await paymentsApi.checkStatus(paymentId);
+        const st = res.data?.payment?.status;
+        if (st === 'completed') {
+          setPaymentPolling(false);
+          setPayStatus('completed');
+          showAlert("Payment successful!", "success");
+          fetchDashboardData(); // Refresh dashboard
+          setTimeout(() => {
+            setPayDlgOpen(false);
+            setPayStatus(null);
+          }, 2000);
+        } else if (st === 'failed' || st === 'cancelled') {
+          setPaymentPolling(false);
+          setPayStatus('failed');
+          showAlert("Payment failed", "error");
+        } else {
+          attempts++;
+          setTimeout(check, 3000);
+        }
+      } catch (e) {
+        attempts++;
+        setTimeout(check, 3000);
+      }
+    };
+    check();
+  };
+
+  const confirmPay = async () => {
+    if (!dashboardData.currentSubscription || !payPhoneNumber) return;
+    try {
+      setPaying(true);
+      const res = await paymentsApi.initiateSubscriptionPayment({
+        subscriptionId: dashboardData.currentSubscription.id,
+        phoneNumber: payPhoneNumber
+      });
+      const pid = res.data?.payment?.id;
+
+      showAlert("Payment initiated. Check phone.", "success");
+
+      if (pid) {
+        setPaying(false);
+        pollPayment(pid);
+      } else {
+        setPaying(false);
+        setPayDlgOpen(false);
+      }
+
+    } catch (e) {
+      console.error(e);
+      setPaying(false);
+      showAlert(e.response?.data?.message || "Payment init failed", "error");
+    }
+  };
+
   // CHART DATA
 
   const pieData = [
-    { name: 'Used', value: getUsagePercentage(), color: '#667eea' },
-    { name: 'Remaining', value: 100 - getUsagePercentage(), color: alpha('#667eea', 0.2) },
+    { name: 'Used', value: getUsagePercentage(), color: '#FFD700' },
+    { name: 'Remaining', value: 100 - getUsagePercentage(), color: alpha('#FFD700', 0.2) },
   ];
 
   const userStatusData = [
@@ -504,346 +490,36 @@ const Dashboard = () => {
 
         <TabPanel value={tabValue} index={0}>
           {/* Admin Overview */}
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<PeopleIcon />}
-                title="Total Users"
-                value={adminStats.totalUsers}
-                subtitle={`${adminStats.activeUsers} active`}
-                color="#667eea"
-                trend={12}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<CheckCircleIcon />}
-                title="Active Users"
-                value={adminStats.activeUsers}
-                subtitle={`${adminStats.totalUsers > 0 ? ((adminStats.activeUsers / adminStats.totalUsers) * 100).toFixed(1) : 0}% of total`}
-                color="#00d4aa"
-                trend={8}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<SubscriptionsIcon />}
-                title="Active Subscriptions"
-                value={adminStats.activeSubscriptions}
-                subtitle={`${adminStats.pendingSubscriptions} pending`}
-                color="#74b9ff"
-                trend={5}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<MoneyIcon />}
-                title="Total Revenue"
-                value={`KSh ${adminStats.totalRevenue.toLocaleString()}`}
-                subtitle="All completed payments"
-                color="#ffb800"
-                trend={15}
-              />
-            </Grid>
-          </Grid>
+          <AdminStatsOverview stats={adminStats} />
 
           {/* Personal Account Section for Admin */}
-          <GlassCard sx={{ mb: 4 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-                Your Personal Account
-              </Typography>
-              <Divider sx={{ mb: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-              
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderRadius: '12px',
-                      background: 'rgba(116, 185, 255, 0.1)',
-                      border: '1px solid rgba(116, 185, 255, 0.2)',
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar sx={{ bgcolor: '#74b9ff', mr: 2, width: 40, height: 40 }}>
-                        <DataUsageIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography color="text.secondary" variant="body2">
-                          Current Plan
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {dashboardData.currentSubscription?.DataPlan?.name || 'No Plan'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderRadius: '12px',
-                      background: 'rgba(0, 212, 170, 0.1)',
-                      border: '1px solid rgba(0, 212, 170, 0.2)',
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar sx={{ bgcolor: '#00d4aa', mr: 2, width: 40, height: 40 }}>
-                        <SpeedIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography color="text.secondary" variant="body2">
-                          Data Usage
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {getUsagePercentage().toFixed(1)}%
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderRadius: '12px',
-                      background: 'rgba(255, 184, 0, 0.1)',
-                      border: '1px solid rgba(255, 184, 0, 0.2)',
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar sx={{ bgcolor: '#ffb800', mr: 2, width: 40, height: 40 }}>
-                        <PaymentIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography color="text.secondary" variant="body2">
-                          Recent Payments
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {dashboardData.recentPayments.length}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderRadius: '12px',
-                      background: 'rgba(255, 107, 107, 0.1)',
-                      border: '1px solid rgba(255, 107, 107, 0.2)',
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar sx={{ bgcolor: '#ff6b6b', mr: 2, width: 40, height: 40 }}>
-                        <ReceiptIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography color="text.secondary" variant="body2">
-                          Pending Invoices
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {dashboardData.pendingInvoices.length}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </GlassCard>
+          <AdminPersonalAccount
+            subscription={dashboardData.currentSubscription}
+            recentPaymentsCount={dashboardData.recentPayments.length}
+            pendingInvoicesCount={dashboardData.pendingInvoices.length}
+            usagePercentage={getUsagePercentage()}
+          />
 
           {/* Charts Section */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <GlassCard>
-                <CardContent sx={{ p: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-                    User Growth Trend
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={dashboardData.usageHistory}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                      <XAxis dataKey="day" stroke="#b8c5d6" />
-                      <YAxis stroke="#b8c5d6" />
-                      <Line
-                        type="monotone"
-                        dataKey="usage"
-                        stroke="#667eea"
-                        strokeWidth={3}
-                        dot={{ fill: '#667eea', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: '#667eea', strokeWidth: 2 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </GlassCard>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <GlassCard>
-                <CardContent sx={{ p: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-                    User Status Distribution
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={userStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {userStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <Box mt={2}>
-                    {userStatusData.map((item, index) => (
-                      <Box key={index} display="flex" alignItems="center" mb={1}>
-                        <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '50%',
-                            bgcolor: item.color,
-                            mr: 1,
-                          }}
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {item.name}: {item.value}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </CardContent>
-              </GlassCard>
-            </Grid>
-          </Grid>
+          <DashboardCharts
+            usageHistory={dashboardData.usageHistory}
+            userStatusData={userStatusData}
+          />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
           {/* User Statistics */}
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <GlassCard>
-                <CardContent sx={{ p: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-                    Recent Users
-                  </Typography>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>User</TableCell>
-                          <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Email</TableCell>
-                          <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Status</TableCell>
-                          <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Role</TableCell>
-                          <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {adminStats.recentUsers.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <Box display="flex" alignItems="center">
-                                <Avatar sx={{ mr: 2, bgcolor: '#667eea' }}>
-                                  {user.firstName?.[0]}{user.lastName?.[0]}
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="body2" fontWeight={500}>
-                                    {user.firstName} {user.lastName}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    ID: {user.id}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2">{user.email}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={user.status}
-                                size="small"
-                                color={
-                                  user.status === 'active' ? 'success' :
-                                  user.status === 'inactive' ? 'warning' : 'error'
-                                }
-                                sx={{ fontWeight: 500 }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={user.role}
-                                size="small"
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" gap={1}>
-                                <Tooltip title="View Details">
-                                  <IconButton size="small" color="primary">
-                                    <VisibilityIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Edit User">
-                                  <IconButton size="small" color="primary">
-                                    <EditIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                                {user.status === 'active' ? (
-                                  <Tooltip title="Suspend User">
-                                    <IconButton
-                                      size="small"
-                                      color="warning"
-                                      onClick={() => handleUserAction(user.id, 'suspend')}
-                                    >
-                                      <BlockIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip title="Activate User">
-                                    <IconButton
-                                      size="small"
-                                      color="success"
-                                      onClick={() => handleUserAction(user.id, 'activate')}
-                                    >
-                                      <ActivateIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </GlassCard>
-            </Grid>
-          </Grid>
+          <RecentUsersTable
+            users={adminStats.recentUsers}
+            onAction={handleUserAction}
+          />
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
           {/* Admin Privileges */}
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <GlassCard>
+              <CustomCard>
                 <CardContent sx={{ p: 4 }}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                     Administrator Privileges
@@ -851,7 +527,7 @@ const Dashboard = () => {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                     Manage system-wide settings and user permissions.
                   </Typography>
-                  
+
                   <Box display="flex" flexDirection="column" gap={2}>
                     <Box
                       sx={{
@@ -917,7 +593,7 @@ const Dashboard = () => {
                     </Box>
                   </Box>
                 </CardContent>
-              </GlassCard>
+              </CustomCard>
             </Grid>
           </Grid>
         </TabPanel>
@@ -946,6 +622,21 @@ const Dashboard = () => {
           Here's your account overview and recent activity
         </Typography>
       </Box>
+
+      {/* Pending Payment Alert */}
+      {dashboardData.currentSubscription?.paymentStatus === 'pending' && (
+        <Alert
+          severity="warning"
+          action={
+            <Button color="inherit" size="small" onClick={handlePayClick}>
+              Pay Now
+            </Button>
+          }
+          sx={{ mb: 4, borderRadius: 2 }}
+        >
+          Your current subscription payment is pending. Services may be limited.
+        </Alert>
+      )}
 
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} sm={6} md={3}>
@@ -987,12 +678,12 @@ const Dashboard = () => {
       </Grid>
 
       {/* Current Subscription Card */}
-      <GlassCard sx={{ mb: 4 }}>
+      <CustomCard className="mb-8">
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             Current Subscription
           </Typography>
-          
+
           {dashboardData.currentSubscription ? (
             <Grid container spacing={3}>
               <Grid item xs={12} md={8}>
@@ -1022,23 +713,42 @@ const Dashboard = () => {
                 </Box>
               </Grid>
               <Grid item xs={12} md={4}>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+                  {dashboardData.currentSubscription.paymentStatus === 'pending' ? (
+                    <Box textAlign="center">
+                      <Chip label="Payment Pending" color="warning" sx={{ mb: 2 }} />
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        Complete payment to activate full speed.
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={handlePayClick}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        Pay Now
+                      </Button>
+                    </Box>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </Box>
               </Grid>
             </Grid>
           ) : (
@@ -1052,10 +762,14 @@ const Dashboard = () => {
               <Button
                 variant="contained"
                 sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: '#FFD700',
+                  color: '#000000',
                   borderRadius: '12px',
                   textTransform: 'none',
-                  fontWeight: 500,
+                  fontWeight: 600,
+                  '&:hover': {
+                    background: '#E6C200',
+                  }
                 }}
               >
                 View Plans
@@ -1063,10 +777,10 @@ const Dashboard = () => {
             </Box>
           )}
         </CardContent>
-      </GlassCard>
+      </CustomCard>
 
       {/* Usage Chart */}
-      <GlassCard>
+      <CustomCard>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             Weekly Usage Trend
@@ -1083,14 +797,62 @@ const Dashboard = () => {
               />
               <defs>
                 <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#667eea" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#764ba2" stopOpacity={0.8} />
+                  <stop offset="5%" stopColor="#FFD700" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#B28F00" stopOpacity={0.8} />
                 </linearGradient>
               </defs>
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
-      </GlassCard>
+      </CustomCard>
+
+      {/* PAY DIALOG */}
+      <Dialog
+        open={payDlgOpen}
+        onClose={() => !paying && !paymentPolling && setPayDlgOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Complete Payment</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {paymentPolling ? (
+            <Box textAlign="center" py={4}>
+              <CircularProgress size={50} sx={{ mb: 2 }} />
+              <Typography variant="h6">Waiting for M-Pesa...</Typography>
+              <Typography variant="body2" color="text.secondary">Check your phone.</Typography>
+            </Box>
+          ) : payStatus === 'completed' ? (
+            <Box textAlign="center" py={4}>
+              <CheckCircleIcon color="success" sx={{ fontSize: 60 }} />
+              <Typography variant="h5" color="success.main">Paid Successfully!</Typography>
+            </Box>
+          ) : (
+            <>
+              <Typography gutterBottom>
+                Pay for subscription <b>{dashboardData.currentSubscription?.DataPlan?.name}</b>.
+              </Typography>
+              <TextField
+                fullWidth
+                label="M-Pesa Number"
+                value={payPhoneNumber}
+                onChange={(e) => setPayPhoneNumber(e.target.value)}
+                placeholder="07..."
+                sx={{ mt: 2 }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!paymentPolling && payStatus !== 'completed' && (
+            <>
+              <Button onClick={() => setPayDlgOpen(false)} disabled={paying}>Cancel</Button>
+              <Button variant="contained" color="success" onClick={confirmPay} disabled={paying}>
+                {paying ? <CircularProgress size={20} /> : "Pay Now"}
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

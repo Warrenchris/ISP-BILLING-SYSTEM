@@ -1,5 +1,6 @@
-const { Subscription, DataPlan, User } = require('../models');
+const { Subscription, DataPlan, User, Payment } = require('../models');
 const { Op } = require('sequelize');
+const { SubscriptionStatus } = require('../config/constants');
 
 /**
  * Create new subscription
@@ -29,7 +30,7 @@ const createSubscription = async (req, res) => {
     const activeSubscription = await Subscription.findOne({
       where: {
         userId,
-        status: 'active'
+        status: SubscriptionStatus.ACTIVE
       }
     });
 
@@ -57,7 +58,7 @@ const createSubscription = async (req, res) => {
       endDate,
       dataRemaining: dataPlan.dataLimit,
       autoRenew: autoRenew || false,
-      status: 'active'
+      status: SubscriptionStatus.PENDING
     });
 
     // Load related data
@@ -90,7 +91,7 @@ const createSubscription = async (req, res) => {
 
   } catch (error) {
     console.error('Create subscription error:', error);
-    
+
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
@@ -130,7 +131,14 @@ const getUserSubscriptions = async (req, res) => {
     const { count, rows: subscriptions } = await Subscription.findAndCountAll({
       where: whereClause,
       include: [
-        { model: DataPlan, as: 'plan' }
+        { model: DataPlan, as: 'plan' },
+        {
+          model: Payment,
+          as: 'payments',
+          attributes: ['status'],
+          limit: 1,
+          order: [['createdAt', 'DESC']]
+        }
       ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
@@ -159,7 +167,8 @@ const getUserSubscriptions = async (req, res) => {
             formattedPrice: subscription.plan.getFormattedPrice(),
             formattedDataLimit: subscription.plan.getFormattedDataLimit(),
             validityText: subscription.plan.getValidityText()
-          }
+          },
+          paymentStatus: subscription.payments?.[0]?.status || 'pending'
         })),
         pagination: {
           currentPage: parseInt(page),
@@ -195,10 +204,17 @@ const getCurrentSubscription = async (req, res) => {
     const subscription = await Subscription.findOne({
       where: {
         userId,
-        status: 'active'
+        status: SubscriptionStatus.ACTIVE
       },
       include: [
-        { model: DataPlan, as: 'plan' }
+        { model: DataPlan, as: 'plan' },
+        {
+          model: Payment,
+          as: 'payments',
+          attributes: ['status'],
+          limit: 1,
+          order: [['createdAt', 'DESC']]
+        }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -227,7 +243,8 @@ const getCurrentSubscription = async (req, res) => {
             formattedPrice: subscription.plan.getFormattedPrice(),
             formattedDataLimit: subscription.plan.getFormattedDataLimit(),
             validityText: subscription.plan.getValidityText()
-          }
+          },
+          paymentStatus: subscription.payments?.[0]?.status || 'pending'
         }
       }
     });
@@ -319,7 +336,7 @@ const cancelSubscription = async (req, res) => {
       });
     }
 
-    if (subscription.status === 'cancelled') {
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
       return res.status(400).json({
         success: false,
         message: 'Subscription is already cancelled'
@@ -327,7 +344,7 @@ const cancelSubscription = async (req, res) => {
     }
 
     await subscription.update({
-      status: 'cancelled',
+      status: SubscriptionStatus.CANCELLED,
       cancellationReason: reason || 'User requested cancellation',
       cancelledAt: new Date()
     });
@@ -377,7 +394,7 @@ const updateDataUsage = async (req, res) => {
       });
     }
 
-    if (subscription.status !== 'active') {
+    if (subscription.status !== SubscriptionStatus.ACTIVE) {
       return res.status(400).json({
         success: false,
         message: 'Cannot update data usage for inactive subscription'
@@ -415,8 +432,8 @@ const updateDataUsage = async (req, res) => {
  */
 const getAllSubscriptions = async (req, res) => {
   try {
-    const { 
-      status, 
+    const {
+      status,
       dataPlanId,
       page = 1,
       limit = 10,

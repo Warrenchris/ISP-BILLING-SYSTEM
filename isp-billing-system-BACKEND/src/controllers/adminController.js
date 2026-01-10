@@ -1,40 +1,41 @@
-  /* src/controllers/adminController.js
-  * ADMIN – users + their current subscription
-  */
-  const { Op }          = require("sequelize");
-  const { User,
-          Subscription,
-          DataPlan }    = require("../models");
-  const bcrypt          = require("bcryptjs");
+/* src/controllers/adminController.js
+* ADMIN – users + their current subscription
+*/
+const { Op } = require("sequelize");
+const { User,
+  Subscription,
+  DataPlan } = require("../models");
+const { UserRole, SubscriptionStatus, PaymentStatus } = require('../config/constants');
+const bcrypt = require("bcryptjs");
 
 
 
-  /* helper ─────────────────────────────────────────────── */
-  const now   = () => new Date();
-  const days  = (end) => Math.max(Math.ceil((new Date(end) - now()) / 8.64e7), 0);
-  const hash  = (pw)  => bcrypt.hash(pw, Number(process.env.BCRYPT_ROUNDS) || 12);
-  const MIN_LEN = 8; // Minimum password length
+/* helper ─────────────────────────────────────────────── */
+const now = () => new Date();
+const days = (end) => Math.max(Math.ceil((new Date(end) - now()) / 8.64e7), 0);
+const hash = (pw) => bcrypt.hash(pw, Number(process.env.BCRYPT_ROUNDS) || 12);
+const MIN_LEN = 8; // Minimum password length
 
-  /* GET /api/admin/users?search=&page=&limit= */
-  exports.getAllUsers = async (req, res, next) => {
+/* GET /api/admin/users?search=&page=&limit= */
+exports.getAllUsers = async (req, res, next) => {
   try {
     const { search = "", page = 1, limit = 25 } = req.query;
 
     const where = search
       ? {
-          [Op.or]: [
-            { firstName:   { [Op.like]: `%${search}%` } },
-            { lastName:    { [Op.like]: `%${search}%` } },
-            { email:       { [Op.like]: `%${search}%` } },
-            { phoneNumber: { [Op.like]: `%${search}%` } },
-          ],
-        }
+        [Op.or]: [
+          { firstName: { [Op.like]: `%${search}%` } },
+          { lastName: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { phoneNumber: { [Op.like]: `%${search}%` } },
+        ],
+      }
       : {};
 
     const { rows, count } = await User.findAndCountAll({
       where,
       offset: (page - 1) * limit,
-      limit:  Number(limit),
+      limit: Number(limit),
       order: [["created_at", "DESC"]],
       attributes: { exclude: ["password"] },
       include: [
@@ -42,7 +43,7 @@
           model: Subscription,
           as: "activeSubscription",
           where: {
-            status: "active",
+            status: SubscriptionStatus.ACTIVE,
             startDate: { [Op.lte]: now() },
             endDate: { [Op.gte]: now() },
             cancelledAt: null,
@@ -82,65 +83,65 @@
     });
   } catch (err) { next(err); }
 };
-  /* PATCH /api/admin/subscriptions/:id
-  * body = { action: 'activate' | 'suspend' | 'cancel' }
-  */
-  exports.patchSubscription = async (req, res, next) => {
-    try {
-      const { id }          = req.params;
-      const { action }      = req.body;          // simple FSM
-      const subscription    = await Subscription.findByPk(id, { include: DataPlan });
-      if (!subscription) return res.status(404).json({ success:false, message:"Not found" });
+/* PATCH /api/admin/subscriptions/:id
+* body = { action: 'activate' | 'suspend' | 'cancel' }
+*/
+exports.patchSubscription = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body;          // simple FSM
+    const subscription = await Subscription.findByPk(id, { include: DataPlan });
+    if (!subscription) return res.status(404).json({ success: false, message: "Not found" });
 
-      switch (action) {
-        case "activate": subscription.status = "active";    break;
-        case "suspend" : subscription.status = "suspended"; break;
-        case "cancel"  : subscription.status = "cancelled"; break;
-        default:
-          return res.status(400).json({ success:false, message:"Bad action" });
-      }
-      await subscription.save();
-      res.json({ success:true, data:{ subscription } });
-    } catch (err) { next(err); }
-  };
+    switch (action) {
+      case "activate": subscription.status = SubscriptionStatus.ACTIVE; break;
+      case "suspend": subscription.status = SubscriptionStatus.SUSPENDED; break;
+      case "cancel": subscription.status = SubscriptionStatus.CANCELLED; break;
+      default:
+        return res.status(400).json({ success: false, message: "Bad action" });
+    }
+    await subscription.save();
+    res.json({ success: true, data: { subscription } });
+  } catch (err) { next(err); }
+};
 
-  /* … keep createUser / updateUser / deleteUser etc. unchanged … */
+/* … keep createUser / updateUser / deleteUser etc. unchanged … */
 
-  /*───────────────────────────────────────────────────────────*/
-  exports.getUserById = async (req, res, next) => {
-    try {
-      const user = await User.findByPk(req.params.id, { attributes: { exclude: ['password'] } });
-      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-      res.json({ success: true, data: { user } });
-    } catch (err) { next(err); }
-  };
+/*───────────────────────────────────────────────────────────*/
+exports.getUserById = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.params.id, { attributes: { exclude: ['password'] } });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, data: { user } });
+  } catch (err) { next(err); }
+};
 
-  /*───────────────────────────────────────────────────────────*/
-  exports.createUser = async (req, res, next) => {
-    try {
-      const user = await User.create({
-        ...req.body,
-        isActive: true,
-        isVerified: true,
+/*───────────────────────────────────────────────────────────*/
+exports.createUser = async (req, res, next) => {
+  try {
+    const user = await User.create({
+      ...req.body,
+      isActive: true,
+      isVerified: true,
+    })
+    const { password, ...rest } = req.body;
+    if (!password) return res.status(400).json({ success: false, message: 'Password required' });
+    if (password || password.length < MIN_LEN)
+      return res.status(400).json({
+        sucess: false,
+        message: `Password must be at least ${MIN_LEN} characters long`
       })
-      const { password, ...rest } = req.body;
-      if (!password) return res.status(400).json({ success: false, message: 'Password required' });
-      if (password || password.length < MIN_LEN) 
-        return res.status(400).json({
-          sucess : false,
-          message: `Password must be at least ${MIN_LEN} characters long`
-        })
 
-      const plain = user.get({ plain: true });
-      delete plain.password;
-      res.status(201).json({ success: true, data: { user: plain } });
-    } catch (err) { next(err); }
-  };
+    const plain = user.get({ plain: true });
+    delete plain.password;
+    res.status(201).json({ success: true, data: { user: plain } });
+  } catch (err) { next(err); }
+};
 
-  /*───────────────────────────────────────────────────────────*/
-  exports.updateUser = async (req, res, next) => {
+/*───────────────────────────────────────────────────────────*/
+exports.updateUser = async (req, res, next) => {
   const { id } = req.params;
-  
+
   try {
     // Verify UUID format
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
@@ -222,14 +223,14 @@
   }
 };
 
-  /*───────────────────────────────────────────────────────────*/
-  exports.deleteUser = async (req, res, next) => {
-    try {
-      const rows = await User.destroy({ where: { id: req.params.id } });
-      if (!rows) return res.status(404).json({ success: false, message: 'User not found' });
-      res.json({ success: true, message: 'User deleted' });
-    } catch (err) { next(err); }
-  };
+/*───────────────────────────────────────────────────────────*/
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const rows = await User.destroy({ where: { id: req.params.id } });
+    if (!rows) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, message: 'User deleted' });
+  } catch (err) { next(err); }
+};
 
 exports.getUserSubscription = async (req, res, next) => {
   try {
@@ -268,31 +269,31 @@ exports.getUserSubscription = async (req, res, next) => {
   }
 };
 
-  /*───────────────────────────────────────────────────────────*/
-  exports.getSystemStats = async (req, res, next) => {
+/*───────────────────────────────────────────────────────────*/
+exports.getSystemStats = async (req, res, next) => {
   try {
     // Get user counts
     const totalUsers = await User.count();
     const activeUsers = await User.count({ where: { status: 'active' } });
     const inactiveUsers = await User.count({ where: { status: 'inactive' } });
     const suspendedUsers = await User.count({ where: { status: 'suspended' } });
-    const adminUsers = await User.count({ where: { role: 'admin' } });
+    const adminUsers = await User.count({ where: { role: UserRole.ADMIN } });
 
     // Get subscription counts
     const totalSubscriptions = await Subscription.count();
-    const activeSubscriptions = await Subscription.count({ where: { status: 'active' } });
-    const expiredSubscriptions = await Subscription.count({ where: { status: 'expired' } });
-    const pendingSubscriptions = await Subscription.count({ where: { status: 'pending' } });
-    const suspendedSubscriptions = await Subscription.count({ where: { status: 'suspended' } });
+    const activeSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.ACTIVE } });
+    const expiredSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.EXPIRED } });
+    const pendingSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.PENDING } });
+    const suspendedSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.SUSPENDED } });
 
     // Get revenue for current month
     const currentDate = new Date();
     const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    
+
     const payments = await Payment.findAll({
       where: {
-        status: 'completed',
+        status: PaymentStatus.COMPLETED,
         createdAt: {
           [Op.between]: [startDate, endDate]
         }
@@ -336,7 +337,7 @@ exports.getUserSubscription = async (req, res, next) => {
   }
 };
 
-  exports.updateUserSubscription = async (req, res, next) => {
+exports.updateUserSubscription = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { action } = req.body; // 'activate', 'suspend', 'cancel'
@@ -345,7 +346,7 @@ exports.getUserSubscription = async (req, res, next) => {
     const subscription = await Subscription.findOne({
       where: {
         userId,
-        status: 'active'
+        status: SubscriptionStatus.ACTIVE
       },
       include: [{
         model: DataPlan,
@@ -363,15 +364,15 @@ exports.getUserSubscription = async (req, res, next) => {
     // Process the action
     switch (action) {
       case 'activate':
-        subscription.status = 'active';
+        subscription.status = SubscriptionStatus.ACTIVE;
         subscription.suspendedAt = null;
         break;
       case 'suspend':
-        subscription.status = 'suspended';
+        subscription.status = SubscriptionStatus.SUSPENDED;
         subscription.suspendedAt = new Date();
         break;
       case 'cancel':
-        subscription.status = 'cancelled';
+        subscription.status = SubscriptionStatus.CANCELLED;
         subscription.cancelledAt = new Date();
         break;
       default:

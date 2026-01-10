@@ -1,15 +1,16 @@
 const { DataPlan } = require('../models');
 const { Op } = require('sequelize');
+const { SubscriptionStatus } = require('../config/constants');
 
 /**
  * Get all data plans
  */
 const getAllDataPlans = async (req, res) => {
   try {
-    const { 
-      category, 
-      planType, 
-      active = 'true', 
+    const {
+      category,
+      planType,
+      active = 'true',
       popular,
       minPrice,
       maxPrice,
@@ -21,23 +22,23 @@ const getAllDataPlans = async (req, res) => {
 
     // Build where clause
     const whereClause = {};
-    
+
     if (active !== 'all') {
       whereClause.isActive = active === 'true';
     }
-    
+
     if (category) {
       whereClause.category = category;
     }
-    
+
     if (planType) {
       whereClause.planType = planType;
     }
-    
+
     if (popular !== undefined) {
       whereClause.isPopular = popular === 'true';
     }
-    
+
     if (minPrice || maxPrice) {
       whereClause.price = {};
       if (minPrice) whereClause.price[Op.gte] = parseFloat(minPrice);
@@ -191,7 +192,7 @@ const createDataPlan = async (req, res) => {
 
   } catch (error) {
     console.error('Create data plan error:', error);
-    
+
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
@@ -256,7 +257,7 @@ const updateDataPlan = async (req, res) => {
 
   } catch (error) {
     console.error('Update data plan error:', error);
-    
+
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
@@ -297,7 +298,7 @@ const deleteDataPlan = async (req, res) => {
     const activeSubscriptions = await Subscription.count({
       where: {
         dataPlanId: id,
-        status: 'active'
+        status: SubscriptionStatus.ACTIVE
       }
     });
 

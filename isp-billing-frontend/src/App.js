@@ -22,27 +22,27 @@ const createModernTheme = (darkMode = true) => createTheme({
   palette: {
     mode: darkMode ? 'dark' : 'light',
     primary: {
-      main: '#667eea',
-      light: '#8fa4f3',
-      dark: '#4c63d2',
-      contrastText: '#ffffff',
+      main: '#FFD700', // Yellow
+      light: '#FFEA00',
+      dark: '#B29500',
+      contrastText: '#000000',
     },
     secondary: {
-      main: '#764ba2',
-      light: '#9575cd',
-      dark: '#512da8',
-      contrastText: '#ffffff',
+      main: '#FFFFFF',
+      light: '#F5F5F5',
+      dark: '#CCCCCC',
+      contrastText: '#000000',
     },
     background: {
       default: darkMode ? '#0a0a0f' : '#f8fafc',
-      paper: darkMode ? 'rgba(26, 26, 46, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+      paper: darkMode ? '#13131a' : '#ffffff', // Darker paper for better contrast
     },
     surface: {
-      main: darkMode ? 'rgba(26, 26, 46, 0.4)' : 'rgba(255, 255, 255, 0.7)',
+      main: darkMode ? 'rgba(19, 19, 26, 0.7)' : 'rgba(255, 255, 255, 0.7)',
     },
     text: {
-      primary: darkMode ? '#ffffff' : '#1a202c',
-      secondary: darkMode ? '#b8c5d6' : '#4a5568',
+      primary: darkMode ? '#FFFFFF' : '#1a202c',
+      secondary: darkMode ? '#A0A0A0' : '#4a5568',
     },
     success: {
       main: '#00d4aa',
@@ -131,9 +131,9 @@ const createModernTheme = (darkMode = true) => createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          background: darkMode 
-            ? `linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%)` 
-            : `linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)`,
+          background: darkMode
+            ? '#0a0a0f'
+            : '#f8fafc',
           backgroundAttachment: 'fixed',
           '&::before': {
             content: '""',
@@ -142,12 +142,10 @@ const createModernTheme = (darkMode = true) => createTheme({
             left: 0,
             right: 0,
             bottom: 0,
-            background: darkMode 
-              ? `radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                 radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-                 radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%)`
-              : `radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-                 radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%)`,
+            background: darkMode
+              ? `radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+                 radial-gradient(circle at 100% 0%, rgba(100, 100, 100, 0.2) 0%, transparent 50%)`
+              : `radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%)`,
             zIndex: -1,
             pointerEvents: 'none',
           },
@@ -157,50 +155,28 @@ const createModernTheme = (darkMode = true) => createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '12px',
+          borderRadius: '8px',
           textTransform: 'none',
-          fontWeight: 500,
-          padding: '12px 24px',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-            transition: 'left 0.5s',
-          },
-          '&:hover::before': {
-            left: '100%',
-          },
+          fontWeight: 600,
+          padding: '10px 24px',
+          boxShadow: 'none',
           '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)',
-          },
-          '&:active': {
-            transform: 'translateY(0)',
+            boxShadow: 'none',
           },
         },
         contained: {
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+          background: '#FFD700',
+          color: '#000000',
           '&:hover': {
-            background: 'linear-gradient(135deg, #7c8df0 0%, #8b5fb8 100%)',
-            boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+            background: '#E6C200',
           },
         },
         outlined: {
-          background: darkMode ? 'rgba(26, 26, 46, 0.4)' : 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+          borderColor: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+          color: darkMode ? '#FFFFFF' : '#000000',
           '&:hover': {
-            background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-            borderColor: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+            borderColor: '#FFD700',
+            background: 'rgba(255, 215, 0, 0.05)',
           },
         },
       },
@@ -208,33 +184,11 @@ const createModernTheme = (darkMode = true) => createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          background: darkMode ? 'rgba(26, 26, 46, 0.6)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: 'blur(25px)',
-          WebkitBackdropFilter: 'blur(25px)',
+          background: darkMode ? '#13131a' : '#ffffff',
+          backgroundImage: 'none',
           border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           borderRadius: '16px',
-          boxShadow: darkMode 
-            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-          },
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: darkMode 
-              ? '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-              : '0 12px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-            borderColor: darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-          },
+          boxShadow: 'none',
         },
       },
     },
@@ -348,7 +302,7 @@ const darkTheme = createModernTheme(true);
 
 function App() {
   const [darkmode, setDarkmode] = React.useState(true); // Default to dark mode for modern look
-  
+
   const toggleDarkMode = () => {
     setDarkmode(!darkmode);
   };
@@ -363,11 +317,11 @@ function App() {
               <Route
                 path="/Login"
                 element={
-                  <Login 
-                    darkMode={darkmode} 
-                    toggleDarkMode={toggleDarkMode} 
+                  <Login
+                    darkMode={darkmode}
+                    toggleDarkMode={toggleDarkMode}
                   />
-                } 
+                }
               />
               <Route
                 path="/*"

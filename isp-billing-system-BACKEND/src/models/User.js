@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const { sequelize } = require('../config/database');
+const { UserRole, SubscriptionStatus } = require('../config/constants');
 
 const User = sequelize.define('User', {
   id: {
@@ -90,8 +91,8 @@ const User = sequelize.define('User', {
     defaultValue: false
   },
   role: {
-    type: DataTypes.ENUM('customer', 'admin', 'support'),
-    defaultValue: 'customer'
+    type: DataTypes.ENUM(UserRole.CUSTOMER, UserRole.ADMIN, UserRole.SUPPORT),
+    defaultValue: UserRole.CUSTOMER
   },
   lastLogin: {
     type: DataTypes.DATE,
@@ -132,22 +133,22 @@ const User = sequelize.define('User', {
 });
 
 // Instance methods
-User.prototype.comparePassword = async function(candidatePassword) {
+User.prototype.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-User.prototype.toJSON = function() {
+User.prototype.toJSON = function () {
   const values = Object.assign({}, this.get());
   delete values.password;
   return values;
 };
 
 // Class methods
-User.findByEmail = function(email) {
+User.findByEmail = function (email) {
   return this.findOne({ where: { email } });
 };
 
-User.findByPhoneNumber = function(phoneNumber) {
+User.findByPhoneNumber = function (phoneNumber) {
   return this.findOne({ where: { phoneNumber } });
 };
 User.associate = (models) => {
@@ -155,7 +156,7 @@ User.associate = (models) => {
   User.hasOne(models.Subscription, {
     foreignKey: 'userId',
     as: 'activeSubscription',
-    scope: { status: 'active' }
+    scope: { status: SubscriptionStatus.ACTIVE }
   });
   User.hasMany(models.Payment, { foreignKey: 'userId', as: 'Payments' });
   User.hasMany(models.Invoice, { foreignKey: 'userId', as: 'Invoices' });
@@ -167,7 +168,7 @@ User.associate = (models) => {
 // Generate password reset token
 const crypto = require('crypto');
 
-User.prototype.generatePasswordResetToken = function() {
+User.prototype.generatePasswordResetToken = function () {
   const resetToken = crypto.randomBytes(20).toString('hex');
   this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   // Set expiration to 1 hour from now
@@ -179,4 +180,3 @@ User.prototype.generatePasswordResetToken = function() {
 
 module.exports = User;
 
-module.exports = User;

@@ -72,6 +72,7 @@ export const paymentsApi = {
   getAll: (params = {}) => api.get('/payments', { params }),
   getById: (id) => api.get(`/payments/${id}`),
   initiateMpesa: (paymentData) => api.post('/payments/mpesa/initiate', paymentData),
+  initiateSubscriptionPayment: (paymentData) => api.post('/payments/subscription', paymentData),
   checkStatus: (transactionId) => api.get(`/payments/status/${transactionId}`),
 };
 
@@ -103,14 +104,14 @@ export const adminApi = {
     update: (id, userData) => api.put(`/admin/users/${id}`, userData),
     delete: (id) => api.delete(`/admin/users/${id}`),
   },
-  
+
   // System statistics
   stats: {
     getDashboard: () => api.get('/admin/stats/dashboard'),
     getRevenue: (params = {}) => api.get('/admin/stats/revenue', { params }),
     getUsage: (params = {}) => api.get('/admin/stats/usage', { params }),
   },
-  
+
   // System management
   system: {
     getHealth: () => api.get('/health'),

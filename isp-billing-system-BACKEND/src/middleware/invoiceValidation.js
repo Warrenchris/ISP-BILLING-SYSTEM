@@ -1,5 +1,6 @@
 const { body, param, query, validationResult } = require('express-validator');
 const { Invoice } = require('../models');
+const { InvoiceStatus } = require('../config/constants');
 
 /**
  * Handle validation errors
@@ -27,25 +28,25 @@ const validateInvoiceGeneration = [
   param('subscriptionId')
     .isUUID()
     .withMessage('Valid subscription ID is required'),
-  
+
   body('billingPeriodStart')
     .isISO8601()
     .withMessage('Valid billing period start date is required')
     .custom((value, { req }) => {
       const startDate = new Date(value);
       const endDate = new Date(req.body.billingPeriodEnd);
-      
+
       if (startDate >= endDate) {
         throw new Error('Billing period start must be before end date');
       }
-      
+
       return true;
     }),
-  
+
   body('billingPeriodEnd')
     .isISO8601()
     .withMessage('Valid billing period end date is required'),
-  
+
   body('dataUsage')
     .optional()
     .isNumeric()
@@ -56,24 +57,24 @@ const validateInvoiceGeneration = [
       }
       return true;
     }),
-  
+
   body('additionalItems')
     .optional()
     .isArray()
     .withMessage('Additional items must be an array'),
-  
+
   body('additionalItems.*.description')
     .if(body('additionalItems').exists())
     .notEmpty()
     .withMessage('Item description is required')
     .isLength({ max: 255 })
     .withMessage('Item description must not exceed 255 characters'),
-  
+
   body('additionalItems.*.itemType')
     .if(body('additionalItems').exists())
     .isIn(['subscription', 'data_plan', 'overage', 'installation', 'equipment', 'penalty', 'discount', 'tax'])
     .withMessage('Invalid item type'),
-  
+
   body('additionalItems.*.quantity')
     .if(body('additionalItems').exists())
     .isNumeric()
@@ -84,7 +85,7 @@ const validateInvoiceGeneration = [
       }
       return true;
     }),
-  
+
   body('additionalItems.*.unitPrice')
     .if(body('additionalItems').exists())
     .isNumeric()
@@ -95,12 +96,12 @@ const validateInvoiceGeneration = [
       }
       return true;
     }),
-  
+
   body('force')
     .optional()
     .isBoolean()
     .withMessage('Force flag must be a boolean'),
-  
+
   handleValidationErrors
 ];
 
@@ -111,16 +112,16 @@ const validateInvoiceStatusUpdate = [
   param('id')
     .isUUID()
     .withMessage('Valid invoice ID is required'),
-  
+
   body('status')
-    .isIn(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'refunded'])
+    .isIn(Object.values(InvoiceStatus))
     .withMessage('Invalid invoice status'),
-  
+
   body('notes')
     .optional()
     .isLength({ max: 1000 })
     .withMessage('Notes must not exceed 1000 characters'),
-  
+
   handleValidationErrors
 ];
 
@@ -131,7 +132,7 @@ const validateMarkAsPaid = [
   param('id')
     .isUUID()
     .withMessage('Valid invoice ID is required'),
-  
+
   body('paidAmount')
     .isNumeric()
     .withMessage('Paid amount must be a number')
@@ -141,17 +142,17 @@ const validateMarkAsPaid = [
       }
       return true;
     }),
-  
+
   body('paymentMethod')
     .optional()
     .isIn(['mpesa', 'bank', 'cash', 'card'])
     .withMessage('Invalid payment method'),
-  
+
   body('notes')
     .optional()
     .isLength({ max: 1000 })
     .withMessage('Notes must not exceed 1000 characters'),
-  
+
   handleValidationErrors
 ];
 
@@ -163,7 +164,7 @@ const validateBulkInvoiceGeneration = [
     .optional()
     .isISO8601()
     .withMessage('Valid billing date is required'),
-  
+
   handleValidationErrors
 ];
 
@@ -175,22 +176,22 @@ const validateInvoiceQuery = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Page must be a positive integer'),
-  
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
-  
+
   query('status')
     .optional()
-    .isIn(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'refunded'])
+    .isIn(Object.values(InvoiceStatus))
     .withMessage('Invalid status filter'),
-  
+
   query('startDate')
     .optional()
     .isISO8601()
     .withMessage('Valid start date is required'),
-  
+
   query('endDate')
     .optional()
     .isISO8601()
@@ -199,25 +200,25 @@ const validateInvoiceQuery = [
       if (req.query.startDate && value) {
         const startDate = new Date(req.query.startDate);
         const endDate = new Date(value);
-        
+
         if (startDate >= endDate) {
           throw new Error('End date must be after start date');
         }
       }
-      
+
       return true;
     }),
-  
+
   query('userId')
     .optional()
     .isUUID()
     .withMessage('Valid user ID is required'),
-  
+
   query('search')
     .optional()
     .isLength({ min: 1, max: 100 })
     .withMessage('Search term must be between 1 and 100 characters'),
-  
+
   handleValidationErrors
 ];
 
@@ -228,7 +229,7 @@ const validateInvoiceId = [
   param('id')
     .isUUID()
     .withMessage('Valid invoice ID is required'),
-  
+
   handleValidationErrors
 ];
 
@@ -242,7 +243,7 @@ const checkInvoiceAccess = async (req, res, next) => {
     const userRole = req.user.role;
 
     const whereClause = { id };
-    
+
     // Non-admin users can only access their own invoices
     if (userRole !== 'admin') {
       whereClause.userId = userId;
@@ -279,7 +280,7 @@ const validateDateRange = [
     .optional()
     .isISO8601()
     .withMessage('Valid start date is required'),
-  
+
   query('endDate')
     .optional()
     .isISO8601()
@@ -288,21 +289,21 @@ const validateDateRange = [
       if (req.query.startDate && value) {
         const startDate = new Date(req.query.startDate);
         const endDate = new Date(value);
-        
+
         if (startDate >= endDate) {
           throw new Error('End date must be after start date');
         }
-        
+
         // Limit date range to 1 year
         const oneYear = 365 * 24 * 60 * 60 * 1000;
         if (endDate - startDate > oneYear) {
           throw new Error('Date range cannot exceed 1 year');
         }
       }
-      
+
       return true;
     }),
-  
+
   handleValidationErrors
 ];
 

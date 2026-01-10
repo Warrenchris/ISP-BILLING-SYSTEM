@@ -1,4 +1,5 @@
 const { Invoice, InvoiceItem, User, Subscription, DataPlan } = require('../models');
+const { InvoiceStatus } = require('../config/constants');
 const billingService = require('../services/billingService');
 const { Op } = require('sequelize');
 const moment = require('moment');
@@ -10,12 +11,12 @@ const PDFDocument = require('pdfkit');
 const generateInvoice = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
-    const { 
-      billingPeriodStart, 
-      billingPeriodEnd, 
-      dataUsage, 
+    const {
+      billingPeriodStart,
+      billingPeriodEnd,
+      dataUsage,
       additionalItems,
-      force = false 
+      force = false
     } = req.body;
 
     // Validate subscription belongs to user (unless admin)
@@ -119,10 +120,10 @@ const getUserInvoices = async (req, res) => {
     const { count, rows: invoices } = await Invoice.findAndCountAll({
       where: whereClause,
       include: [
-        { 
-          model: Subscription, 
-          as: 'Subscription', 
-          include: [{ model: DataPlan, as: 'plan' }] 
+        {
+          model: Subscription,
+          as: 'Subscription',
+          include: [{ model: DataPlan, as: 'plan' }]
         },
         { model: InvoiceItem, as: 'Items' }
       ],
@@ -164,7 +165,7 @@ const getInvoiceById = async (req, res) => {
     const { id } = req.params;
 
     const whereClause = { id };
-    
+
     // Non-admin users can only see their own invoices
     if (req.user.role !== 'admin') {
       whereClause.userId = req.user.userId;
@@ -225,7 +226,7 @@ const updateInvoiceStatus = async (req, res) => {
       invoice.notes = notes;
     }
 
-    if (status === 'sent') {
+    if (status === InvoiceStatus.SENT) {
       invoice.sentAt = new Date();
     }
 
@@ -276,7 +277,7 @@ const markInvoiceAsPaid = async (req, res) => {
     }
 
     // If fully paid and subscription exists, activate it
-    if (invoice.paymentStatus === 'paid' && invoice.Subscription) {
+    if (invoice.paymentStatus === InvoiceStatus.PAID && invoice.Subscription) {
       await invoice.Subscription.activateSubscription();
     }
 
@@ -329,16 +330,16 @@ const generateBulkInvoices = async (req, res) => {
  */
 const getAllInvoices = async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      status, 
-      startDate, 
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      startDate,
       endDate,
       userId,
-      search 
+      search
     } = req.query;
-    
+
     const offset = (page - 1) * limit;
 
     const whereClause = {};
@@ -486,7 +487,7 @@ const sendPaymentReminders = async (req, res) => {
 const getBillingStatistics = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     const start = startDate ? new Date(startDate) : moment().startOf('month').toDate();
     const end = endDate ? new Date(endDate) : moment().endOf('month').toDate();
 

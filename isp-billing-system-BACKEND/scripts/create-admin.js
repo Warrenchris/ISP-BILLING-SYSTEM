@@ -1,50 +1,43 @@
-// scripts/create-admin.js
-// ---------------------------------------------
-// Utility script to add a new ADMIN user quickly
-// Usage (from project root):
-//    node scripts/create-admin.js
-// ---------------------------------------------
+const { Sequelize } = require('sequelize');
+const { sequelize } = require('../config/database');
+const User = require('../models/user');
 
-const { v4: uuid } = require('uuid');
-const bcrypt = require('bcryptjs');
-const { sequelize, User } = require('../src/models'); // adjust path if models are elsewhere
+async function createAdmin() {
+    try {
+        console.log('Connecting to database...');
+        await sequelize.authenticate();
+        console.log('Database connected.');
 
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Connected to database');
+        const adminData = {
+            firstName: 'Warren',
+            lastName: 'Chris',
+            email: 'warrenchris745@gmail.com',
+            password: 'R@ycee_11',
+            role: 'admin',
+            phoneNumber: '+254700000000', // Dummy number, required by model
+            isActive: true,
+            isVerified: true
+        };
 
-    const EMAIL = 'warrenchris745@gmail.com';
-    const PLAIN_PASSWORD = 'R@ycee_11';
+        // check if user exists
+        const existingUser = await User.findOne({ where: { email: adminData.email } });
+        if (existingUser) {
+            console.log('User already exists. Updating role and password...');
+            existingUser.role = 'admin';
+            existingUser.password = adminData.password; // Hook will re-hash
+            await existingUser.save();
+            console.log('User updated successfully.');
+        } else {
+            console.log('Creating new admin user...');
+            await User.create(adminData);
+            console.log('Admin user created successfully.');
+        }
 
-    // Abort if user already exists ----------------------------------------
-    const existing = await User.findOne({ where: { email: EMAIL } });
-    if (existing) {
-      console.warn(`⚠️  User with email ${EMAIL} already exists. Aborting.`);
-      process.exit(0);
+        process.exit(0);
+    } catch (error) {
+        console.error('Error creating admin user:', error);
+        process.exit(1);
     }
+}
 
-    // Hash password -------------------------------------------------------
-    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS, 10) || 12;
-    const hashedPassword = await bcrypt.hash(PLAIN_PASSWORD, saltRounds);
-
-    // Create the user -----------------------------------------------------
-    const admin = await User.create({
-      id: uuid(),
-      firstName: 'Warren',
-      lastName: 'Chris',
-      email: EMAIL,
-      phoneNumber: '+254700000111', // dummy phone – edit if required
-      password: hashedPassword,
-      role: 'admin',
-      isActive: true,
-      isVerified: true,
-    });
-
-    console.log('✅ Admin user created successfully:\n', admin.toJSON());
-  } catch (err) {
-    console.error('❌ Error creating admin user:', err);
-  } finally {
-    await sequelize.close();
-  }
-})();
+createAdmin();

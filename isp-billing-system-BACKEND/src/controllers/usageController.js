@@ -1,5 +1,6 @@
 const { Subscription, DataPlan, User } = require('../models');
 const { Op } = require('sequelize');
+const { SubscriptionStatus } = require('../config/constants');
 
 /**
  * Get current data usage for the authenticated user
@@ -12,7 +13,7 @@ const getCurrentUsage = async (req, res) => {
     const subscription = await Subscription.findOne({
       where: {
         userId,
-        status: 'active'
+        status: SubscriptionStatus.ACTIVE
       },
       include: [{
         model: DataPlan,
@@ -107,7 +108,7 @@ const getCurrentUsage = async (req, res) => {
 const getUsageHistory = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { 
+    const {
       period = '30d',
       page = 1,
       limit = 10
@@ -116,7 +117,7 @@ const getUsageHistory = async (req, res) => {
     // Calculate date range based on period
     const now = new Date();
     let startDate;
-    
+
     switch (period) {
       case '7d':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -154,7 +155,7 @@ const getUsageHistory = async (req, res) => {
       const subscriptionStart = new Date(subscription.startDate);
       const subscriptionEnd = new Date(subscription.endDate);
       const currentDate = new Date();
-      
+
       // Generate daily usage data
       for (let d = new Date(Math.max(subscriptionStart, startDate)); d <= Math.min(subscriptionEnd, currentDate); d.setDate(d.getDate() + 1)) {
         const dayUsage = Math.random() * 500 + 100; // Random usage between 100-600 MB
@@ -164,7 +165,7 @@ const getUsageHistory = async (req, res) => {
           formattedUsage: `${Math.round(dayUsage)} MB`
         });
       }
-      
+
       return days;
     };
 
@@ -215,7 +216,7 @@ const getUsageAnalytics = async (req, res) => {
     const now = new Date();
     let startDate;
     let days;
-    
+
     switch (period) {
       case '7d':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -237,8 +238,7 @@ const getUsageAnalytics = async (req, res) => {
     // Get current subscription
     const subscription = await Subscription.findOne({
       where: {
-        userId,
-        status: 'active'
+        status: SubscriptionStatus.ACTIVE
       },
       include: [{
         model: DataPlan,
@@ -261,20 +261,20 @@ const getUsageAnalytics = async (req, res) => {
         const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
         const usage = Math.random() * 800 + 200; // Random usage between 200-1000 MB
         const usageBytes = Math.round(usage * 1024 * 1024);
-        
+
         analytics.dailyBreakdown.push({
           date: date.toISOString().split('T')[0],
           usage: usageBytes,
           formattedUsage: `${Math.round(usage)} MB`
         });
-        
+
         analytics.totalUsage += usageBytes;
       }
 
       analytics.averageDailyUsage = Math.round(analytics.totalUsage / days);
-      
+
       // Find peak usage day
-      const peakDay = analytics.dailyBreakdown.reduce((max, day) => 
+      const peakDay = analytics.dailyBreakdown.reduce((max, day) =>
         day.usage > max.usage ? day : max
       );
       analytics.peakUsageDay = peakDay;
@@ -282,10 +282,10 @@ const getUsageAnalytics = async (req, res) => {
       // Calculate trend (simplified)
       const firstHalf = analytics.dailyBreakdown.slice(0, Math.floor(days / 2));
       const secondHalf = analytics.dailyBreakdown.slice(Math.floor(days / 2));
-      
+
       const firstHalfAvg = firstHalf.reduce((sum, day) => sum + day.usage, 0) / firstHalf.length;
       const secondHalfAvg = secondHalf.reduce((sum, day) => sum + day.usage, 0) / secondHalf.length;
-      
+
       if (secondHalfAvg > firstHalfAvg * 1.1) {
         analytics.usageTrend = 'increasing';
       } else if (secondHalfAvg < firstHalfAvg * 0.9) {

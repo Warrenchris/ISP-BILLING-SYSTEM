@@ -28,7 +28,9 @@ import {
   Refresh as RefreshIcon,
   Info as InfoIcon,
   Payment as PaymentIcon,
+  CreditCard as PayIcon,
 } from "@mui/icons-material";
+import { CheckCircle as CheckIcon } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useApi } from "../contexts/ApiContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -50,21 +52,21 @@ const ErrorBoundary = ({ children, fallback }) => {
 };
 
 const statusColor = (s) =>
-  ({ 
-    active: "success", 
-    expired: "error", 
-    suspended: "warning", 
-    cancelled: "default", 
-    pending: "info" 
-  }[s] ?? "default");
+({
+  active: "success",
+  expired: "error",
+  suspended: "warning",
+  cancelled: "default",
+  pending: "info"
+}[s] ?? "default");
 
 const paymentStatusColor = (s) =>
-  ({
-    paid: "success",
-    unpaid: "error",
-    pending: "warning",
-    refunded: "info"
-  }[s] ?? "default");
+({
+  paid: "success",
+  unpaid: "error",
+  pending: "warning",
+  refunded: "info"
+}[s] ?? "default");
 
 const safeValueGetter = (params, field, defaultValue = "—") => {
   try {
@@ -94,7 +96,7 @@ const safeNestedValueGetter = (params, path, defaultValue = "—") => {
 };
 
 export default function Subscriptions() {
-  const { subscriptionsApi } = useApi();
+  const { subscriptionsApi, paymentsApi } = useApi();
   const { user } = useAuth();
 
   const [subs, setSubs] = useState([]);
@@ -104,6 +106,13 @@ export default function Subscriptions() {
   const [selSub, setSelSub] = useState(null);
   const [reason, setReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+
+  // Payment State
+  const [payDlgOpen, setPayDlgOpen] = useState(false);
+  const [payPhoneNumber, setPayPhoneNumber] = useState("");
+  const [paying, setPaying] = useState(false);
+  const [paymentPolling, setPaymentPolling] = useState(false);
+  const [payStatus, setPayStatus] = useState(null); // 'pending', 'completed', 'failed'
 
   const pop = (msg, sev = "info") => {
     setAlert({ msg, sev });
@@ -117,12 +126,12 @@ export default function Subscriptions() {
       const currentSub = r.data?.data?.subscription || null;
       const allSubs = await subscriptionsApi.getAll();
       const subscriptions = allSubs.data?.data?.subscriptions || [];
-      
+
       const markedSubs = subscriptions.map(sub => ({
         ...sub,
         isCurrent: currentSub && sub.id === currentSub.id
       }));
-      
+
       setSubs(markedSubs);
     } catch (e) {
       console.error("fetch subs", e);
@@ -136,7 +145,7 @@ export default function Subscriptions() {
 
   const activeSubs = subs.filter((s) => s?.status === "active");
   const currentSub = subs.find((s) => s?.isCurrent) || null;
-  
+
   const tableRows = React.useMemo(() => {
     const defaultDataPlan = { name: "Unknown Plan", dataLimit: 0 };
     return subs.map((s) => ({
@@ -152,17 +161,17 @@ export default function Subscriptions() {
     }));
   }, [subs]);
 
-  const askCancel = (s) => { 
+  const askCancel = (s) => {
     if (!s) return;
-    setSelSub(s); 
-    setReason(""); 
-    setDlgOpen(true); 
+    setSelSub(s);
+    setReason("");
+    setDlgOpen(true);
   };
 
   const confirmCancel = async () => {
-    if (!selSub || !reason.trim()) { 
-      pop("Provide a reason", "warning"); 
-      return; 
+    if (!selSub || !reason.trim()) {
+      pop("Provide a reason", "warning");
+      return;
     }
     try {
       setCancelling(true);
@@ -173,8 +182,87 @@ export default function Subscriptions() {
     } catch (e) {
       console.error("cancel", e);
       pop(e.response?.data?.message || "Cancel failed", "error");
-    } finally { 
-      setCancelling(false); 
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  // --- Payment Logic ---
+  const handlePayClick = (sub) => {
+    if (!sub) return;
+    setSelSub(sub);
+    setPayPhoneNumber(user?.phoneNumber || "");
+    setPayDlgOpen(true);
+    setPayStatus(null);
+  };
+
+  const pollPayment = async (paymentId) => {
+    setPaymentPolling(true);
+    setPayStatus('pending');
+
+    let attempts = 0;
+    const max = 20; // 60s
+
+    const check = async () => {
+      if (attempts >= max) {
+        setPaymentPolling(false);
+        setPayStatus('timeout');
+        pop("Payment check timed out. Please check status later.", "warning");
+        return;
+      }
+      try {
+        const res = await paymentsApi.checkStatus(paymentId);
+        const st = res.data?.payment?.status;
+        if (st === 'completed') {
+          setPaymentPolling(false);
+          setPayStatus('completed');
+          pop("Payment successful!", "success");
+          load(); // Refresh list to show active
+          setTimeout(() => {
+            setPayDlgOpen(false);
+            setPayStatus(null);
+          }, 2000);
+        } else if (st === 'failed' || st === 'cancelled') {
+          setPaymentPolling(false);
+          setPayStatus('failed');
+          pop("Payment failed", "error");
+        } else {
+          attempts++;
+          setTimeout(check, 3000);
+        }
+      } catch (e) {
+        attempts++;
+        setTimeout(check, 3000);
+      }
+    };
+    check();
+  };
+
+  const confirmPay = async () => {
+    if (!selSub || !payPhoneNumber) return;
+    try {
+      setPaying(true);
+      // Initiate
+      const res = await paymentsApi.initiateSubscriptionPayment({
+        subscriptionId: selSub.id,
+        phoneNumber: payPhoneNumber
+      });
+      const pid = res.data?.payment?.id;
+
+      pop("Payment initiated. Check phone.", "success");
+
+      if (pid) {
+        setPaying(false); // Enable close but keep dialog for polling
+        pollPayment(pid);
+      } else {
+        setPaying(false);
+        setPayDlgOpen(false);
+      }
+
+    } catch (e) {
+      console.error(e);
+      setPaying(false);
+      pop(e.response?.data?.message || "Payment init failed", "error");
     }
   };
 
@@ -195,9 +283,9 @@ export default function Subscriptions() {
   };
 
   const cols = React.useMemo(() => [
-    { 
-      field: "subscriptionNumber", 
-      headerName: "Subscription #", 
+    {
+      field: "subscriptionNumber",
+      headerName: "Subscription #",
       width: 160,
       valueGetter: (params) => safeValueGetter(params, "subscriptionNumber"),
       renderCell: (params) => {
@@ -207,20 +295,20 @@ export default function Subscriptions() {
           <Box>
             <Typography fontWeight="medium">{value}</Typography>
             {isCurrent && (
-              <Chip 
-                label="Current" 
-                color="primary" 
-                size="small" 
-                sx={{ mt: 0.5 }} 
+              <Chip
+                label="Current"
+                color="primary"
+                size="small"
+                sx={{ mt: 0.5 }}
               />
             )}
           </Box>
         );
       }
     },
-    { 
-      field: "planName", 
-      headerName: "Plan", 
+    {
+      field: "planName",
+      headerName: "Plan",
       width: 180,
       valueGetter: (params) => safeNestedValueGetter(params, "DataPlan.name", "—"),
       renderCell: (params) => {
@@ -233,42 +321,42 @@ export default function Subscriptions() {
         );
       }
     },
-    { 
-      field: "status", 
-      headerName: "Status", 
+    {
+      field: "status",
+      headerName: "Status",
       width: 120,
       valueGetter: (params) => safeValueGetter(params, "status", "unknown"),
       renderCell: (params) => {
         const value = safeValueGetter(params, "status", "unknown");
         return (
-          <Chip 
-            label={value} 
-            color={statusColor(value)} 
-            size="small" 
+          <Chip
+            label={value}
+            color={statusColor(value)}
+            size="small"
           />
         );
       }
     },
-    { 
-      field: "paymentStatus", 
-      headerName: "Payment", 
+    {
+      field: "paymentStatus",
+      headerName: "Payment",
       width: 120,
       valueGetter: (params) => safeValueGetter(params, "paymentStatus", "N/A"),
       renderCell: (params) => {
         const value = safeValueGetter(params, "paymentStatus", "N/A");
         return (
-          <Chip 
-            label={value} 
-            color={paymentStatusColor(value)} 
-            size="small" 
+          <Chip
+            label={value}
+            color={paymentStatusColor(value)}
+            size="small"
             icon={<PaymentIcon fontSize="small" />}
           />
         );
       }
     },
-    { 
-      field: "dataRemaining", 
-      headerName: "Data Left", 
+    {
+      field: "dataRemaining",
+      headerName: "Data Left",
       width: 140,
       valueGetter: (params) => safeValueGetter(params, "dataRemaining", 0),
       renderCell: (params) => {
@@ -276,9 +364,9 @@ export default function Subscriptions() {
         return <Typography>{formatBytes(value)}</Typography>;
       }
     },
-    { 
-      field: "endDate", 
-      headerName: "Expires", 
+    {
+      field: "endDate",
+      headerName: "Expires",
       width: 140,
       valueGetter: (params) => safeValueGetter(params, "endDate"),
       renderCell: (params) => {
@@ -290,10 +378,10 @@ export default function Subscriptions() {
         );
       }
     },
-    { 
-      field: "actions", 
-      headerName: "", 
-      width: 110, 
+    {
+      field: "actions",
+      headerName: "",
+      width: 110,
       sortable: false,
       renderCell: (params) => {
         const status = safeValueGetter(params, "status");
@@ -302,18 +390,30 @@ export default function Subscriptions() {
           <Box>
             {status === "active" && row && (
               <Tooltip title="Cancel">
-                <IconButton 
-                  size="small" 
-                  color="error" 
+                <IconButton
+                  size="small"
+                  color="error"
                   onClick={() => askCancel(row)}
                 >
-                  <CancelIcon fontSize="small"/>
+                  <CancelIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {/* Pay Now Button for Pending */}
+            {status !== "active" && row?.paymentStatus === 'pending' && (
+              <Tooltip title="Pay Now">
+                <IconButton
+                  size="small"
+                  color="success"
+                  onClick={() => handlePayClick(row)}
+                >
+                  <PayIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             <Tooltip title="Details">
               <IconButton size="small" color="primary">
-                <InfoIcon fontSize="small"/>
+                <InfoIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>
@@ -326,7 +426,7 @@ export default function Subscriptions() {
     return (
       <Box>
         <Typography variant="h4" gutterBottom>My Subscriptions</Typography>
-        <LinearProgress/>
+        <LinearProgress />
       </Box>
     );
   }
@@ -335,9 +435,9 @@ export default function Subscriptions() {
     <Box>
       <Box display="flex" justifyContent="space-between" mb={3}>
         <Typography variant="h4">My Subscriptions</Typography>
-        <Button 
-          variant="outlined" 
-          startIcon={<RefreshIcon/>} 
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
           onClick={load}
         >
           Refresh
@@ -358,13 +458,13 @@ export default function Subscriptions() {
                 <Typography variant="h6" fontWeight="bold">
                   {currentSub.DataPlan?.name || "Unknown Plan"}
                 </Typography>
-                <Chip 
-                  label={currentSub.status || "unknown"} 
-                  color={statusColor(currentSub.status)} 
+                <Chip
+                  label={currentSub.status || "unknown"}
+                  color={statusColor(currentSub.status)}
                   size="small"
                 />
               </Box>
-              
+
               <Typography variant="caption" color="text.secondary">
                 #{currentSub.subscriptionNumber || "N/A"}
               </Typography>
@@ -378,8 +478,8 @@ export default function Subscriptions() {
                     {formatBytes(currentSub.dataRemaining || 0)} remaining
                   </Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
+                <LinearProgress
+                  variant="determinate"
                   value={usagePct(currentSub)}
                   sx={{ height: 8, borderRadius: 4, mt: 0.5 }}
                 />
@@ -451,13 +551,13 @@ export default function Subscriptions() {
                   <CardContent>
                     <Box display="flex" justifyContent="space-between" mb={1}>
                       <Typography variant="h6">{s.DataPlan?.name || "Unknown Plan"}</Typography>
-                      <Chip 
-                        label={s.status || "unknown"} 
-                        color={statusColor(s.status)} 
+                      <Chip
+                        label={s.status || "unknown"}
+                        color={statusColor(s.status)}
                         size="small"
                       />
                     </Box>
-                    
+
                     <Typography variant="caption" color="text.secondary">
                       #{s.subscriptionNumber || "N/A"}
                     </Typography>
@@ -471,8 +571,8 @@ export default function Subscriptions() {
                           {formatBytes(s.dataRemaining || 0)} left
                         </Typography>
                       </Box>
-                      <LinearProgress 
-                        variant="determinate" 
+                      <LinearProgress
+                        variant="determinate"
                         value={usagePct(s)}
                         sx={{ height: 8, borderRadius: 4, mt: 0.5 }}
                       />
@@ -484,7 +584,7 @@ export default function Subscriptions() {
                         {Math.floor(daysLeft(s))} days left
                       </Typography>
                     </Box>
-                    
+
                     <Box display="flex" alignItems="center" mb={2}>
                       <DataUsageIcon sx={{ mr: 1 }} fontSize="small" />
                       <Typography variant="body2">
@@ -559,10 +659,10 @@ export default function Subscriptions() {
       )}
 
       {/* CANCEL DIALOG */}
-      <Dialog 
-        open={dlgOpen} 
-        onClose={() => setDlgOpen(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={dlgOpen}
+        onClose={() => setDlgOpen(false)}
+        maxWidth="sm"
         fullWidth
       >
         <DialogTitle>Cancel Subscription</DialogTitle>
@@ -599,7 +699,50 @@ export default function Subscriptions() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      {/* PAY DIALOG */}
+      <Dialog open={payDlgOpen} onClose={() => !paying && !paymentPolling && setPayDlgOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Complete Payment</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {paymentPolling ? (
+            <Box textAlign="center" py={4}>
+              <CircularProgress size={50} sx={{ mb: 2 }} />
+              <Typography variant="h6">Waiting for M-Pesa...</Typography>
+              <Typography variant="body2" color="text.secondary">Check your phone.</Typography>
+            </Box>
+          ) : payStatus === 'completed' ? (
+            <Box textAlign="center" py={4}>
+              <CheckIcon color="success" sx={{ fontSize: 60 }} />
+              <Typography variant="h5" color="success.main">Paid Successfully!</Typography>
+            </Box>
+          ) : (
+            <>
+              <Typography gutterBottom>
+                Pay for subscription <b>{selSub?.DataPlan?.name}</b> verification.
+              </Typography>
+              <TextField
+                fullWidth
+                label="M-Pesa Number"
+                value={payPhoneNumber}
+                onChange={(e) => setPayPhoneNumber(e.target.value)}
+                placeholder="07..."
+                sx={{ mt: 2 }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!paymentPolling && payStatus !== 'completed' && (
+            <>
+              <Button onClick={() => setPayDlgOpen(false)} disabled={paying}>Cancel</Button>
+              <Button variant="contained" color="success" onClick={confirmPay} disabled={paying}>
+                {paying ? <CircularProgress size={20} /> : "Pay Now"}
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
+    </Box >
   );
 }
 

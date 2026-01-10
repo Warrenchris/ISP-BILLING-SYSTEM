@@ -1,173 +1,128 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+const { PaymentStatus } = require('../config/constants');
 
+// Payment model definition
 const Payment = sequelize.define('Payment', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+    primaryKey: true,
   },
-  
-  // User and subscription references
   userId: {
     type: DataTypes.UUID,
     field: 'user_id',
     allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
+    references: { model: 'users', key: 'id' },
   },
-  
   subscriptionId: {
     type: DataTypes.UUID,
-    allowNull: true, // Can be null for one-time payments
-    references: {
-      model: 'subscriptions',
-      key: 'id'
-    }
+    allowNull: true,
+    references: { model: 'subscriptions', key: 'id' },
   },
-  
-  // Payment details
   amount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    validate: {
-      min: 1
-    }
+    validate: { min: 1 },
   },
-  
   currency: {
     type: DataTypes.STRING(3),
     allowNull: false,
-    defaultValue: 'KES'
+    defaultValue: 'KES',
   },
-  
-  // M-Pesa specific fields
   phoneNumber: {
     type: DataTypes.STRING(15),
-    allowNull: true, // Allow null for cash payments where phone number might not be directly associated with the payment itself
+    allowNull: true,
     validate: {
-      is: /^(?:\+254|0|254)[17]\d{8}$/ // Kenyan phone number format: allows +254, 0, or 254 prefix, followed by 1 or 7 and 8 digits
-    }
+      // Kenyan phone format: +254XXXXXXXXX, 254XXXXXXXXX, or 0XXXXXXXXX starting with 1/7
+      is: /^(?:\+254|0|254)[17]\d{8}$/,
+    },
   },
-  
-  // STK Push request details
   checkoutRequestId: {
     type: DataTypes.STRING(100),
     field: 'checkout_request_id',
     allowNull: true,
-    unique: true
+    unique: true,
   },
-  
   merchantRequestId: {
     type: DataTypes.STRING(100),
-    allowNull: true
+    allowNull: true,
   },
-  
-  // M-Pesa transaction details
   mpesaReceiptNumber: {
     type: DataTypes.STRING(50),
     allowNull: true,
-    unique: true
+    unique: true,
   },
-  
   transactionDate: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
   },
-  
-  // Payment status
   status: {
     type: DataTypes.ENUM(
-      'pending',      // STK push sent, waiting for user response
-      'processing',   // User entered PIN, processing payment
-      'completed',    // Payment successful
-      'failed',       // Payment failed
-      'cancelled',    // User cancelled
-      'expired'       // STK push expired
+      PaymentStatus.PENDING,
+      PaymentStatus.PROCESSING,
+      PaymentStatus.COMPLETED,
+      PaymentStatus.FAILED,
+      PaymentStatus.CANCELLED,
+      PaymentStatus.EXPIRED,
     ),
     allowNull: false,
-    defaultValue: 'pending'
+    defaultValue: PaymentStatus.PENDING,
   },
-  
-  // Payment method and type
   paymentMethod: {
     type: DataTypes.ENUM('mpesa', 'card', 'bank', 'cash'),
     allowNull: false,
-    defaultValue: 'mpesa'
+    defaultValue: 'mpesa',
   },
-  
   paymentType: {
-    type: DataTypes.ENUM(
-      'subscription',     // Subscription payment
-      'top_up',          // Account top-up
-      'penalty',         // Late payment penalty
-      'installation'     // Installation fee
-    ),
+    type: DataTypes.ENUM('subscription', 'top_up', 'penalty', 'installation'),
     allowNull: false,
-    defaultValue: 'subscription'
+    defaultValue: 'subscription',
   },
-  
-  // Reference and description
   reference: {
     type: DataTypes.STRING(100),
-    allowNull: false
+    allowNull: false,
   },
-  
   description: {
     type: DataTypes.STRING(255),
-    allowNull: false
+    allowNull: false,
   },
-  
-  // Callback and response data
   callbackData: {
     type: DataTypes.JSON,
-    allowNull: true
+    allowNull: true,
   },
-  
   errorMessage: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
   },
-  
-  // Retry mechanism
   retryCount: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 0
+    defaultValue: 0,
   },
-  
   maxRetries: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 3
+    defaultValue: 3,
   },
-  
-  // Timestamps for tracking
   initiatedAt: {
     type: DataTypes.DATE,
     allowNull: false,
-    defaultValue: DataTypes.NOW
+    defaultValue: DataTypes.NOW,
   },
-  
   completedAt: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
   },
-  
   expiresAt: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
   },
-  
-  // Additional metadata
   metadata: {
     type: DataTypes.JSON,
-    allowNull: true
-  }
-}, 
-{
+    allowNull: true,
+  },
+}, {
   tableName: 'payments',
   underscored: true,
   timestamps: true,
@@ -176,7 +131,7 @@ const Payment = sequelize.define('Payment', {
   indexes: [
     { fields: ['checkout_request_id'], unique: true, name: 'payments_checkout_request_id' },
     { fields: ['status'], name: 'payments_status' },
-    { fields: ['user_id'], name: 'payments_user_id' }, // ✅ Fix casing
+    { fields: ['user_id'], name: 'payments_user_id' },
   ],
   hooks: {
     beforeCreate: async (payment) => {
@@ -187,21 +142,22 @@ const Payment = sequelize.define('Payment', {
         payment.currency = 'KES';
         payment.expiresAt = payment.expiresAt || new Date(Date.now() + 5 * 60 * 1000);
       }
-    }
-  }
+    },
+  },
 });
 
 // Instance methods
-Payment.prototype.isExpired = function() {
+Payment.prototype.isExpired = function () {
   return this.expiresAt && new Date() > this.expiresAt;
 };
 
-Payment.prototype.canRetry = function() {
-  return this.retryCount < this.maxRetries && ['failed', 'expired'].includes(this.status);
+Payment.prototype.canRetry = function () {
+  return this.retryCount < this.maxRetries
+    && [PaymentStatus.FAILED, PaymentStatus.EXPIRED].includes(this.status);
 };
 
-Payment.prototype.markAsCompleted = function(mpesaData = {}) {
-  this.status = 'completed';
+Payment.prototype.markAsCompleted = function (mpesaData = {}) {
+  this.status = PaymentStatus.COMPLETED;
   this.completedAt = new Date();
   if (mpesaData.mpesaReceiptNumber) this.mpesaReceiptNumber = mpesaData.mpesaReceiptNumber;
   if (mpesaData.transactionDate) this.transactionDate = mpesaData.transactionDate;
@@ -209,112 +165,87 @@ Payment.prototype.markAsCompleted = function(mpesaData = {}) {
   return this.save();
 };
 
-Payment.prototype.markAsFailed = function(errorMessage, callbackData = null) {
-  this.status = 'failed';
+Payment.prototype.markAsFailed = function (errorMessage, callbackData = null) {
+  this.status = PaymentStatus.FAILED;
   this.errorMessage = errorMessage;
   this.callbackData = callbackData;
   return this.save();
 };
 
-Payment.prototype.getFormattedAmount = function() {
+Payment.prototype.getFormattedAmount = function () {
   return `KES ${parseFloat(this.amount).toLocaleString('en-KE', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   })}`;
 };
 
-Payment.prototype.getDurationSinceInitiated = function() {
+Payment.prototype.getDurationSinceInitiated = function () {
   const now = new Date();
   const initiated = new Date(this.initiatedAt);
   const diffMs = now - initiated;
   const diffMins = Math.floor(diffMs / 60000);
-  
   if (diffMins < 1) return 'Just now';
   if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-  
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 };
 
-Payment.prototype.getStatusColor = function() {
+Payment.prototype.getStatusColor = function () {
   const colors = {
-    pending: 'orange',
-    processing: 'blue',
-    completed: 'green',
-    failed: 'red',
-    cancelled: 'gray',
-    expired: 'red'
+    [PaymentStatus.PENDING]: 'orange',
+    [PaymentStatus.PROCESSING]: 'blue',
+    [PaymentStatus.COMPLETED]: 'green',
+    [PaymentStatus.FAILED]: 'red',
+    [PaymentStatus.CANCELLED]: 'gray',
+    [PaymentStatus.EXPIRED]: 'red',
   };
   return colors[this.status] || 'gray';
 };
 
-Payment.prototype.markAsCompleted = function(mpesaData) {
-  this.status = 'completed';
-  this.completedAt = new Date();
-  this.mpesaReceiptNumber = mpesaData.mpesaReceiptNumber;
-  this.transactionDate = mpesaData.transactionDate;
-  this.callbackData = mpesaData;
-  return this.save();
-};
-
-Payment.prototype.markAsFailed = function(errorMessage, callbackData = null) {
-  this.status = 'failed';
-  this.errorMessage = errorMessage;
-  this.callbackData = callbackData;
-  return this.save();
-};
-
-Payment.prototype.incrementRetry = function() {
+Payment.prototype.incrementRetry = function () {
   this.retryCount += 1;
   return this.save();
 };
 
 // Static methods
-Payment.findByCheckoutRequestId = function(checkoutRequestId) {
+Payment.findByCheckoutRequestId = function (checkoutRequestId) {
   return this.findOne({ where: { checkoutRequestId } });
 };
 
-Payment.handleMpesaCallback = async function(callbackData) {
-  const payment = await this.findOne({ 
-    where: { checkoutRequestId: callbackData.checkoutRequestId } 
-  });
+Payment.handleMpesaCallback = async function (callbackData) {
+  const payment = await this.findOne({ where: { checkoutRequestId: callbackData.checkoutRequestId } });
   if (!payment) throw new Error('Payment not found');
-  
-  return callbackData.success 
+  return callbackData.success
     ? payment.markAsCompleted(callbackData.transactionDetails)
     : payment.markAsFailed(callbackData.resultDesc, callbackData);
 };
 
-Payment.findByReference = function(reference) {
+Payment.findByReference = function (reference) {
   return this.findOne({ where: { reference } });
 };
 
-
-Payment.findByMpesaReceipt = function(mpesaReceiptNumber) {
+Payment.findByMpesaReceipt = function (mpesaReceiptNumber) {
   return this.findOne({ where: { mpesaReceiptNumber } });
 };
 
-Payment.getPaymentStats = async function(userId = null) {
+Payment.getPaymentStats = async function (userId = null) {
   const whereClause = userId ? { userId } : {};
-  
   const stats = await this.findAll({
     where: whereClause,
     attributes: [
       'status',
       [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-      [sequelize.fn('SUM', sequelize.col('amount')), 'total']
+      [sequelize.fn('SUM', sequelize.col('amount')), 'total'],
     ],
     group: ['status'],
-    raw: true
+    raw: true,
   });
-  
   return stats.reduce((acc, stat) => {
     acc[stat.status] = {
-      count: parseInt(stat.count),
-      total: parseFloat(stat.total || 0)
+      count: parseInt(stat.count, 10),
+      total: parseFloat(stat.total || 0),
     };
     return acc;
   }, {});

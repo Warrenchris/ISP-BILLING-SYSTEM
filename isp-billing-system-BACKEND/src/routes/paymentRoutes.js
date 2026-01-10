@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const MpesaService = require('../services/mpesaService');
-const Payment = require('../models/Payment');
+const { Payment } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const {
   validateSubscriptionPayment,
@@ -13,7 +13,7 @@ const {
   normalizePhoneNumber,
   checkMpesaConfig
 } = require('../middleware/paymentValidation');
-const { createCashPayment, confirmPayment, getAllPayments } = require('../controllers/paymentController');
+const { createCashPayment, confirmPayment, getAllPayments, initiateSubscriptionPayment, queryPaymentStatus } = require('../controllers/paymentController');
 
 const mpesaService = new MpesaService();
 
@@ -27,7 +27,7 @@ router.get('/', authenticate, authorize(['admin']), (req, res, next) => {
     query: req.query
   });
   next();
-  
+
 }, getAllPayments);
 
 // POST /api/payments/mpesa/initiate - Initiate M-Pesa payment
@@ -40,7 +40,7 @@ router.post(
   async (req, res) => {
     try {
       const { phoneNumber, amount, accountReference, transactionDesc } = req.body;
-      
+
       // Add validation
       if (!phoneNumber || !amount) {
         return res.status(400).json({
@@ -69,6 +69,19 @@ router.post(
     }
   }
 );
+
+// POST /api/payments/subscription - Initiate subscription payment
+router.post(
+  '/subscription',
+  authenticate,
+  checkMpesaConfig,
+  normalizePhoneNumber,
+  validateSubscriptionPayment,
+  initiateSubscriptionPayment
+);
+
+// GET /api/payments/status/:paymentId - Check payment status
+router.get('/status/:paymentId', authenticate, queryPaymentStatus);
 
 // POST /api/payments/mpesa/callback - M-Pesa callback handler
 router.post('/mpesa/callback', async (req, res) => {
