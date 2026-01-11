@@ -38,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { Google, Facebook } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 
 // Import the modern logo
@@ -111,13 +112,14 @@ const Login = ({ darkMode, toggleDarkMode }) => {
     routerIp: '',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  // const [error, setError] = useState(''); // Removed in favor of global notifications
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [accessRequestOpen, setAccessRequestOpen] = useState(false);
   const [accessRequestLoading, setAccessRequestLoading] = useState(false);
   const [accessRequestSuccess, setAccessRequestSuccess] = useState(false);
   const { login } = useAuth();
+  const { notifyError, notifySuccess } = useNotification();
   const navigate = useNavigate();
   const theme = useTheme();
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -132,7 +134,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
       await api.post('/auth/forgot-password', { email: forgotPasswordEmail });
       setForgotPasswordSuccess(true);
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to send password reset email');
+      // Error handled by global ApiContext interceptor
     } finally {
       setForgotPasswordLoading(false);
     }
@@ -148,7 +150,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    setError('');
+    // setError('');
   };
 
   const handleAccessRequestChange = (e) => {
@@ -161,15 +163,14 @@ const Login = ({ darkMode, toggleDarkMode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    // setError('');
 
     const result = await login(formData.email.trim(), formData.password.trim());
 
     if (result.success) {
       navigate('/dashboard');
-    } else {
-      setError(result.message);
     }
+    // if failed, AuthContext triggers notification.
 
     setLoading(false);
   };
@@ -205,7 +206,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
         });
       }, 2000);
     } catch (err) {
-      setError('Failed to submit access request. Please try again.');
+      notifyError('Failed to submit access request. Please try again.');
       setAccessRequestLoading(false);
     }
   };
@@ -491,25 +492,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
               </Box>
             </Fade>
 
-            {error && (
-              <Slide direction="down" in={!!error}>
-                <Alert
-                  severity="error"
-                  sx={{
-                    mb: 3,
-                    borderRadius: '12px',
-                    background: darkMode
-                      ? 'rgba(239, 68, 68, 0.1)'
-                      : 'rgba(239, 68, 68, 0.05)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                  }}
-                >
-                  {error}
-                </Alert>
-              </Slide>
-            )}
+            {/* Local Error Alert removed - global notification used */}
 
             <Fade in={mounted} timeout={1200}>
               <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>

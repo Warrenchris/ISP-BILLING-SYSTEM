@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './contexts/AuthContext';
 import { ApiProvider } from './contexts/ApiContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -332,55 +333,57 @@ function App() {
   return (
     <ThemeProvider theme={darkmode ? darkTheme : lightTheme}>
       <CssBaseline />
-      <ApiProvider>
-        <AuthProvider>
-          <Router>
-            <Routes>
-              <Route
-                path="/Login"
-                element={
-                  <Login
-                    darkMode={darkmode}
-                    toggleDarkMode={toggleDarkMode}
-                  />
-                }
-              />
-              <Route
-                path="/*"
-                element={
-                  <ProtectedRoute>
-                    <Layout darkMode={darkmode} toggleDarkMode={toggleDarkMode}>
-                      <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/data-plans" element={<DataPlans />} />
-                        <Route path="/subscriptions" element={<Subscriptions />} />
-                        <Route path="/payments" element={<Payments />} />
-                        <Route path="/invoices" element={<Invoices />} />
-                        <Route path="/data-usage" element={<DataUsage />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/tickets" element={<SupportTickets />} />
-                        <Route path="/notifications" element={<Notifications />} />
+      <NotificationProvider>
+        <ApiProvider>
+          <AuthProvider>
+            <Router>
+              <Routes>
+                <Route
+                  path="/Login"
+                  element={
+                    <Login
+                      darkMode={darkmode}
+                      toggleDarkMode={toggleDarkMode}
+                    />
+                  }
+                />
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <Layout darkMode={darkmode} toggleDarkMode={toggleDarkMode}>
+                        <Routes>
+                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="/dashboard" element={<Dashboard />} />
+                          <Route path="/data-plans" element={<DataPlans />} />
+                          <Route path="/subscriptions" element={<Subscriptions />} />
+                          <Route path="/payments" element={<Payments />} />
+                          <Route path="/invoices" element={<Invoices />} />
+                          <Route path="/data-usage" element={<DataUsage />} />
+                          <Route path="/profile" element={<Profile />} />
+                          <Route path="/tickets" element={<SupportTickets />} />
+                          <Route path="/notifications" element={<Notifications />} />
 
-                        {/* Admin Only Routes */}
-                        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                          <Route path="/admin/users" element={<AdminUsers />} />
-                          <Route path="/users" element={<UsersManagement />} />
-                          <Route path="/users/:id" element={<UserDetails />} />
-                          <Route path="/reports" element={<Reports />} />
-                          <Route path="/staff" element={<StaffRoles />} />
-                          <Route path="/settings" element={<Settings />} />
-                          <Route path="/audit-logs" element={<AuditLogs />} />
-                        </Route>
-                      </Routes>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </Router>
-        </AuthProvider>
-      </ApiProvider>
+                          {/* Admin Only Routes */}
+                          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                            <Route path="/admin/users" element={<AdminUsers />} />
+                            <Route path="/users" element={<UsersManagement />} />
+                            <Route path="/users/:id" element={<UserDetails />} />
+                            <Route path="/reports" element={<Reports />} />
+                            <Route path="/staff" element={<StaffRoles />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/audit-logs" element={<AuditLogs />} />
+                          </Route>
+                        </Routes>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </Router>
+          </AuthProvider>
+        </ApiProvider>
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

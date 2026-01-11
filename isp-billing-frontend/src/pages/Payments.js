@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { useTheme, alpha } from '@mui/material/styles';
 
 // Import newly created components
@@ -85,7 +86,7 @@ const Payments = () => {
   const [cashReference, setCashReference] = useState('');
   const [cashDescription, setCashDescription] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
+  // const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' }); // Replaced by global notification
   const [mpesaDebugMode, setMpesaDebugMode] = useState(false);
   const [cashPaymentEnabled, setCashPaymentEnabled] = useState(false);
 
@@ -104,6 +105,7 @@ const Payments = () => {
 
   const { paymentsApi, adminApi } = useApi();
   const { user } = useAuth();
+  const { notifySuccess, notifyError, notifyWarning } = useNotification();
   const theme = useTheme();
   const isAdmin = user?.role === 'admin';
 
@@ -154,16 +156,13 @@ const Payments = () => {
       setPayments(processedPayments);
     } catch (error) {
       console.error("Error fetching payments:", error);
-      showAlert("Error loading payments", "error");
+      notifyError("Error loading payments");
     } finally {
       setLoading(false);
     }
   };
 
-  const showAlert = (message, severity = 'info') => {
-    setAlert({ show: true, message, severity });
-    setTimeout(() => setAlert({ show: false, message: '', severity: 'info' }), 5000);
-  };
+  // const showAlert = ... // Removed
 
   const handleConfirmPayment = async (paymentId) => {
     try {
@@ -175,20 +174,20 @@ const Payments = () => {
         // Try to activate subscription if confirmed
         try {
           await paymentsApi.activateSubscription(payment.subscriptionId);
-          showAlert("Payment confirmed and subscription activated!", "success");
+          notifySuccess("Payment confirmed and subscription activated!");
         } catch (subError) {
           console.warn("Auto-activation failed or not applicable", subError);
-          showAlert("Payment confirmed successfully!", "success");
+          notifySuccess("Payment confirmed successfully!");
         }
       } else {
-        showAlert("Payment confirmed successfully!", "success");
+        notifySuccess("Payment confirmed successfully!");
       }
 
       fetchPayments();
       if (selectedUser) fetchUserSubscription(selectedUser.id);
     } catch (error) {
       console.error("Error confirming payment:", error);
-      showAlert(error.response?.data?.message || "Failed to confirm payment", "error");
+      notifyError(error.response?.data?.message || "Failed to confirm payment");
     } finally {
       setProcessing(false);
     }
@@ -198,11 +197,11 @@ const Payments = () => {
     try {
       setProcessing(true);
       await paymentsApi.rejectPayment(paymentId);
-      showAlert("Payment rejected successfully", "success");
+      notifySuccess("Payment rejected successfully");
       fetchPayments();
     } catch (error) {
       console.error("Error rejecting payment:", error);
-      showAlert(error.response?.data?.message || "Failed to reject payment", "error");
+      notifyError(error.response?.data?.message || "Failed to reject payment");
     } finally {
       setProcessing(false);
     }
@@ -258,13 +257,13 @@ const Payments = () => {
   const saveAdminSettings = async () => {
     try {
       await adminApi.settings?.updatePaymentSettings({ cashPaymentEnabled, mpesaDebugMode });
-      showAlert('Settings updated', 'success');
+      notifySuccess('Settings updated');
       setAdminSettingsDialog(false);
-    } catch (e) { showAlert('Failed to update settings', 'error'); }
+    } catch (e) { notifyError('Failed to update settings'); }
   };
 
   const handleMpesaPayment = async () => {
-    if (!phoneNumber || !amount) return showAlert('Fill all fields', 'warning');
+    if (!phoneNumber || !amount) return notifyWarning('Fill all fields');
     try {
       setProcessing(true);
       const formattedPhone = phoneNumber.replace(/^0/, '254');
@@ -274,19 +273,19 @@ const Payments = () => {
         description: 'ISP Billing',
         accountReference: `ISP-${Date.now()}`
       });
-      showAlert('M-Pesa prompt sent!', 'success');
+      notifySuccess('M-Pesa prompt sent!');
       setMpesaDialog(false);
       setPhoneNumber(''); setAmount('');
       setTimeout(fetchPayments, 3000);
     } catch (error) {
-      showAlert(error.response?.data?.message || 'M-Pesa initiation failed', 'error');
+      notifyError(error.response?.data?.message || 'M-Pesa initiation failed');
     } finally {
       setProcessing(false);
     }
   };
 
   const handleCashPayment = async () => {
-    if (!selectedUser || !cashAmount || !cashReference) return showAlert('Missing fields', 'warning');
+    if (!selectedUser || !cashAmount || !cashReference) return notifyWarning('Missing fields');
     try {
       setProcessing(true);
       const response = await paymentsApi.createCashPayment({
@@ -298,13 +297,13 @@ const Payments = () => {
         activateSubscription: true
       });
       if (response.data?.success) {
-        showAlert('Cash payment recorded', 'success');
+        notifySuccess('Cash payment recorded');
         setCashDialog(false);
         setSelectedUser(null); setCashAmount(''); setCashReference('');
         fetchPayments();
       }
     } catch (error) {
-      showAlert(error.response?.data?.message || 'Cash payment failed', 'error');
+      notifyError(error.response?.data?.message || 'Cash payment failed');
     } finally {
       setProcessing(false);
     }
@@ -368,21 +367,7 @@ const Payments = () => {
         </Box>
       </Box>
 
-      {alert.show && (
-        <Alert
-          severity={alert.severity}
-          sx={{
-            mb: 3,
-            borderRadius: '12px',
-            background: alpha(theme.palette.background.paper, 0.8),
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${theme.palette.divider}`,
-            color: 'text.primary'
-          }}
-        >
-          {alert.message}
-        </Alert>
-      )}
+      {/* Alert removed */}
 
       <PaymentStatsRow stats={stats} />
 

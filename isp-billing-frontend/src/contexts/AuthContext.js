@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 // import api from '../services/api';
 import { authService } from '../services/authService';
 
+import { useNotification } from './NotificationContext';
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -15,6 +17,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { notifySuccess, notifyError, notifyInfo } = useNotification();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -48,12 +51,15 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
 
       setUser(userData);
+      notifySuccess(`Welcome back, ${userData.name || 'User'}!`);
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      const message = error.response?.data?.message || 'Login failed';
+      notifyError(message);
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed'
+        message
       };
     }
   };
@@ -61,12 +67,15 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authService.register(userData);
+      notifySuccess('Registration successful! Please login.');
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Registration error:', error);
+      const message = error.response?.data?.message || 'Registration failed';
+      notifyError(message);
       return {
         success: false,
-        message: error.response?.data?.message || 'Registration failed'
+        message
       };
     }
   };
@@ -74,6 +83,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.clear();
     setUser(null);
+    notifyInfo('You have been logged out.');
     window.location.href = '/login';
   };
 
@@ -85,12 +95,15 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
 
+      notifySuccess('Profile updated successfully!');
       return { success: true, data: updatedUser };
     } catch (error) {
       console.error('Profile update error:', error);
+      const message = error.response?.data?.message || 'Profile update failed';
+      notifyError(message);
       return {
         success: false,
-        message: error.response?.data?.message || 'Profile update failed'
+        message
       };
     }
   };
@@ -98,12 +111,15 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async (currentPassword, newPassword) => {
     try {
       await authService.changePassword({ currentPassword, newPassword });
+      notifySuccess('Password changed successfully!');
       return { success: true };
     } catch (error) {
       console.error('Password change error:', error);
+      const message = error.response?.data?.message || 'Password change failed';
+      notifyError(message);
       return {
         success: false,
-        message: error.response?.data?.message || 'Password change failed'
+        message
       };
     }
   };
