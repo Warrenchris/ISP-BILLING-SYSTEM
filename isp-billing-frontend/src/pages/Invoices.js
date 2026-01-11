@@ -61,7 +61,7 @@ const Invoices = () => {
 
   useEffect(() => {
     const checkRole = async () => {
-      const res = await authApi.profile();
+      const res = await authApi.getProfile();
       const isAdminUser = res?.data?.data?.role?.toLowerCase?.() === 'admin';
       // setIsAdmin(isAdmin);
       await fetchInvoices(isAdminUser);
