@@ -17,7 +17,7 @@ const UserSubscriptionsDialog = ({ open, onClose, user, subscriptions, loading, 
             fullWidth
             PaperProps={{
                 style: {
-                    backgroundColor: '#13131a',
+                    backgroundColor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '16px',
                     color: 'white'
@@ -56,8 +56,8 @@ const UserSubscriptionsDialog = ({ open, onClose, user, subscriptions, loading, 
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-2 py-0.5 rounded text-xs font-medium border ${sub.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                    sub.status === 'expired' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                        'bg-gray-700 text-gray-300'
+                                                sub.status === 'expired' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                    'bg-gray-700 text-gray-300'
                                                 }`}>
                                                 {sub.status}
                                             </span>

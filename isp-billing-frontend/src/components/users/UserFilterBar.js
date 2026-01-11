@@ -21,7 +21,7 @@ const UserFilterBar = ({
                 <h2 className="text-2xl font-bold text-white">User Management</h2>
                 <button
                     onClick={onAdd}
-                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-blue-500/30"
+                    className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-light hover:from-primary-dark hover:to-primary text-primary-contrast px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-primary/30"
                 >
                     <AddIcon fontSize="small" />
                     <span>Add User</span>
@@ -37,7 +37,7 @@ const UserFilterBar = ({
                             placeholder="Search users..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            className="w-full bg-background-paper border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                         />
                     </div>
 
@@ -45,7 +45,7 @@ const UserFilterBar = ({
                         <select
                             value={filters.role}
                             onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+                            className="w-full bg-background-paper border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                         >
                             <option value="all">All Roles</option>
                             <option value="customer">Customer</option>
@@ -58,7 +58,7 @@ const UserFilterBar = ({
                         <select
                             value={filters.status}
                             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+                            className="w-full bg-background-paper border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -71,7 +71,7 @@ const UserFilterBar = ({
                         <select
                             value={filters.subscriptionStatus}
                             onChange={(e) => setFilters({ ...filters, subscriptionStatus: e.target.value })}
-                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+                            className="w-full bg-background-paper border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                         >
                             <option value="all">All Subscriptions</option>
                             <option value="active">Active</option>

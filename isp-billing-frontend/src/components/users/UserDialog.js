@@ -3,7 +3,11 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, MenuItem, Button, Box, Typography
 } from '@mui/material';
-import { USER_ROLES } from '../../utils/constants';
+const USER_ROLES = {
+    ADMIN: 'admin',
+    CUSTOMER: 'customer',
+    STAFF: 'staff',
+};
 
 // We'll keep using MUI Dialog for modal behavior consistency, but styling content with Tailwind
 const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
@@ -17,14 +21,15 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
             fullWidth
             PaperProps={{
                 style: {
-                    backgroundColor: '#13131a',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'divider',
                     borderRadius: '16px',
-                    color: 'white'
+                    color: 'text.primary'
                 }
             }}
         >
-            <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="h6" fontWeight="bold">
                     {isEdit ? 'Edit User' : 'Create New User'}
                 </Typography>
@@ -39,8 +44,12 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             fullWidth
                             variant="outlined"
                             sx={{
-                                '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
-                                '& .MuiInputLabel-root': { color: 'gray' }
+                                '& .MuiOutlinedInput-root': {
+                                    color: 'text.primary',
+                                    '& fieldset': { borderColor: 'divider' },
+                                    '&:hover fieldset': { borderColor: 'text.primary' }
+                                },
+                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                             }}
                         />
                         <TextField
@@ -131,9 +140,13 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             fullWidth
                             variant="outlined"
                             sx={{
-                                '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
-                                '& .MuiInputLabel-root': { color: 'gray' },
-                                '& .MuiSelect-icon': { color: 'white' }
+                                '& .MuiOutlinedInput-root': {
+                                    color: 'text.primary',
+                                    '& fieldset': { borderColor: 'divider' },
+                                    '&:hover fieldset': { borderColor: 'text.primary' }
+                                },
+                                '& .MuiInputLabel-root': { color: 'text.secondary' },
+                                '& .MuiSelect-icon': { color: 'text.primary' }
                             }}
                         >
                             {Object.values(USER_ROLES).map((role) => (
@@ -169,8 +182,8 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                     variant="contained"
                     onClick={onSave}
                     sx={{
-                        bgcolor: '#00d4aa',
-                        '&:hover': { bgcolor: '#00bfa0' },
+                        bgcolor: 'success.main',
+                        '&:hover': { bgcolor: 'success.dark' },
                         color: 'black',
                         fontWeight: 'bold'
                     }}

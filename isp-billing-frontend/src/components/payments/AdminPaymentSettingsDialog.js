@@ -9,7 +9,8 @@ import {
     Avatar,
     Box,
     FormControlLabel,
-    Switch
+    Switch,
+    useTheme
 } from '@mui/material';
 import { Settings as SettingsIcon } from '@mui/icons-material';
 
@@ -22,6 +23,7 @@ const AdminPaymentSettingsDialog = ({
     setMpesaDebugMode,
     onSave
 }) => {
+    const theme = useTheme();
     return (
         <Dialog
             open={open}
@@ -43,7 +45,7 @@ const AdminPaymentSettingsDialog = ({
                     sx={{
                         width: 64,
                         height: 64,
-                        background: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                         margin: '0 auto 16px',
                     }}
                 >
@@ -96,10 +98,10 @@ const AdminPaymentSettingsDialog = ({
                     onClick={onSave}
                     sx={{
                         borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                         color: 'white',
                         '&:hover': {
-                            background: 'linear-gradient(135deg, #ad6cc4 0%, #9b59b6 100%)',
+                            background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                         }
                     }}
                 >

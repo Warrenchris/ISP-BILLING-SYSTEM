@@ -11,13 +11,14 @@ import {
     Badge,
     Menu,
     MenuItem,
-    ListItemIcon,
-    Divider
+    Divider,
+    useTheme
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Header = ({ onMenuClick }) => {
+    const theme = useTheme();
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -45,7 +46,7 @@ const Header = ({ onMenuClick }) => {
     };
 
     return (
-        <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 md:px-8 bg-[#1a1a2e]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 md:px-8 bg-[rgba(15,15,15,0.75)] backdrop-blur-xl border-b border-white/5">
             <div className="flex items-center gap-4">
                 <IconButton
                     onClick={onMenuClick}
@@ -72,7 +73,7 @@ const Header = ({ onMenuClick }) => {
                 </div>
 
                 <IconButton sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}>
-                    <Badge badgeContent={3} color="error" sx={{ '& .MuiBadge-badge': { backgroundColor: '#ef4444' } }}>
+                    <Badge badgeContent={3} color="error" sx={{ '& .MuiBadge-badge': { backgroundColor: 'error.main' } }}>
                         <NotificationsIcon />
                     </Badge>
                 </IconButton>
@@ -90,7 +91,7 @@ const Header = ({ onMenuClick }) => {
                     <Avatar
                         sx={{
                             bgcolor: 'transparent',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                             width: 36,
                             height: 36,
                             fontSize: '0.9rem',
@@ -137,7 +138,7 @@ const Header = ({ onMenuClick }) => {
                     <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>Profile</MenuItem>
                     <MenuItem onClick={() => { handleMenuClose(); navigate('/settings'); }}>Account Settings</MenuItem>
                     <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 1 }} />
-                    <MenuItem onClick={handleLogout} sx={{ color: '#ef4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1) !important' } }}>
+                    <MenuItem onClick={handleLogout} sx={{ color: 'error.main', '&:hover': { bgcolor: 'error.main', opacity: 0.1 } }}>
                         Logout
                     </MenuItem>
                 </Menu>

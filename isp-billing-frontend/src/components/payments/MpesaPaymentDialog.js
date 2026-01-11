@@ -8,7 +8,8 @@ import {
     Button,
     Typography,
     Avatar,
-    CircularProgress
+    CircularProgress,
+    useTheme
 } from '@mui/material';
 import { Phone as PhoneIcon } from '@mui/icons-material';
 
@@ -22,6 +23,7 @@ const MpesaPaymentDialog = ({
     amount,
     setAmount
 }) => {
+    const theme = useTheme();
     return (
         <Dialog
             open={open}
@@ -44,7 +46,7 @@ const MpesaPaymentDialog = ({
                     sx={{
                         width: 64,
                         height: 64,
-                        background: 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)', // MPESA Green-ish
+                        background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`, // MPESA Green-ish
                         margin: '0 auto 16px',
                         boxShadow: '0 8px 20px rgba(0, 212, 170, 0.3)'
                     }}
@@ -100,11 +102,11 @@ const MpesaPaymentDialog = ({
                     disabled={processing || !phoneNumber || !amount}
                     sx={{
                         borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)',
+                        background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
                         color: 'white',
                         px: 4,
                         '&:hover': {
-                            background: 'linear-gradient(135deg, #0ceebf 0%, #00d4aa 100%)',
+                            background: `linear-gradient(135deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)`,
                         },
                     }}
                 >

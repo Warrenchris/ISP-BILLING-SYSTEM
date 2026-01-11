@@ -82,9 +82,9 @@ const Invoices = () => {
   const handleDownloadPdf = async (invoice) => {
     try {
       setDownloading({ ...downloading, [invoice.id]: true });
-      
+
       const response = await invoicesApi.downloadPdf(invoice.id);
-      
+
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -94,7 +94,7 @@ const Invoices = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       showAlert('Invoice downloaded successfully', 'success');
     } catch (error) {
       console.error('Download error:', error);
@@ -111,22 +111,22 @@ const Invoices = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      paid: '#00d4aa',
-      pending: '#ffb800',
-      overdue: '#ff6b6b',
-      cancelled: '#9e9e9e',
+      paid: theme.palette.success.main,
+      pending: theme.palette.warning.main,
+      overdue: theme.palette.error.main,
+      cancelled: theme.palette.text.disabled,
     };
-    return colors[status] || '#9e9e9e';
+    return colors[status] || theme.palette.text.disabled;
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
       case 'paid':
-        return <CheckCircleIcon sx={{ color: '#00d4aa' }} />;
+        return <CheckCircleIcon sx={{ color: theme.palette.success.main }} />;
       case 'pending':
-        return <ScheduleIcon sx={{ color: '#ffb800' }} />;
+        return <ScheduleIcon sx={{ color: theme.palette.warning.main }} />;
       case 'overdue':
-        return <CancelIcon sx={{ color: '#ff6b6b' }} />;
+        return <CancelIcon sx={{ color: theme.palette.error.main }} />;
       default:
         return <ReceiptIcon />;
     }
@@ -173,7 +173,7 @@ const Invoices = () => {
   );
 
   // Modern Stat Card Component
-  const StatCard = ({ icon, title, value, subtitle, color = '#667eea' }) => (
+  const StatCard = ({ icon, title, value, subtitle, color = theme.palette.primary.main }) => (
     <GlassCard>
       <CardContent sx={{ p: 3 }}>
         <Box display="flex" alignItems="center">
@@ -225,7 +225,7 @@ const Invoices = () => {
       headerName: 'Invoice #',
       width: 150,
       renderCell: (params) => (
-        <Typography variant="body2" fontWeight="medium" sx={{ color: '#667eea' }}>
+        <Typography variant="body2" fontWeight="medium" sx={{ color: theme.palette.primary.main }}>
           {params.value}
         </Typography>
       ),
@@ -294,9 +294,9 @@ const Invoices = () => {
               size="small"
               onClick={() => handleViewInvoice(params.row)}
               sx={{
-                background: 'rgba(116, 185, 255, 0.1)',
-                border: '1px solid rgba(116, 185, 255, 0.2)',
-                color: '#74b9ff',
+                background: alpha(theme.palette.info.main, 0.1),
+                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                color: theme.palette.info.main,
                 '&:hover': {
                   background: 'rgba(116, 185, 255, 0.2)',
                   transform: 'translateY(-1px)',
@@ -312,9 +312,9 @@ const Invoices = () => {
               onClick={() => handleDownloadPdf(params.row)}
               disabled={downloading[params.row.id]}
               sx={{
-                background: 'rgba(102, 126, 234, 0.1)',
-                border: '1px solid rgba(102, 126, 234, 0.2)',
-                color: '#667eea',
+                background: alpha(theme.palette.primary.main, 0.1),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                color: theme.palette.primary.main,
                 '&:hover': {
                   background: 'rgba(102, 126, 234, 0.2)',
                   transform: 'translateY(-1px)',
@@ -337,7 +337,7 @@ const Invoices = () => {
   ];
 
   const pendingInvoices = invoices.filter(inv => inv.status === 'pending');
-  const overdueInvoices = invoices.filter(inv => 
+  const overdueInvoices = invoices.filter(inv =>
     inv.status === 'pending' && isOverdue(inv.dueDate, inv.status)
   );
   const totalPending = pendingInvoices.reduce((sum, inv) => sum + parseFloat(inv.totalAmount || 0), 0);
@@ -350,7 +350,7 @@ const Invoices = () => {
             variant="h3"
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -506,7 +506,7 @@ const Invoices = () => {
             sx={{
               width: 80,
               height: 80,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               margin: '0 auto 16px',
             }}
           >

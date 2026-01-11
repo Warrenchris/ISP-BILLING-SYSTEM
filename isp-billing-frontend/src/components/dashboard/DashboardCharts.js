@@ -1,8 +1,20 @@
 import React from 'react';
+import { useTheme } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import CustomCard from '../common/CustomCard';
 
 const DashboardCharts = ({ usageHistory, userStatusData }) => {
+    const theme = useTheme();
+
+    const chartColors = [
+        theme.palette.charts.blue,
+        theme.palette.charts.green,
+        theme.palette.charts.orange,
+        theme.palette.charts.purple,
+        theme.palette.charts.teal,
+        theme.palette.charts.pink,
+    ];
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div className="lg:col-span-2">
@@ -12,27 +24,27 @@ const DashboardCharts = ({ usageHistory, userStatusData }) => {
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={usageHistory}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
                                     <XAxis
                                         dataKey="day"
-                                        stroke="#6b7280"
-                                        tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                        stroke={theme.palette.text.secondary}
+                                        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                                         axisLine={false}
                                         tickLine={false}
                                     />
                                     <YAxis
-                                        stroke="#6b7280"
-                                        tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                        stroke={theme.palette.text.secondary}
+                                        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                                         axisLine={false}
                                         tickLine={false}
                                     />
                                     <Line
                                         type="monotone"
                                         dataKey="usage"
-                                        stroke="#FFD700"
+                                        stroke={theme.palette.charts.blue}
                                         strokeWidth={3}
-                                        dot={{ fill: '#FFD700', strokeWidth: 2, r: 4 }}
-                                        activeDot={{ r: 6, stroke: '#FFD700', strokeWidth: 4 }}
+                                        dot={{ fill: theme.palette.charts.blue, strokeWidth: 2, r: 4 }}
+                                        activeDot={{ r: 6, stroke: theme.palette.charts.blue, strokeWidth: 4 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
@@ -58,7 +70,7 @@ const DashboardCharts = ({ usageHistory, userStatusData }) => {
                                         stroke="none"
                                     >
                                         {userStatusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                            <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                                         ))}
                                     </Pie>
                                 </PieChart>
@@ -70,7 +82,7 @@ const DashboardCharts = ({ usageHistory, userStatusData }) => {
                                     <div className="flex items-center gap-3">
                                         <div
                                             className="w-3 h-3 rounded-full"
-                                            style={{ backgroundColor: item.color }}
+                                            style={{ backgroundColor: chartColors[index % chartColors.length] }}
                                         />
                                         <span className="text-sm text-gray-300 font-medium">{item.name}</span>
                                     </div>

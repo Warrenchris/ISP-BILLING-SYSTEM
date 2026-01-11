@@ -11,7 +11,8 @@ import {
     CircularProgress,
     Autocomplete,
     Grid,
-    Box
+    Box,
+    useTheme
 } from '@mui/material';
 import { MonetizationOn as CashIcon } from '@mui/icons-material';
 
@@ -33,6 +34,7 @@ const CashPaymentDialog = ({
     cashDescription,
     setCashDescription
 }) => {
+    const theme = useTheme();
     return (
         <Dialog
             open={open}
@@ -55,7 +57,7 @@ const CashPaymentDialog = ({
                     sx={{
                         width: 64,
                         height: 64,
-                        background: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)', // Blue-ish for Cash
+                        background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`, // Blue-ish for Cash
                         margin: '0 auto 16px',
                     }}
                 >
@@ -114,7 +116,7 @@ const CashPaymentDialog = ({
                             border: '1px solid rgba(0, 212, 170, 0.2)',
                         }}
                     >
-                        <Typography variant="subtitle2" gutterBottom sx={{ color: '#00d4aa' }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ color: 'success.main' }}>
                             Active Subscription Found
                         </Typography>
                         <Typography variant="body2" color="gray">
@@ -179,11 +181,11 @@ const CashPaymentDialog = ({
                     disabled={processing || !selectedUser || !cashAmount || !cashReference}
                     sx={{
                         borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)',
+                        background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)`,
                         color: 'white',
                         px: 4,
                         '&:hover': {
-                            background: 'linear-gradient(135deg, #8bc6ff 0%, #74b9ff 100%)',
+                            background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)`,
                         }
                     }}
                 >

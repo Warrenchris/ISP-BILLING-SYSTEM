@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme, alpha } from '@mui/material/styles';
 
 // Import newly created components
 import PaymentStatsRow from '../components/payments/PaymentStatsRow';
@@ -104,6 +105,7 @@ const Payments = () => {
 
   const { paymentsApi, adminApi } = useApi();
   const { user } = useAuth();
+  const theme = useTheme();
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
@@ -314,7 +316,7 @@ const Payments = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 700, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1 }}>
+          <Typography variant="h3" sx={{ fontWeight: 700, background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1 }}>
             Payments
           </Typography>
           <Typography variant="body1" color="text.secondary">Manage your payment transactions</Typography>
@@ -329,9 +331,9 @@ const Payments = () => {
                 sx={{
                   borderRadius: '12px',
                   textTransform: 'none',
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  '&:hover': { background: 'rgba(255,255,255,0.1)' }
+                  color: 'text.primary',
+                  borderColor: 'divider',
+                  '&:hover': { background: alpha(theme.palette.text.primary, 0.1) }
                 }}
               >
                 Cash Payment
@@ -343,9 +345,9 @@ const Payments = () => {
                 sx={{
                   borderRadius: '12px',
                   textTransform: 'none',
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  '&:hover': { background: 'rgba(255,255,255,0.1)' }
+                  color: 'text.primary',
+                  borderColor: 'divider',
+                  '&:hover': { background: alpha(theme.palette.text.primary, 0.1) }
                 }}
               >
                 Settings
@@ -359,7 +361,7 @@ const Payments = () => {
             sx={{
               borderRadius: '12px',
               textTransform: 'none',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
             }}
           >
             M-Pesa Payment
@@ -373,10 +375,10 @@ const Payments = () => {
           sx={{
             mb: 3,
             borderRadius: '12px',
-            background: 'rgba(26, 26, 46, 0.8)',
+            background: alpha(theme.palette.background.paper, 0.8),
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'white'
+            border: `1px solid ${theme.palette.divider}`,
+            color: 'text.primary'
           }}
         >
           {alert.message}

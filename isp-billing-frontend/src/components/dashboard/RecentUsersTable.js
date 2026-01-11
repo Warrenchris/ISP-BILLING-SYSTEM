@@ -38,7 +38,7 @@ const RecentUsersTable = ({ users, onAction }) => {
                                 <tr key={user.id} className="group hover:bg-white/5 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-[#667eea] flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-contrast font-bold text-sm shadow-md">
                                                 {user.firstName?.[0]}{user.lastName?.[0]}
                                             </div>
                                             <div>
@@ -65,7 +65,7 @@ const RecentUsersTable = ({ users, onAction }) => {
                                     <td className="p-4">
                                         <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button
-                                                className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-400/10 transition-colors"
+                                                className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
                                                 title="View Details"
                                             >
                                                 <VisibilityIcon sx={{ fontSize: 18 }} />

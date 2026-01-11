@@ -33,7 +33,7 @@ const UserDetailsDialog = ({ open, onClose, user, onEdit }) => {
             fullWidth
             PaperProps={{
                 style: {
-                    backgroundColor: '#13131a',
+                    backgroundColor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '16px',
                     color: 'white'
@@ -42,7 +42,7 @@ const UserDetailsDialog = ({ open, onClose, user, onEdit }) => {
         >
             <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)', p: 3 }}>
                 <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-[#13131a] shadow-lg">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-background-paper shadow-lg">
                         {initials}
                     </div>
                     <div>
@@ -88,7 +88,7 @@ const UserDetailsDialog = ({ open, onClose, user, onEdit }) => {
                         </h4>
 
                         {user.activeSubscription ? (
-                            <div className="bg-gradient-to-r from-blue-900/20 to-indigo-900/20 rounded-2xl p-6 border border-blue-500/20">
+                            <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 rounded-2xl p-6 border border-yellow-500/20">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <p className="text-gray-400 text-sm mb-1">Plan Name</p>
@@ -132,11 +132,11 @@ const UserDetailsDialog = ({ open, onClose, user, onEdit }) => {
                         onClose();
                         onEdit(user);
                     }}
-                    sx={{ color: '#74b9ff' }}
+                    sx={{ color: 'info.main' }}
                 >
                     Edit Profile
                 </Button>
-                <Button onClick={onClose} variant="contained" sx={{ bgcolor: 'white', color: 'black', '&:hover': { bgcolor: '#e0e0e0' } }}>
+                <Button onClick={onClose} variant="contained" sx={{ bgcolor: 'white', color: 'black', '&:hover': { bgcolor: 'grey.300' } }}>
                     Close
                 </Button>
             </DialogActions>

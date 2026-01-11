@@ -11,20 +11,43 @@ module.exports = {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#FFCC00', // Yellow Main
-                    light: '#FFD633',
-                    dark: '#B28F00',
+                    DEFAULT: '#FFD300', // Primary Accent Yellow
+                    light: '#FFEB99', // Soft Gold Glow
+                    dark: '#FFCC00', // Hover/Active Yellow
                     contrast: '#000000',
                 },
                 background: {
-                    DEFAULT: '#0a0a0f', // Global Dark
-                    paper: '#13131a', // Card Dark
-                    glass: 'rgba(19, 19, 26, 0.7)',
+                    DEFAULT: '#0B0B0B', // Primary System Background
+                    paper: '#111111', // Secondary Background
+                    sidebar: '#0E0E0E', // Sidebar/Navbar Background
                 },
                 text: {
                     primary: '#FFFFFF',
-                    secondary: '#A0A0A0',
+                    secondary: '#BFBFBF',
+                    muted: '#8A8A8A',
+                    disabled: '#5C5C5C',
+                },
+                status: {
+                    success: '#22C55E',
+                    warning: '#FACC15',
+                    error: '#EF4444',
+                    info: '#3B82F6',
+                },
+                charts: {
+                    blue: '#3B82F6',
+                    green: '#22C55E',
+                    orange: '#F97316',
+                    purple: '#A855F7',
+                    teal: '#14B8A6',
+                    pink: '#EC4899',
+                },
+                glass: {
+                    DEFAULT: 'rgba(255, 255, 255, 0.08)',
+                    border: 'rgba(255, 255, 255, 0.18)',
                 }
+            },
+            backgroundImage: {
+                'gradient-primary': 'linear-gradient(135deg, #FFD300 0%, #FFCC00 100%)',
             },
             fontFamily: {
                 sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],

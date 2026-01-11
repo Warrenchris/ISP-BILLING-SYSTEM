@@ -7,6 +7,7 @@ import {
     Tooltip,
     CircularProgress,
     Button,
+    useTheme,
 } from '@mui/material';
 import {
     Visibility as VisibilityIcon,
@@ -23,15 +24,7 @@ import {
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import CustomCard from '../common/CustomCard';
 
-const getStatusColor = (status) => {
-    const colors = {
-        completed: '#00d4aa',
-        pending: '#ffb800',
-        failed: '#ff6b6b',
-        cancelled: '#9e9e9e',
-    };
-    return colors[status] || '#9e9e9e';
-};
+
 
 const getPaymentMethodIcon = (method) => {
     switch (method?.toLowerCase()) {
@@ -59,6 +52,17 @@ const PaymentHistoryTable = ({
     processing,
     onRefresh
 }) => {
+    const theme = useTheme();
+
+    const getStatusColor = (status) => {
+        const colors = {
+            completed: theme.palette.success.main,
+            pending: theme.palette.warning.main,
+            failed: theme.palette.error.main,
+            cancelled: theme.palette.text.secondary,
+        };
+        return colors[status] || theme.palette.text.secondary;
+    };
     return (
         <CustomCard>
             <div className="p-6">
@@ -101,7 +105,7 @@ const PaymentHistoryTable = ({
                             {loading ? (
                                 <tr>
                                     <td colSpan={isAdmin ? 7 : 6} className="py-8 text-center">
-                                        <CircularProgress size={24} sx={{ color: '#667eea' }} />
+                                        <CircularProgress size={24} sx={{ color: theme.palette.primary.main }} />
                                     </td>
                                 </tr>
                             ) : payments.length > 0 ? (
@@ -170,7 +174,7 @@ const PaymentHistoryTable = ({
                                                                     onClick={() => onConfirm(payment.id)}
                                                                     disabled={processing}
                                                                     sx={{
-                                                                        color: '#00d4aa',
+                                                                        color: theme.palette.success.main,
                                                                         bgcolor: 'rgba(0, 212, 170, 0.1)',
                                                                         border: '1px solid rgba(0, 212, 170, 0.2)',
                                                                         '&:hover': { bgcolor: 'rgba(0, 212, 170, 0.2)' },
@@ -189,7 +193,7 @@ const PaymentHistoryTable = ({
                                                                     onClick={() => onReject(payment.id)}
                                                                     disabled={processing}
                                                                     sx={{
-                                                                        color: '#ff6b6b',
+                                                                        color: theme.palette.error.main,
                                                                         bgcolor: 'rgba(255, 107, 107, 0.1)',
                                                                         border: '1px solid rgba(255, 107, 107, 0.2)',
                                                                         '&:hover': { bgcolor: 'rgba(255, 107, 107, 0.2)' },

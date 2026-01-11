@@ -50,23 +50,23 @@ const Sidebar = ({ mobileOpen, setMobileOpen }) => {
                 className={`
           flex items-center px-4 py-3 mb-1 mx-3 rounded-xl cursor-pointer transition-all duration-200 group
           ${isSelected
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                        ? 'bg-gradient-to-r from-primary to-primary-light text-primary-contrast shadow-lg shadow-primary/30'
                         : 'text-gray-400 hover:bg-white/5 hover:text-white'
                     }
         `}
             >
-                <Icon className={`mr-3 text-xl ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+                <Icon className={`mr-3 text-xl ${isSelected ? 'text-primary-contrast' : 'text-gray-400 group-hover:text-white'}`} />
                 <span className="font-medium">{item.text}</span>
             </div>
         );
     };
 
     const drawerContent = (
-        <div className="flex flex-col h-full bg-[#1a1a2e] text-white">
+        <div className="flex flex-col h-full bg-background-sidebar text-text-primary">
             {/* Logo Section */}
             <div className="p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center shadow-lg shadow-primary/20">
                         <span className="font-bold text-lg">ISP</span>
                     </div>
                     <div>
@@ -122,7 +122,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }) => {
             <div className="hidden md:block w-[280px] shrink-0" />
 
             {/* Desktop Sidebar (Fixed) */}
-            <div className="hidden md:block fixed top-0 left-0 w-[280px] h-full z-40 border-r border-white/5 bg-[#1a1a2e]">
+            <div className="hidden md:block fixed top-0 left-0 w-[280px] h-full z-40 border-r border-white/5 bg-background-sidebar">
                 {drawerContent}
             </div>
 
@@ -138,7 +138,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }) => {
                         boxSizing: 'border-box',
                         width: 280,
                         border: 'none',
-                        bgcolor: '#1a1a2e'
+                        bgcolor: 'background.paper'
                     },
                 }}
             >

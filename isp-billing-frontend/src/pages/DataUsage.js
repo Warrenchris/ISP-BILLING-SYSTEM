@@ -20,14 +20,8 @@ import {
   Speed as SpeedIcon,
   NetworkCheck as NetworkCheckIcon,
   Refresh as RefreshIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-  SignalWifi4Bar as SignalIcon,
-  Router as RouterIcon,
 } from '@mui/icons-material';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -51,7 +45,7 @@ const DataUsage = () => {
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
 
-  const { dataUsageApi, subscriptionsApi } = useApi();
+  const { dataUsageApi } = useApi();
 
   useEffect(() => {
     fetchUsageData();
@@ -60,7 +54,7 @@ const DataUsage = () => {
   const fetchUsageData = async () => {
     try {
       setLoading(true);
-      
+
       const [currentRes, historyRes, analyticsRes] = await Promise.allSettled([
         dataUsageApi.getCurrent(),
         dataUsageApi.getHistory({ limit: 30 }),
@@ -141,21 +135,21 @@ const DataUsage = () => {
 
   const getUsageColor = () => {
     const percentage = getUsagePercentage();
-    if (percentage >= 90) return '#ff6b6b';
-    if (percentage >= 75) return '#ffb800';
-    return '#667eea';
+    if (percentage >= 90) return theme.palette.error.main;
+    if (percentage >= 75) return theme.palette.warning.main;
+    return theme.palette.primary.main;
   };
 
   // Modern Glass Card Component
   const GlassCard = ({ children, sx = {}, ...props }) => (
     <Card
       sx={{
-        background: 'rgba(26, 26, 46, 0.6)',
+        background: theme.palette.background.paper,
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${theme.palette.divider}`,
         borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         overflow: 'hidden',
@@ -182,7 +176,7 @@ const DataUsage = () => {
   );
 
   // Modern Stat Card Component
-  const StatCard = ({ icon, title, value, subtitle, color = '#667eea' }) => (
+  const StatCard = ({ icon, title, value, subtitle, color = theme.palette.primary.main }) => (
     <GlassCard>
       <CardContent sx={{ p: 3, textAlign: 'center' }}>
         <Avatar
@@ -245,7 +239,8 @@ const DataUsage = () => {
           variant="h3"
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            fontWeight: 700,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -255,7 +250,7 @@ const DataUsage = () => {
           Data Usage
         </Typography>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress size={60} sx={{ color: '#667eea' }} />
+          <CircularProgress size={60} sx={{ color: theme.palette.primary.main }} />
         </Box>
       </Box>
     );
@@ -269,7 +264,8 @@ const DataUsage = () => {
             variant="h3"
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              fontWeight: 700,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -290,13 +286,13 @@ const DataUsage = () => {
             borderRadius: '12px',
             textTransform: 'none',
             fontWeight: 500,
-            background: 'rgba(26, 26, 46, 0.4)',
+            background: alpha(theme.palette.background.paper, 0.4),
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: `1px solid ${theme.palette.divider}`,
             '&:hover': {
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderColor: 'rgba(255, 255, 255, 0.2)',
+              background: alpha(theme.palette.common.white, 0.1),
+              borderColor: alpha(theme.palette.common.white, 0.2),
               transform: 'translateY(-1px)',
             },
           }}
@@ -311,10 +307,10 @@ const DataUsage = () => {
           sx={{
             mb: 3,
             borderRadius: '12px',
-            background: 'rgba(26, 26, 46, 0.8)',
+            background: alpha(theme.palette.background.paper, 0.8),
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: `1px solid ${theme.palette.divider}`,
           }}
         >
           {alert.message}
@@ -329,7 +325,7 @@ const DataUsage = () => {
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Current Usage Overview
               </Typography>
-              
+
               <Box mb={4}>
                 <Box display="flex" justifyContent="space-between" mb={2}>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -345,7 +341,7 @@ const DataUsage = () => {
                   sx={{
                     height: 16,
                     borderRadius: 8,
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backgroundColor: theme.palette.divider,
                     '& .MuiLinearProgress-bar': {
                       background: `linear-gradient(135deg, ${getUsageColor()} 0%, ${alpha(getUsageColor(), 0.8)} 100%)`,
                       borderRadius: 8,
@@ -364,7 +360,7 @@ const DataUsage = () => {
                     icon={<DataUsageIcon sx={{ fontSize: 28 }} />}
                     title="Today's Usage"
                     value={currentUsage ? formatBytes(currentUsage.dailyUsage) : '0 MB'}
-                    color="#667eea"
+                    color={theme.palette.primary.main}
                   />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -372,7 +368,7 @@ const DataUsage = () => {
                     icon={<SpeedIcon sx={{ fontSize: 28 }} />}
                     title="Avg Speed"
                     value={currentUsage ? `${currentUsage.averageSpeed.toFixed(1)} Mbps` : '0 Mbps'}
-                    color="#00d4aa"
+                    color={theme.palette.success.main}
                   />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -380,7 +376,7 @@ const DataUsage = () => {
                     icon={<NetworkCheckIcon sx={{ fontSize: 28 }} />}
                     title="Active Sessions"
                     value={currentUsage ? currentUsage.activeSessions : 0}
-                    color="#74b9ff"
+                    color={theme.palette.info.main}
                   />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -392,16 +388,16 @@ const DataUsage = () => {
                         label={analytics?.weeklyTrend || 'stable'}
                         size="small"
                         sx={{
-                          background: analytics?.weeklyTrend === 'increasing' 
-                            ? 'linear-gradient(135deg, #ffb800 0%, #f39c12 100%)'
-                            : 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)',
+                          background: analytics?.weeklyTrend === 'increasing'
+                            ? `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`
+                            : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
                           color: 'white',
                           fontWeight: 500,
                           textTransform: 'capitalize',
                         }}
                       />
                     }
-                    color="#ffb800"
+                    color={theme.palette.warning.main}
                   />
                 </Grid>
               </Grid>
@@ -464,21 +460,21 @@ const DataUsage = () => {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#667eea" stopOpacity={0.1} />
+                      <stop offset="5%" stopColor={theme.palette.charts.teal} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={theme.palette.charts.teal} stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                  <XAxis dataKey="date" stroke="#b8c5d6" />
-                  <YAxis tickFormatter={(value) => `${value}MB`} stroke="#b8c5d6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                  <XAxis dataKey="date" stroke={theme.palette.text.secondary} />
+                  <YAxis tickFormatter={(value) => `${value}MB`} stroke={theme.palette.text.secondary} />
                   <Tooltip
                     formatter={(value, name) => [
                       `${value}MB`,
                       name === 'total' ? 'Total Usage' : name
                     ]}
                     contentStyle={{
-                      background: 'rgba(26, 26, 46, 0.9)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: alpha(theme.palette.background.paper, 0.9),
+                      border: `1px solid ${theme.palette.divider}`,
                       borderRadius: '8px',
                       backdropFilter: 'blur(20px)',
                     }}
@@ -486,7 +482,7 @@ const DataUsage = () => {
                   <Area
                     type="monotone"
                     dataKey="total"
-                    stroke="#667eea"
+                    stroke={theme.palette.charts.teal}
                     strokeWidth={3}
                     fill="url(#colorTotal)"
                   />
@@ -504,20 +500,20 @@ const DataUsage = () => {
               </Typography>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={chartData.slice(-7)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                  <XAxis dataKey="date" stroke="#b8c5d6" />
-                  <YAxis tickFormatter={(value) => `${value}MB`} stroke="#b8c5d6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                  <XAxis dataKey="date" stroke={theme.palette.text.secondary} />
+                  <YAxis tickFormatter={(value) => `${value}MB`} stroke={theme.palette.text.secondary} />
                   <Tooltip
                     formatter={(value, name) => [`${value}MB`, name === 'downloaded' ? 'Downloaded' : 'Uploaded']}
                     contentStyle={{
-                      background: 'rgba(26, 26, 46, 0.9)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: alpha(theme.palette.background.paper, 0.9),
+                      border: `1px solid ${theme.palette.divider}`,
                       borderRadius: '8px',
                       backdropFilter: 'blur(20px)',
                     }}
                   />
-                  <Bar dataKey="downloaded" fill="#667eea" name="Downloaded" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="uploaded" fill="#74b9ff" name="Uploaded" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="downloaded" fill={theme.palette.charts.blue} name="Downloaded" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="uploaded" fill={theme.palette.charts.purple} name="Uploaded" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -532,8 +528,8 @@ const DataUsage = () => {
           sx={{
             mb: 3,
             borderRadius: '12px',
-            background: 'rgba(255, 107, 107, 0.1)',
-            border: '1px solid rgba(255, 107, 107, 0.2)',
+            background: alpha(theme.palette.error.main, 0.1),
+            border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
           }}
@@ -551,8 +547,8 @@ const DataUsage = () => {
           sx={{
             mb: 3,
             borderRadius: '12px',
-            background: 'rgba(255, 184, 0, 0.1)',
-            border: '1px solid rgba(255, 184, 0, 0.2)',
+            background: alpha(theme.palette.warning.main, 0.1),
+            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
           }}
@@ -576,25 +572,27 @@ const DataUsage = () => {
                 icon: '📺',
                 title: 'Video Streaming',
                 description: 'Lower video quality to reduce data consumption',
-                color: '#ff6b6b',
+                title: 'Video Streaming',
+                description: 'Lower video quality to reduce data consumption',
+                color: theme.palette.error.main,
               },
               {
                 icon: '📱',
                 title: 'App Updates',
                 description: 'Update apps only when connected to Wi-Fi',
-                color: '#74b9ff',
+                color: theme.palette.info.main,
               },
               {
                 icon: '🔄',
                 title: 'Background Apps',
                 description: 'Disable background data for unused apps',
-                color: '#00d4aa',
+                color: theme.palette.success.main,
               },
               {
                 icon: '🗜️',
                 title: 'Data Compression',
                 description: 'Enable data saver mode in your browser',
-                color: '#ffb800',
+                color: theme.palette.warning.main,
               },
             ].map((tip, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>

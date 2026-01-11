@@ -8,7 +8,7 @@ const StatCard = ({
     title,
     value,
     subtitle,
-    color = '#FFD700', // Default to Primary Yellow
+    color = 'primary.main', // Default to Primary Yellow
     trend,
     trendLabel
 }) => {

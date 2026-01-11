@@ -1,15 +1,27 @@
-import { VALIDATION_PATTERNS, ERROR_MESSAGES } from './constants';
+// Constants replaced from deleted file
+const VALIDATION_PATTERNS = {
+  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  KENYAN_PHONE: /^(?:254|\+254|0)?(7[0-9]{8})$/,
+  PASSWORD: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, // Minimum 8 chars, at least one letter and one number
+};
+
+const ERROR_MESSAGES = {
+  REQUIRED_FIELD: 'This field is required',
+  EMAIL_INVALID: 'Please enter a valid email address',
+  PHONE_INVALID: 'Please enter a valid Kenyan phone number',
+  PASSWORD_WEAK: 'Password must be at least 8 characters with letters and numbers',
+};
 
 // Format bytes to human readable format
 export const formatBytes = (bytes, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
@@ -18,7 +30,7 @@ export const formatCurrency = (amount, currency = 'KSh') => {
   if (typeof amount !== 'number') {
     amount = parseFloat(amount) || 0;
   }
-  
+
   return `${currency} ${amount.toLocaleString('en-KE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -28,22 +40,22 @@ export const formatCurrency = (amount, currency = 'KSh') => {
 // Format date
 export const formatDate = (date, options = {}) => {
   if (!date) return 'N/A';
-  
+
   const defaultOptions = {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   };
-  
+
   const formatOptions = { ...defaultOptions, ...options };
-  
+
   return new Date(date).toLocaleDateString('en-US', formatOptions);
 };
 
 // Format date and time
 export const formatDateTime = (date) => {
   if (!date) return 'N/A';
-  
+
   return new Date(date).toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -56,30 +68,30 @@ export const formatDateTime = (date) => {
 // Get relative time (e.g., "2 hours ago")
 export const getRelativeTime = (date) => {
   if (!date) return 'N/A';
-  
+
   const now = new Date();
   const past = new Date(date);
   const diffInSeconds = Math.floor((now - past) / 1000);
-  
+
   if (diffInSeconds < 60) {
     return 'Just now';
   }
-  
+
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
     return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
   }
-  
+
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
     return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
   }
-  
+
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 30) {
     return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
   }
-  
+
   return formatDate(date);
 };
 
@@ -88,7 +100,7 @@ export const validatePhoneNumber = (phoneNumber) => {
   if (!phoneNumber) {
     return { isValid: false, message: ERROR_MESSAGES.REQUIRED_FIELD };
   }
-  
+
   const isValid = VALIDATION_PATTERNS.KENYAN_PHONE.test(phoneNumber);
   return {
     isValid,
@@ -101,7 +113,7 @@ export const validateEmail = (email) => {
   if (!email) {
     return { isValid: false, message: ERROR_MESSAGES.REQUIRED_FIELD };
   }
-  
+
   const isValid = VALIDATION_PATTERNS.EMAIL.test(email);
   return {
     isValid,
@@ -114,7 +126,7 @@ export const validatePassword = (password) => {
   if (!password) {
     return { isValid: false, message: ERROR_MESSAGES.REQUIRED_FIELD };
   }
-  
+
   const isValid = VALIDATION_PATTERNS.PASSWORD.test(password);
   return {
     isValid,
@@ -134,17 +146,17 @@ export const validateRequired = (value, fieldName = 'Field') => {
 // Format phone number for display
 export const formatPhoneNumber = (phoneNumber) => {
   if (!phoneNumber) return '';
-  
+
   // Convert to international format if it starts with 0
   if (phoneNumber.startsWith('0')) {
     return '+254' + phoneNumber.slice(1);
   }
-  
+
   // Add + if it starts with 254
   if (phoneNumber.startsWith('254')) {
     return '+' + phoneNumber;
   }
-  
+
   return phoneNumber;
 };
 
@@ -174,7 +186,7 @@ export const debounce = (func, wait) => {
 // Throttle function
 export const throttle = (func, limit) => {
   let inThrottle;
-  return function() {
+  return function () {
     const args = arguments;
     const context = this;
     if (!inThrottle) {
@@ -231,7 +243,7 @@ export const getStatusColor = (status, type = 'default') => {
       success: 'success',
     },
   };
-  
+
   return statusColors[type]?.[status] || statusColors.default[status] || 'default';
 };
 
@@ -269,7 +281,7 @@ export const sortBy = (array, key, direction = 'asc') => {
   return [...array].sort((a, b) => {
     const aVal = a[key];
     const bVal = b[key];
-    
+
     if (direction === 'asc') {
       return aVal > bVal ? 1 : -1;
     } else {
@@ -328,7 +340,7 @@ export const storage = {
       return defaultValue;
     }
   },
-  
+
   set: (key, value) => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -338,7 +350,7 @@ export const storage = {
       return false;
     }
   },
-  
+
   remove: (key) => {
     try {
       localStorage.removeItem(key);
@@ -348,7 +360,7 @@ export const storage = {
       return false;
     }
   },
-  
+
   clear: () => {
     try {
       localStorage.clear();

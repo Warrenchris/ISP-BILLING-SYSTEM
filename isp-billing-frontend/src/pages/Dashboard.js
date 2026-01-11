@@ -377,8 +377,8 @@ const Dashboard = () => {
   // CHART DATA
 
   const pieData = [
-    { name: 'Used', value: getUsagePercentage(), color: '#FFD700' },
-    { name: 'Remaining', value: 100 - getUsagePercentage(), color: alpha('#FFD700', 0.2) },
+    { name: 'Used', value: getUsagePercentage(), color: theme.palette.primary.main },
+    { name: 'Remaining', value: 100 - getUsagePercentage(), color: alpha(theme.palette.primary.main, 0.2) },
   ];
 
   const userStatusData = [
@@ -428,7 +428,7 @@ const Dashboard = () => {
               variant="h3"
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -446,8 +446,8 @@ const Dashboard = () => {
               icon={<AdminIcon />}
               label="Administrator"
               sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+                color: theme.palette.primary.contrastText,
                 fontWeight: 500,
               }}
             />
@@ -609,7 +609,7 @@ const Dashboard = () => {
           variant="h3"
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -702,7 +702,7 @@ const Dashboard = () => {
                       borderRadius: 6,
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
                       '& .MuiLinearProgress-bar': {
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
                         borderRadius: 6,
                       },
                     }}
@@ -762,13 +762,13 @@ const Dashboard = () => {
               <Button
                 variant="contained"
                 sx={{
-                  background: '#FFD700',
-                  color: '#000000',
+                  background: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
                   borderRadius: '12px',
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    background: '#E6C200',
+                    background: theme.palette.primary.dark,
                   }
                 }}
               >
@@ -797,7 +797,7 @@ const Dashboard = () => {
               />
               <defs>
                 <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FFD700" stopOpacity={0.8} />
+                  <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
                   <stop offset="95%" stopColor="#B28F00" stopOpacity={0.8} />
                 </linearGradient>
               </defs>

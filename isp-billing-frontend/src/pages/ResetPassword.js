@@ -73,12 +73,12 @@ const ResetPassword = () => {
   const GlassCard = ({ children, sx = {}, ...props }) => (
     <Card
       sx={{
-        background: 'rgba(26, 26, 46, 0.6)',
+        background: theme.palette.background.paper,
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${theme.palette.divider}`,
         borderRadius: '24px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
         position: 'relative',
         overflow: 'hidden',
         maxWidth: 450,
@@ -98,7 +98,9 @@ const ResetPassword = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%)',
+        background: theme.palette.mode === 'dark'
+          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`
+          : `linear-gradient(135deg, ${theme.palette.grey[50]} 0%, ${theme.palette.grey[200]} 100%)`,
         p: 3,
       }}
     >
@@ -110,17 +112,17 @@ const ResetPassword = () => {
                 sx={{
                   width: 64,
                   height: 64,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                   mb: 2,
                   boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                 }}
               >
                 <LockIcon fontSize="large" />
               </Avatar>
-              <Typography variant="h4" fontWeight={700} sx={{ color: '#fff', mb: 1, textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight={700} sx={{ color: 'text.primary', mb: 1, textAlign: 'center' }}>
                 Reset Password
               </Typography>
-              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
+              <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center' }}>
                 Enter a new strong password for your account.
               </Typography>
             </Box>
@@ -128,11 +130,11 @@ const ResetPassword = () => {
             {success ? (
               <Fade in={success}>
                 <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <CheckCircleIcon sx={{ fontSize: 64, color: '#00d4aa', mb: 2 }} />
-                  <Typography variant="h5" gutterBottom sx={{ color: '#fff' }}>
+                  <CheckCircleIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                  <Typography variant="h5" gutterBottom sx={{ color: 'text.primary' }}>
                     Password Reset!
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Redirecting to login...
                   </Typography>
                 </Box>
@@ -155,7 +157,7 @@ const ResetPassword = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <LockIcon sx={{ color: 'rgba(255,255,255,0.5)' }} />
+                        <LockIcon sx={{ color: 'text.secondary' }} />
                       </InputAdornment>
                     ),
                     endAdornment: (
@@ -182,7 +184,7 @@ const ResetPassword = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <LockIcon sx={{ color: 'rgba(255,255,255,0.5)' }} />
+                        <LockIcon sx={{ color: 'text.secondary' }} />
                       </InputAdornment>
                     ),
                   }}
@@ -198,10 +200,10 @@ const ResetPassword = () => {
                     fontSize: '1rem',
                     fontWeight: 600,
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #7c8df0 0%, #8b5fb8 100%)',
+                      background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                       transform: 'translateY(-2px)',
                     }
                   }}

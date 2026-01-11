@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid } from '@mui/material';
+import { Grid, useTheme } from '@mui/material';
 import {
     Payment as PaymentIcon,
     CheckCircle as CheckCircleIcon,
@@ -9,6 +9,7 @@ import {
 import StatCard from '../common/StatCard';
 
 const PaymentStatsRow = ({ stats }) => {
+    const theme = useTheme();
     const { totalPayments, completedPayments, pendingPayments, totalPaid } = stats;
 
     return (
@@ -18,7 +19,7 @@ const PaymentStatsRow = ({ stats }) => {
                     icon={<PaymentIcon />}
                     title="Total Payments"
                     value={totalPayments}
-                    color="#667eea"
+                    color={theme.palette.primary.main}
                 />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -27,7 +28,7 @@ const PaymentStatsRow = ({ stats }) => {
                     title="Completed"
                     value={completedPayments}
                     subtitle="payments"
-                    color="#00d4aa"
+                    color={theme.palette.success.main}
                 />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -36,7 +37,7 @@ const PaymentStatsRow = ({ stats }) => {
                     title="Pending"
                     value={pendingPayments}
                     subtitle="payments"
-                    color="#ffb800"
+                    color={theme.palette.warning.main}
                 />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -45,7 +46,7 @@ const PaymentStatsRow = ({ stats }) => {
                     title="Total Amount"
                     value={`KSh ${totalPaid.toFixed(2)}`}
                     subtitle="completed"
-                    color="#74b9ff"
+                    color={theme.palette.error.main}
                 />
             </Grid>
         </Grid>

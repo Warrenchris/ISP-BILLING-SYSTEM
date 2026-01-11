@@ -9,7 +9,8 @@ import {
     Grid,
     Box,
     Chip,
-    alpha
+    alpha,
+    useTheme,
 } from '@mui/material';
 import {
     Phone as PhoneIcon,
@@ -20,15 +21,7 @@ import {
 } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 
-const getStatusColor = (status) => {
-    const colors = {
-        completed: '#00d4aa',
-        pending: '#ffb800',
-        failed: '#ff6b6b',
-        cancelled: '#9e9e9e',
-    };
-    return colors[status] || '#9e9e9e';
-};
+
 
 const getPaymentMethodIcon = (method) => {
     switch (method?.toLowerCase()) {
@@ -42,6 +35,18 @@ const getPaymentMethodIcon = (method) => {
 };
 
 const PaymentDetailsDialog = ({ open, payment, onClose }) => {
+    const theme = useTheme();
+
+    const getStatusColor = (status) => {
+        const colors = {
+            completed: theme.palette.success.main,
+            pending: theme.palette.warning.main,
+            failed: theme.palette.error.main,
+            cancelled: theme.palette.text.secondary,
+        };
+        return colors[status] || theme.palette.text.secondary;
+    };
+
     if (!payment) return null;
 
     return (
@@ -52,8 +57,8 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
             fullWidth
             PaperProps={{
                 sx: {
-                    background: '#1a1a2e',
-                    color: 'white',
+                    background: 'background.paper',
+                    color: 'text.primary',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: 2,
                 },
@@ -79,7 +84,7 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
                             }}
                         >
                             <Typography variant="body2" color="gray">Amount Paid</Typography>
-                            <Typography variant="h4" fontWeight="bold" color="#00d4aa">
+                            <Typography variant="h4" fontWeight="bold" color={theme.palette.success.main}>
                                 {formatCurrency(payment.amount)}
                             </Typography>
                         </Box>

@@ -62,12 +62,12 @@ const Profile = () => {
   const GlassCard = ({ children, sx = {}, ...props }) => (
     <Card
       sx={{
-        background: 'rgba(26, 26, 46, 0.6)',
+        background: theme.palette.background.paper,
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${theme.palette.divider}`,
         borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'visible',
         '&:hover': {
@@ -172,7 +172,7 @@ const Profile = () => {
           variant="h3"
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -195,12 +195,12 @@ const Profile = () => {
               borderRadius: 2,
               backdropFilter: 'blur(10px)',
               background: alert.severity === 'error'
-                ? 'rgba(255, 107, 107, 0.1)'
-                : 'rgba(0, 212, 170, 0.1)',
-              border: `1px solid ${alert.severity === 'error' ? 'rgba(255, 107, 107, 0.2)' : 'rgba(0, 212, 170, 0.2)'}`,
-              color: alert.severity === 'error' ? '#ff6b6b' : '#00d4aa',
+                ? alpha(theme.palette.error.main, 0.1)
+                : alpha(theme.palette.success.main, 0.1),
+              border: `1px solid ${alert.severity === 'error' ? alpha(theme.palette.error.main, 0.2) : alpha(theme.palette.success.main, 0.2)}`,
+              color: alert.severity === 'error' ? theme.palette.error.main : theme.palette.success.main,
               '& .MuiAlert-icon': {
-                color: alert.severity === 'error' ? '#ff6b6b' : '#00d4aa',
+                color: alert.severity === 'error' ? theme.palette.error.main : theme.palette.success.main,
               }
             }}
           >
@@ -218,8 +218,8 @@ const Profile = () => {
                 <Box display="flex" alignItems="center">
                   <Avatar
                     sx={{
-                      bgcolor: 'rgba(102, 126, 234, 0.1)',
-                      color: '#667eea',
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.primary.main,
                       mr: 2
                     }}
                   >
@@ -239,7 +239,7 @@ const Profile = () => {
                     textTransform: 'none',
                     fontWeight: 500,
                     ...(editing ? {} : {
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     })
                   }}
                 >
@@ -408,9 +408,9 @@ const Profile = () => {
                     sx={{
                       width: 100,
                       height: 100,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                       fontSize: '2.5rem',
-                      boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)',
+                      boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.4)}`,
                       border: '4px solid rgba(255, 255, 255, 0.1)'
                     }}
                   >
@@ -424,8 +424,8 @@ const Profile = () => {
                       width: 24,
                       height: 24,
                       borderRadius: '50%',
-                      bgcolor: '#00d4aa',
-                      border: '4px solid #1a1a2e',
+                      bgcolor: theme.palette.success.main,
+                      border: `4px solid ${theme.palette.background.paper}`,
                     }}
                   />
                 </Box>
@@ -450,12 +450,12 @@ const Profile = () => {
                     px: 1.5,
                     py: 0.5,
                     borderRadius: '8px',
-                    bgcolor: 'rgba(0, 212, 170, 0.1)',
-                    color: '#00d4aa',
-                    border: '1px solid rgba(0, 212, 170, 0.2)'
+                    bgcolor: alpha(theme.palette.success.main, 0.1),
+                    color: theme.palette.success.main,
+                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
                   }}
                 >
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#00d4aa', mr: 1 }} />
+                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: theme.palette.success.main, mr: 1 }} />
                   <Typography variant="body2" fontWeight={600}>
                     Active
                   </Typography>
@@ -496,8 +496,8 @@ const Profile = () => {
                   borderColor: 'rgba(255, 255, 255, 0.2)',
                   color: 'text.primary',
                   '&:hover': {
-                    borderColor: '#667eea',
-                    background: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: theme.palette.primary.main,
+                    background: alpha(theme.palette.primary.main, 0.1),
                   }
                 }}
               >
@@ -518,7 +518,7 @@ const Profile = () => {
                   <Typography variant="body2" color="text.secondary">
                     Password Strength
                   </Typography>
-                  <Typography variant="caption" color="#00d4aa" fontWeight={600}>
+                  <Typography variant="caption" color="success.main" fontWeight={600}>
                     Strong
                   </Typography>
                 </Box>
@@ -534,7 +534,7 @@ const Profile = () => {
                     sx={{
                       width: '85%',
                       height: '100%',
-                      background: 'linear-gradient(90deg, #00d4aa 0%, #00b894 100%)',
+                      background: `linear-gradient(90deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)`,
                       borderRadius: 3,
                     }}
                   />
@@ -577,7 +577,7 @@ const Profile = () => {
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 16px',
-              color: '#667eea'
+              color: theme.palette.primary.main
             }}
           >
             <LockIcon fontSize="large" />
@@ -654,7 +654,7 @@ const Profile = () => {
               passwordData.newPassword !== passwordData.confirmPassword
             }
             sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               borderRadius: '8px',
               px: 4,
               boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'

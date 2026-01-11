@@ -19,6 +19,7 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import {
   DataUsage as DataUsageIcon,
@@ -98,6 +99,7 @@ const safeNestedValueGetter = (params, path, defaultValue = "—") => {
 export default function Subscriptions() {
   const { subscriptionsApi, paymentsApi } = useApi();
   const { user } = useAuth();
+  const theme = useTheme();
 
   const [subs, setSubs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -626,10 +628,10 @@ export default function Subscriptions() {
                   rowsPerPageOptions={[10, 25, 50]}
                   disableSelectionOnClick
                   sx={{
-                    "& .MuiDataGrid-cell": { borderBottom: "1px solid #f0f0f0" },
+                    "& .MuiDataGrid-cell": { borderBottom: `1px solid ${theme.palette.divider}` },
                     "& .MuiDataGrid-columnHeaders": {
-                      background: "#fafafa",
-                      borderBottom: "2px solid #e0e0e0"
+                      background: theme.palette.action.hover,
+                      borderBottom: `2px solid ${theme.palette.divider}`
                     }
                   }}
                 />

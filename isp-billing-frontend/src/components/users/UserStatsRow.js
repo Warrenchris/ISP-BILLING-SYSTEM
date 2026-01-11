@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '@mui/material';
 import {
     Person as PersonIcon,
     CheckCircle as CheckCircleIcon,
@@ -10,43 +11,44 @@ import {
 import StatCard from '../common/StatCard';
 
 const UserStatsRow = ({ stats }) => {
+    const theme = useTheme();
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
             <StatCard
                 icon={<PersonIcon />}
                 title="Total"
                 value={stats.total}
-                color="#74b9ff"
+                color={theme.palette.info.main}
             />
             <StatCard
                 icon={<CheckCircleIcon />}
                 title="Active"
                 value={stats.active}
-                color="#00d4aa"
+                color={theme.palette.success.main}
             />
             <StatCard
                 icon={<WarningIcon />}
                 title="Inactive"
                 value={stats.inactive}
-                color="#ffb800"
+                color={theme.palette.warning.main}
             />
             <StatCard
                 icon={<BlockIcon />}
                 title="Suspended"
                 value={stats.suspended}
-                color="#ff6b6b"
+                color={theme.palette.error.main}
             />
             <StatCard
                 icon={<SupervisorIcon />}
                 title="Admins"
                 value={stats.admins}
-                color="#a29bfe"
+                color={theme.palette.secondary.light}
             />
             <StatCard
                 icon={<DataUsageIcon />}
                 title="Subscribed"
                 value={stats.withActiveSubscriptions}
-                color="#0984e3"
+                color={theme.palette.info.dark}
             />
         </div>
     );

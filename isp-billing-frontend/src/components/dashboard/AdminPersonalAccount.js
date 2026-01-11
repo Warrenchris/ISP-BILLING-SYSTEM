@@ -6,13 +6,14 @@ import {
     Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
+import { useTheme, alpha } from '@mui/material';
 
 const AccountStatBox = ({ icon, color, title, value }) => (
     <div
         className="p-6 rounded-xl border relative overflow-hidden transition-transform hover:scale-[1.02]"
         style={{
-            background: `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, 0.1)`,
-            borderColor: `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, 0.2)`
+            background: alpha(color, 0.1),
+            borderColor: alpha(color, 0.2)
         }}
     >
         <div className="flex items-center gap-4">
@@ -31,6 +32,7 @@ const AccountStatBox = ({ icon, color, title, value }) => (
 );
 
 const AdminPersonalAccount = ({ subscription, recentPaymentsCount, pendingInvoicesCount, usagePercentage }) => {
+    const theme = useTheme();
     // Helper to format usage percentage
     const formattedUsage = typeof usagePercentage === 'number' ? usagePercentage.toFixed(1) : '0.0';
 
@@ -48,25 +50,25 @@ const AdminPersonalAccount = ({ subscription, recentPaymentsCount, pendingInvoic
                         icon={<DataUsageIcon />}
                         title="Current Plan"
                         value={subscription?.DataPlan?.name || 'No Plan'}
-                        color="#74b9ff"
+                        color={theme.palette.info.main}
                     />
                     <AccountStatBox
                         icon={<SpeedIcon />}
                         title="Data Usage"
                         value={`${formattedUsage}%`}
-                        color="#00d4aa"
+                        color={theme.palette.success.main}
                     />
                     <AccountStatBox
                         icon={<PaymentIcon />}
                         title="Recent Payments"
                         value={recentPaymentsCount}
-                        color="#ffb800"
+                        color={theme.palette.warning.main}
                     />
                     <AccountStatBox
                         icon={<ReceiptIcon />}
                         title="Pending Invoices"
                         value={pendingInvoicesCount}
-                        color="#ff6b6b"
+                        color={theme.palette.error.main}
                     />
                 </div>
             </div>

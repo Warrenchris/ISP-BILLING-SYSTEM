@@ -22,9 +22,9 @@ const createModernTheme = (darkMode = true) => createTheme({
   palette: {
     mode: darkMode ? 'dark' : 'light',
     primary: {
-      main: '#FFD700', // Yellow
-      light: '#FFEA00',
-      dark: '#B29500',
+      main: '#FFD300', // Primary Accent Yellow
+      light: '#FFEB99', // Soft Gold Glow
+      dark: '#FFCC00', // Hover/Active Yellow
       contrastText: '#000000',
     },
     secondary: {
@@ -34,35 +34,47 @@ const createModernTheme = (darkMode = true) => createTheme({
       contrastText: '#000000',
     },
     background: {
-      default: darkMode ? '#0a0a0f' : '#f8fafc',
-      paper: darkMode ? '#13131a' : '#ffffff', // Darker paper for better contrast
+      default: darkMode ? '#0B0B0B' : '#f8fafc', // Primary System Background
+      paper: darkMode ? '#111111' : '#ffffff', // Secondary Background (Cards)
+      sidebar: darkMode ? '#0E0E0E' : '#ffffff', // Sidebar/Navbar Background
     },
     surface: {
-      main: darkMode ? 'rgba(19, 19, 26, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+      main: darkMode ? 'rgba(15, 15, 15, 0.75)' : 'rgba(255, 255, 255, 0.75)', // Glass Overlay Base
+      border: darkMode ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)', // Glass Border
     },
     text: {
       primary: darkMode ? '#FFFFFF' : '#1a202c',
-      secondary: darkMode ? '#A0A0A0' : '#4a5568',
+      secondary: darkMode ? '#BFBFBF' : '#4a5568',
+      disabled: darkMode ? '#5C5C5C' : '#9ca3af',
     },
+    divider: darkMode ? '#E6B800' : '#e2e8f0', // Border / Divider Gold
     success: {
-      main: '#00d4aa',
+      main: '#22C55E',
       light: '#4ade80',
-      dark: '#059669',
+      dark: '#15803d',
     },
     warning: {
-      main: '#ffb800',
-      light: '#fbbf24',
-      dark: '#d97706',
+      main: '#FACC15',
+      light: '#fde047',
+      dark: '#ca8a04',
     },
     error: {
-      main: '#ff6b6b',
+      main: '#EF4444',
       light: '#f87171',
-      dark: '#dc2626',
+      dark: '#b91c1c',
     },
     info: {
-      main: '#74b9ff',
+      main: '#3B82F6',
       light: '#60a5fa',
       dark: '#2563eb',
+    },
+    charts: {
+      blue: '#3B82F6',
+      green: '#22C55E',
+      orange: '#F97316',
+      purple: '#A855F7',
+      teal: '#14B8A6',
+      pink: '#EC4899',
     },
   },
   typography: {
@@ -71,7 +83,7 @@ const createModernTheme = (darkMode = true) => createTheme({
       fontSize: '2.5rem',
       fontWeight: 700,
       letterSpacing: '-0.025em',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #FFD300 0%, #FFCC00 100%)',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
       backgroundClip: 'text',
