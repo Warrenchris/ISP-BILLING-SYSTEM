@@ -28,7 +28,7 @@ export default function AdminUsers() {
     status: 'all',
     subscriptionStatus: 'all'
   });
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  // const [selectedUsers, setSelectedUsers] = useState([]);
   const [userStats, setUserStats] = useState({
     total: 0,
     active: 0,
@@ -134,7 +134,7 @@ export default function AdminUsers() {
 
         const { confirm, ...payload } = currentUser;
 
-        const response = await adminApi.users.create(payload);
+        await adminApi.users.create(payload);
 
         showAlert('User created successfully', 'success');
         setUserDialogOpen(false);

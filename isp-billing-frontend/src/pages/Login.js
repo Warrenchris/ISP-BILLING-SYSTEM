@@ -57,10 +57,10 @@ const pulseAnimation = keyframes`
   100% { transform: scale(1); opacity: 1; }
 `;
 
-const shimmerAnimation = keyframes`
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-`;
+// const shimmerAnimation = keyframes`
+//   0% { transform: translateX(-100%); }
+//   100% { transform: translateX(100%); }
+// `;
 
 const gradientShift = keyframes`
   0% { background-position: 0% 50%; }

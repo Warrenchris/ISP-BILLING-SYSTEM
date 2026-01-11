@@ -372,7 +372,7 @@ export const storage = {
   },
 };
 
-export default {
+const helpers = {
   formatBytes,
   formatCurrency,
   formatDate,
@@ -398,4 +398,6 @@ export default {
   copyToClipboard,
   storage,
 };
+
+export default helpers;
 

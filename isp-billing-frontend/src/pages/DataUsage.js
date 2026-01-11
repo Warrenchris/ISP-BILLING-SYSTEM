@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -47,11 +47,7 @@ const DataUsage = () => {
 
   const { dataUsageApi } = useApi();
 
-  useEffect(() => {
-    fetchUsageData();
-  }, []);
-
-  const fetchUsageData = async () => {
+  const fetchUsageData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -83,7 +79,11 @@ const DataUsage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dataUsageApi]);
+
+  useEffect(() => {
+    fetchUsageData();
+  }, [fetchUsageData]);
 
   const generateMockData = () => {
     setCurrentUsage({
@@ -239,7 +239,6 @@ const DataUsage = () => {
           variant="h3"
           sx={{
             fontWeight: 700,
-            fontWeight: 700,
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -263,7 +262,6 @@ const DataUsage = () => {
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 700,
               fontWeight: 700,
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               WebkitBackgroundClip: 'text',
@@ -570,8 +568,6 @@ const DataUsage = () => {
             {[
               {
                 icon: '📺',
-                title: 'Video Streaming',
-                description: 'Lower video quality to reduce data consumption',
                 title: 'Video Streaming',
                 description: 'Lower video quality to reduce data consumption',
                 color: theme.palette.error.main,

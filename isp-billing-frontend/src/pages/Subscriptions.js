@@ -40,10 +40,10 @@ import { formatBytes } from "../utils/helpers";
 const ErrorBoundary = ({ children, fallback }) => {
   const [hasError, setHasError] = useState(false);
 
-  const handleOnError = (error, errorInfo) => {
-    console.error("DataGrid Error:", error, errorInfo);
-    setHasError(true);
-  };
+  //   const handleOnError = (error, errorInfo) => {
+  //     console.error("DataGrid Error:", error, errorInfo);
+  //     setHasError(true);
+  //   };
 
   if (hasError) {
     return fallback || <Typography color="error">Error displaying data</Typography>;

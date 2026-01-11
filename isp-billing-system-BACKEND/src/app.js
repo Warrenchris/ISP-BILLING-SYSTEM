@@ -19,6 +19,11 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const dataUsageRoutes = require("./routes/dataUsageRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const supportRoutes = require("./routes/supportRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const auditRoutes = require("./routes/auditRoutes");
+const settingRoutes = require("./routes/settingRoutes");
 
 // Create Express app
 const app = express();
@@ -101,6 +106,13 @@ app.use("/api/invoices", invoiceRoutes);
 app.use("/api/usage", dataUsageRoutes);
 app.use("/api/admin", adminRoutes);
 
+// New Routes
+app.use("/api/support/tickets", supportRoutes); // Matches frontend /api/support/tickets (if router uses /)
+app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin/audit-logs", auditRoutes);
+app.use("/api/admin/settings", settingRoutes);
+
 // Swagger UI
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: ".swagger-ui .topbar { display: none }",
@@ -130,6 +142,9 @@ app.get("/", (req, res) => {
   logger.info("Welcome endpoint accessed", { ip: req.ip, userAgent: req.get("User-Agent") });
   res.json(welcomeMessage);
 });
+
+// Handle favicon.ico to prevent 404 errors
+app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 // 404 handler
 app.use(notFound);

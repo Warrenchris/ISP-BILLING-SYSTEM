@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useApi } from './ApiContext';
+// import api from '../services/api';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -14,43 +15,38 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { api } = useApi();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        // Set the authorization header for future requests
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          // Verify token validity optionally here
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.clear();
+        }
       }
-    }
-    
-    setLoading(false);
-  }, [api]);
+      setLoading(false);
+    };
+
+    initAuth();
+  }, []);
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await authService.login({ email, password });
       const { accessToken: token, refreshToken } = response.data.data.tokens;
       const userData = response.data.data.user;
-      
-      // Store token and user data
+
       localStorage.setItem('token', token);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Set authorization header
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       setUser(userData);
       return { success: true };
     } catch (error) {
@@ -64,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await authService.register(userData);
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Registration error:', error);
@@ -76,21 +72,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    delete api.defaults.headers.common['Authorization'];
+    localStorage.clear();
     setUser(null);
+    window.location.href = '/login';
   };
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await api.put('/auth/profile', profileData);
+      const response = await authService.updateProfile(profileData);
       const updatedUser = response.data.data.user;
-      
-      // Update local storage and state
+
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-      
+
       return { success: true, data: updatedUser };
     } catch (error) {
       console.error('Profile update error:', error);
@@ -103,10 +97,7 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      await api.put('/auth/change-password', {
-        currentPassword,
-        newPassword
-      });
+      await authService.changePassword({ currentPassword, newPassword });
       return { success: true };
     } catch (error) {
       console.error('Password change error:', error);
@@ -148,4 +139,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

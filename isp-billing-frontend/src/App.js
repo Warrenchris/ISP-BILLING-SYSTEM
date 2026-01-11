@@ -17,6 +17,16 @@ import AdminUsers from './pages/AdminUsers';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
+// New Pages Imports
+import UsersManagement from './pages/UsersManagement';
+import UserDetails from './pages/UserDetails';
+import SupportTickets from './pages/SupportTickets';
+import Reports from './pages/Reports';
+import StaffRoles from './pages/StaffRoles';
+import Notifications from './pages/Notifications';
+import Settings from './pages/Settings';
+import AuditLogs from './pages/AuditLogs';
+
 // Modern dark theme configuration with glassmorphism support
 const createModernTheme = (darkMode = true) => createTheme({
   palette: {
@@ -349,7 +359,19 @@ function App() {
                         <Route path="/invoices" element={<Invoices />} />
                         <Route path="/data-usage" element={<DataUsage />} />
                         <Route path="/profile" element={<Profile />} />
-                        <Route path="/admin/users" element={<AdminUsers />} />
+                        <Route path="/tickets" element={<SupportTickets />} />
+                        <Route path="/notifications" element={<Notifications />} />
+
+                        {/* Admin Only Routes */}
+                        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                          <Route path="/admin/users" element={<AdminUsers />} />
+                          <Route path="/users" element={<UsersManagement />} />
+                          <Route path="/users/:id" element={<UserDetails />} />
+                          <Route path="/reports" element={<Reports />} />
+                          <Route path="/staff" element={<StaffRoles />} />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="/audit-logs" element={<AuditLogs />} />
+                        </Route>
                       </Routes>
                     </Layout>
                   </ProtectedRoute>
@@ -364,4 +386,3 @@ function App() {
 }
 
 export default App;
-

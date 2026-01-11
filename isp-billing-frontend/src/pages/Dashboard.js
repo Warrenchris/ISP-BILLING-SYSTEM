@@ -1,63 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Grid,
-  Card,
   CardContent,
   Typography,
-  Avatar,
   LinearProgress,
   Chip,
   Button,
   Alert,
   Tabs,
   Tab,
-  Divider,
-  IconButton,
-  Tooltip,
-  Badge,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Switch,
-  FormControlLabel,
-  CircularProgress,
   TextField,
+  CircularProgress,
   useTheme,
   alpha,
 } from '@mui/material';
 import {
-  TrendingUp as TrendingUpIcon,
   DataUsage as DataUsageIcon,
   Payment as PaymentIcon,
   Receipt as ReceiptIcon,
   Wifi as WifiIcon,
-  Speed as SpeedIcon,
   People as PeopleIcon,
-  Subscriptions as SubscriptionsIcon,
   AdminPanelSettings as AdminIcon,
   Security as SecurityIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Warning as WarningIcon,
-  MonetizationOn as MoneyIcon,
   Refresh as RefreshIcon,
-  SupervisorAccount as SupervisorIcon,
-  Block as BlockIcon,
-  CheckCircleOutline as ActivateIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../contexts/ApiContext';
 import CustomCard from '../components/common/CustomCard';
@@ -81,8 +54,8 @@ const Dashboard = () => {
   const [paying, setPaying] = useState(false);
   const [paymentPolling, setPaymentPolling] = useState(false);
   const [payStatus, setPayStatus] = useState(null); // 'pending', 'completed', 'failed'
-  const [adminPrivilegesOpen, setAdminPrivilegesOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  // const [adminPrivilegesOpen, setAdminPrivilegesOpen] = useState(false);
+  // const [selectedUser, setSelectedUser] = useState(null);
 
   const showAlert = (message, severity = 'info') => {
     console.log(`[${severity.toUpperCase()}] ${message}`);
@@ -158,7 +131,7 @@ const Dashboard = () => {
 
   // DATA FETCHING FUNCTIONS
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -187,9 +160,9 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [subscriptionsApi, paymentsApi, invoicesApi]);
 
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = useCallback(async () => {
     try {
       setRefreshing(true);
 
@@ -265,7 +238,7 @@ const Dashboard = () => {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [adminApi, paymentsApi, subscriptionsApi]);
 
   // ACTION HANDLERS
 
@@ -401,7 +374,7 @@ const Dashboard = () => {
     if (isAdmin) {
       fetchAdminStats();
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchDashboardData, fetchAdminStats]);
 
   // LOADING STATE
 

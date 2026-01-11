@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Alert, Typography, Button } from '@mui/material';
 import {
-  Payment as PaymentIcon,
   Settings as SettingsIcon,
   Phone as PhoneIcon,
   MonetizationOn as CashIcon

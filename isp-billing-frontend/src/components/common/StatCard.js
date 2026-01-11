@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, alpha } from '@mui/material';
+import { alpha } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import CustomCard from './CustomCard';
 

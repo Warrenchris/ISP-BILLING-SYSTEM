@@ -1,8 +1,5 @@
 import React from 'react';
 import {
-    Box,
-    Typography,
-    Chip,
     IconButton,
     Tooltip,
     CircularProgress,
@@ -19,7 +16,6 @@ import {
     CreditCard as CardIcon,
     Payment as PaymentIcon,
     Refresh as RefreshIcon,
-    Subscription as SubscriptionIcon,
 } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import CustomCard from '../common/CustomCard';

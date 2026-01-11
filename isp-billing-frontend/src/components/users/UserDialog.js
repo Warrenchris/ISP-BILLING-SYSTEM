@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, MenuItem, Button, Box, Typography
+    TextField, MenuItem, Button
 } from '@mui/material';
 const USER_ROLES = {
     ADMIN: 'admin',

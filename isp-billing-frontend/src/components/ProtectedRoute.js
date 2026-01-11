@@ -1,75 +1,30 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { LinearProgress, Box } from '@mui/material';
 
-const ProtectedRoute = ({ children, adminOnly = false, supportOnly = false }) => {
-  const { user, loading, isAuthenticated, isAdmin, isSupport } = useAuth();
+const ProtectedRoute = ({ allowedRoles, children }) => {
+  const { user, loading, isAuthenticated } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        bgcolor="background.default"
-      >
-        <CircularProgress size={60} />
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Loading...
-        </Typography>
+      <Box sx={{ width: '100%', mt: 4 }}>
+        <LinearProgress />
       </Box>
     );
   }
 
   if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (adminOnly && !isAdmin()) {
-    return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        bgcolor="background.default"
-      >
-        <Typography variant="h4" color="error" gutterBottom>
-          Access Denied
-        </Typography>
-        <Typography variant="body1">
-          You don't have permission to access this page.
-        </Typography>
-      </Box>
-    );
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    // Redirect to dashboard or customized unauthorized page
+    return <Navigate to="/dashboard" replace />;
   }
 
-  if (supportOnly && !isSupport()) {
-    return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        bgcolor="background.default"
-      >
-        <Typography variant="h4" color="error" gutterBottom>
-          Access Denied
-        </Typography>
-        <Typography variant="body1">
-          You don't have permission to access this page.
-        </Typography>
-      </Box>
-    );
-  }
-
-  return children;
+  return children ? children : <Outlet />;
 };
 
 export default ProtectedRoute;
-

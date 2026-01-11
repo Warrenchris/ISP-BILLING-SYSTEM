@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button, Box, Typography,
+    Button,
 } from '@mui/material';
 import {
     Email, Phone, CalendarToday, Public, Speed, DataUsage, AccountCircle, Router, Edit

@@ -7,11 +7,18 @@ const Payment = require('./Payment');
 const Invoice = require('./Invoice');
 const InvoiceItem = require('./InvoiceItem');
 const DataUsage = require('./DataUsage');
+const SupportTicket = require('./SupportTicket');
+const Notification = require('./Notification');
+const AuditLog = require('./AuditLog');
+const Setting = require('./Setting');
 
 User.hasMany(Subscription, { foreignKey: 'userId', as: 'Subscriptions' });
 User.hasMany(Payment, { foreignKey: 'userId', as: 'Payments' });
 User.hasMany(Invoice, { foreignKey: 'userId', as: 'Invoices' });
 User.hasMany(DataUsage, { foreignKey: 'userId', as: 'DataUsage' });
+User.hasMany(SupportTicket, { foreignKey: 'userId', as: 'SupportTickets' });
+User.hasMany(Notification, { foreignKey: 'userId', as: 'Notifications' });
+User.hasMany(AuditLog, { foreignKey: 'userId', as: 'AuditLogs' });
 User.hasOne(Subscription, { foreignKey: 'userId', as: 'activeSubscription' });
 
 
@@ -36,6 +43,13 @@ InvoiceItem.belongsTo(Invoice, { foreignKey: 'invoiceId', as: 'Invoice' });
 DataUsage.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 DataUsage.belongsTo(Subscription, { foreignKey: 'subscriptionId', as: 'Subscription' });
 
+SupportTicket.belongsTo(User, { foreignKey: 'userId', as: 'User' });
+SupportTicket.belongsTo(User, { foreignKey: 'assignedTo', as: 'Staff' });
+
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'User' });
+
+AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'User' });
+
 const syncDatabase = async (force = false) => {
   try {
     await sequelize.sync({ force });
@@ -55,5 +69,9 @@ module.exports = {
   Invoice,
   InvoiceItem,
   DataUsage,
+  SupportTicket,
+  Notification,
+  AuditLog,
+  Setting,
   syncDatabase
 };

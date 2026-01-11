@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -23,13 +23,10 @@ import {
   Receipt as ReceiptIcon,
   Download as DownloadIcon,
   Visibility as VisibilityIcon,
-  Payment as PaymentIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
   Cancel as CancelIcon,
-  MonetizationOn as MoneyIcon,
-  Description as DescriptionIcon,
+  Refresh as RefreshIcon,
+  Schedule as ScheduleIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useApi } from '../contexts/ApiContext';
@@ -44,19 +41,7 @@ const Invoices = () => {
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
 
   const { invoicesApi, authApi } = useApi();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkRole = async () => {
-      const res = await authApi.profile();
-      const isAdmin = res?.data?.data?.role?.toLowerCase?.() === 'admin';
-      setIsAdmin(isAdmin);
-      await fetchInvoices(isAdmin);
-    };
-    checkRole();
-  }, []);
-
-  const fetchInvoices = async (isAdminUser = false) => {
+  const fetchInvoices = useCallback(async (isAdminUser = false) => {
     try {
       setLoading(true);
       const response = isAdminUser
@@ -72,7 +57,17 @@ const Invoices = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [invoicesApi]);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const res = await authApi.profile();
+      const isAdminUser = res?.data?.data?.role?.toLowerCase?.() === 'admin';
+      // setIsAdmin(isAdmin);
+      await fetchInvoices(isAdminUser);
+    };
+    checkRole();
+  }, [authApi, fetchInvoices]);
 
   const showAlert = (message, severity = 'info') => {
     setAlert({ show: true, message, severity });
@@ -119,18 +114,18 @@ const Invoices = () => {
     return colors[status] || theme.palette.text.disabled;
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'paid':
-        return <CheckCircleIcon sx={{ color: theme.palette.success.main }} />;
-      case 'pending':
-        return <ScheduleIcon sx={{ color: theme.palette.warning.main }} />;
-      case 'overdue':
-        return <CancelIcon sx={{ color: theme.palette.error.main }} />;
-      default:
-        return <ReceiptIcon />;
-    }
-  };
+  //   const getStatusIcon = (status) => {
+  //     switch (status) {
+  //       case 'paid':
+  //         return <CheckCircleIcon sx={{ color: theme.palette.success.main }} />;
+  //       case 'pending':
+  //         return <ScheduleIcon sx={{ color: theme.palette.warning.main }} />;
+  //       case 'overdue':
+  //         return <CancelIcon sx={{ color: theme.palette.error.main }} />;
+  //       default:
+  //         return <ReceiptIcon />;
+  //     }
+  //   };
 
   const isOverdue = (dueDate, status) => {
     if (status === 'paid') return false;
