@@ -19,8 +19,8 @@ const UserSubscriptionsDialog = ({ open, onClose, user, subscriptions, loading, 
                 style: {
                     backgroundColor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '16px',
-                    color: 'white'
+                    
+                    color: 'text.primary'
                 }
             }}
         >
@@ -120,7 +120,7 @@ const UserSubscriptionsDialog = ({ open, onClose, user, subscriptions, loading, 
                 </div>
             </DialogContent>
             <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <Button onClick={onClose} variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}>Close</Button>
+                <Button onClick={onClose} variant="outlined" sx={{ color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}>Close</Button>
             </DialogActions>
         </Dialog>
     );

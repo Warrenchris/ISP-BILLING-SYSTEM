@@ -70,37 +70,37 @@ const PlanForm = ({ open, onClose, onSaved }) => {
         )}
 
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField required fullWidth
               name="name" label="Plan Name"
               value={form.name} onChange={handleChange} />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <TextField required fullWidth type="number"
               name="price" label="Price (KSh)"
               value={form.price} onChange={handleChange} />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <TextField required fullWidth type="number"
               name="dataLimitMB" label="Data Limit (MB)"
               value={form.dataLimitMB} onChange={handleChange} />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <TextField required fullWidth type="number"
               name="validityPeriod" label="Validity (days)"
               value={form.validityPeriod} onChange={handleChange} />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <TextField fullWidth
               name="speed" label="Speed (e.g. 5 Mbps)"
               value={form.speed} onChange={handleChange} />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <TextField select fullWidth required
               name="category" label="Category"
               value={form.category} onChange={handleChange}>
@@ -110,7 +110,7 @@ const PlanForm = ({ open, onClose, onSaved }) => {
             </TextField>
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <TextField select fullWidth required
               name="planType" label="Plan Type"
               value={form.planType} onChange={handleChange}>
@@ -119,7 +119,7 @@ const PlanForm = ({ open, onClose, onSaved }) => {
             </TextField>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField fullWidth multiline minRows={2}
               name="description" label="Description"
               value={form.description} onChange={handleChange} />

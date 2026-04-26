@@ -35,11 +35,10 @@ const MpesaPaymentDialog = ({
                     background: 'rgba(26, 26, 46, 0.95)',
                     backdropFilter: 'blur(30px)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '20px',
+                    
                     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-                    color: 'white'
-                },
-            }}
+                    color: 'text.primary'
+                } }}
         >
             <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
                 <Avatar
@@ -71,7 +70,7 @@ const MpesaPaymentDialog = ({
                     sx={{ mb: 3 }}
                     helperText="M-Pesa registered number"
                     InputLabelProps={{ style: { color: '#aaa' } }}
-                    InputProps={{ style: { color: 'white' } }}
+                    InputProps={{ style: { color: 'text.primary' } }}
                 />
 
                 <TextField
@@ -84,7 +83,7 @@ const MpesaPaymentDialog = ({
                     sx={{ mb: 2 }}
                     helperText="Min: 1 KSh, Max: 150,000 KSh"
                     InputLabelProps={{ style: { color: '#aaa' } }}
-                    InputProps={{ style: { color: 'white' } }}
+                    InputProps={{ style: { color: 'text.primary' } }}
                 />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
@@ -101,14 +100,12 @@ const MpesaPaymentDialog = ({
                     onClick={onPay}
                     disabled={processing || !phoneNumber || !amount}
                     sx={{
-                        borderRadius: '10px',
+                        
                         background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-                        color: 'white',
-                        px: 4,
+                        color: 'text.primary',
+                        px: 3,
                         '&:hover': {
-                            background: `linear-gradient(135deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)`,
-                        },
-                    }}
+                            background: `linear-gradient(135deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)` } }}
                 >
                     {processing ? <CircularProgress size={20} color="inherit" /> : 'Pay Now'}
                 </Button>

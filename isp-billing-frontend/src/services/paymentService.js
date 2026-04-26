@@ -24,5 +24,4 @@ export const paymentService = {
     markInvoicePaid: (id, data) => api.put(`/invoices/${id}/mark-paid`, data),
 
     // Stats
-    getStats: () => api.get('/payments/stats'),
-};
+    getStats: () => api.get('/payments/stats') };

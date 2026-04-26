@@ -76,56 +76,50 @@ export const NotificationProvider = ({ children }) => {
             width: '100%',
             backdropFilter: 'blur(10px)',
             border: '1px solid',
-            borderRadius: '12px',
+            
             alignItems: 'center',
             '& .MuiAlert-icon': {
-                fontSize: '24px',
-            },
-        };
+                fontSize: '24px' } };
 
         switch (severity) {
             case 'success':
                 return {
                     ...baseStyle,
                     backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                    color: '#ffffff',
+                    color: 'text.primary',
                     borderColor: 'rgba(34, 197, 94, 0.3)',
                     borderLeft: '4px solid #22c55e',
                     boxShadow: '0 4px 20px rgba(34, 197, 94, 0.15)',
                     animation: `${glowAnimation} 2s infinite ease-in-out`,
-                    '& .MuiAlert-icon': { color: '#22c55e' },
-                };
+                    '& .MuiAlert-icon': { color: '#22c55e' } };
             case 'error':
                 return {
                     ...baseStyle,
                     backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                    color: '#ffffff',
+                    color: 'text.primary',
                     borderColor: 'rgba(239, 68, 68, 0.3)',
                     borderLeft: '4px solid #ef4444',
                     boxShadow: '0 4px 20px rgba(239, 68, 68, 0.15)',
                     animation: `${glowAnimation} 2s infinite ease-in-out`,
-                    '& .MuiAlert-icon': { color: '#ef4444' },
-                };
+                    '& .MuiAlert-icon': { color: '#ef4444' } };
             case 'warning':
                 return {
                     ...baseStyle,
                     backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                    color: '#ffffff',
+                    color: 'text.primary',
                     borderColor: 'rgba(234, 179, 8, 0.3)',
                     borderLeft: '4px solid #eab308',
                     boxShadow: '0 4px 20px rgba(234, 179, 8, 0.15)',
-                    '& .MuiAlert-icon': { color: '#eab308' },
-                };
+                    '& .MuiAlert-icon': { color: '#eab308' } };
             default: // info
                 return {
                     ...baseStyle,
                     backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                    color: '#ffffff',
+                    color: 'text.primary',
                     borderColor: 'rgba(59, 130, 246, 0.3)',
                     borderLeft: '4px solid #3b82f6',
                     boxShadow: '0 4px 20px rgba(59, 130, 246, 0.15)',
-                    '& .MuiAlert-icon': { color: '#3b82f6' },
-                };
+                    '& .MuiAlert-icon': { color: '#3b82f6' } };
         }
     };
 
@@ -136,8 +130,7 @@ export const NotificationProvider = ({ children }) => {
                 notifySuccess,
                 notifyError,
                 notifyWarning,
-                notifyInfo,
-            }}
+                notifyInfo }}
         >
             {children}
             <Snackbar

@@ -7,5 +7,4 @@ export const reportService = {
     getARPU: (params) => api.get('/reports/arpu', { params }),
 
     // Exporting
-    exportReport: (type, params) => api.get(`/reports/export/${type}`, { params, responseType: 'blob' }),
-};
+    exportReport: (type, params) => api.get(`/reports/export/${type}`, { params, responseType: 'blob' }) };

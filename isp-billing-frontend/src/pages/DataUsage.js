@@ -12,15 +12,13 @@ import {
   Button,
   Avatar,
   useTheme,
-  alpha,
-} from '@mui/material';
+  alpha } from '@mui/material';
 import {
   DataUsage as DataUsageIcon,
   TrendingUp as TrendingUpIcon,
   Speed as SpeedIcon,
   NetworkCheck as NetworkCheckIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+  Refresh as RefreshIcon } from '@mui/icons-material';
 import {
   XAxis,
   YAxis,
@@ -33,8 +31,7 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell,
-} from 'recharts';
+  Cell } from 'recharts';
 import { useApi } from '../contexts/ApiContext';
 
 const DataUsage = () => {
@@ -102,8 +99,7 @@ const DataUsage = () => {
         date: date.toISOString().split('T')[0],
         downloaded: Math.floor(Math.random() * 500) + 100, // MB
         uploaded: Math.floor(Math.random() * 100) + 20, // MB
-        sessions: Math.floor(Math.random() * 5) + 1,
-      });
+        sessions: Math.floor(Math.random() * 5) + 1 });
     }
     setUsageHistory(mockHistory);
 
@@ -111,8 +107,7 @@ const DataUsage = () => {
       weeklyTrend: 'increasing',
       averageDailyUsage: 180 * 1024 * 1024, // 180 MB
       peakUsageHour: 20, // 8 PM
-      totalSessions: 45,
-    });
+      totalSessions: 45 });
   };
 
   const showAlert = (message, severity = 'info') => {
@@ -148,7 +143,7 @@ const DataUsage = () => {
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
         border: `1px solid ${theme.palette.divider}`,
-        borderRadius: '16px',
+        
         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
@@ -160,15 +155,12 @@ const DataUsage = () => {
           left: 0,
           right: 0,
           height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-        },
+          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)' },
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-          borderColor: 'rgba(255, 255, 255, 0.15)',
-        },
-        ...sx,
-      }}
+          borderColor: 'rgba(255, 255, 255, 0.15)' },
+        ...sx }}
       {...props}
     >
       {children}
@@ -185,8 +177,7 @@ const DataUsage = () => {
             height: 64,
             background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
             margin: '0 auto 16px',
-            boxShadow: `0 8px 25px ${alpha(color, 0.3)}`,
-          }}
+            boxShadow: `0 8px 25px ${alpha(color, 0.3)}` }}
         >
           {icon}
         </Avatar>
@@ -205,8 +196,7 @@ const DataUsage = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            mb: 1,
-          }}
+            mb: 1 }}
         >
           {value}
         </Typography>
@@ -224,8 +214,7 @@ const DataUsage = () => {
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     downloaded: item.downloaded,
     uploaded: item.uploaded,
-    total: item.downloaded + item.uploaded,
-  }));
+    total: item.downloaded + item.uploaded }));
 
   const pieData = [
     { name: 'Used', value: getUsagePercentage(), color: getUsageColor() },
@@ -243,8 +232,7 @@ const DataUsage = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            mb: 4,
-          }}
+            mb: 4 }}
         >
           Data Usage
         </Typography>
@@ -267,8 +255,7 @@ const DataUsage = () => {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              mb: 1,
-            }}
+              mb: 1 }}
           >
             Data Usage
           </Typography>
@@ -281,7 +268,7 @@ const DataUsage = () => {
           startIcon={<RefreshIcon />}
           onClick={fetchUsageData}
           sx={{
-            borderRadius: '12px',
+            
             textTransform: 'none',
             fontWeight: 500,
             background: alpha(theme.palette.background.paper, 0.4),
@@ -291,9 +278,7 @@ const DataUsage = () => {
             '&:hover': {
               background: alpha(theme.palette.common.white, 0.1),
               borderColor: alpha(theme.palette.common.white, 0.2),
-              transform: 'translateY(-1px)',
-            },
-          }}
+              transform: 'translateY(-1px)' } }}
         >
           Refresh
         </Button>
@@ -304,12 +289,11 @@ const DataUsage = () => {
           severity={alert.severity}
           sx={{
             mb: 3,
-            borderRadius: '12px',
+            
             background: alpha(theme.palette.background.paper, 0.8),
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${theme.palette.divider}`,
-          }}
+            border: `1px solid ${theme.palette.divider}` }}
         >
           {alert.message}
         </Alert>
@@ -317,9 +301,9 @@ const DataUsage = () => {
 
       {/* Usage Overview */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12 }} lg={8}>
           <GlassCard>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Current Usage Overview
               </Typography>
@@ -338,14 +322,12 @@ const DataUsage = () => {
                   value={getUsagePercentage()}
                   sx={{
                     height: 16,
-                    borderRadius: 8,
+                    
                     backgroundColor: theme.palette.divider,
                     '& .MuiLinearProgress-bar': {
                       background: `linear-gradient(135deg, ${getUsageColor()} 0%, ${alpha(getUsageColor(), 0.8)} 100%)`,
-                      borderRadius: 8,
-                      boxShadow: `0 2px 8px ${alpha(getUsageColor(), 0.3)}`,
-                    },
-                  }}
+                      
+                      boxShadow: `0 2px 8px ${alpha(getUsageColor(), 0.3)}` } }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   {getUsagePercentage().toFixed(1)}% of your data plan used
@@ -353,7 +335,7 @@ const DataUsage = () => {
               </Box>
 
               <Grid container spacing={3}>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <StatCard
                     icon={<DataUsageIcon sx={{ fontSize: 28 }} />}
                     title="Today's Usage"
@@ -361,7 +343,7 @@ const DataUsage = () => {
                     color={theme.palette.primary.main}
                   />
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <StatCard
                     icon={<SpeedIcon sx={{ fontSize: 28 }} />}
                     title="Avg Speed"
@@ -369,7 +351,7 @@ const DataUsage = () => {
                     color={theme.palette.success.main}
                   />
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <StatCard
                     icon={<NetworkCheckIcon sx={{ fontSize: 28 }} />}
                     title="Active Sessions"
@@ -377,7 +359,7 @@ const DataUsage = () => {
                     color={theme.palette.info.main}
                   />
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <StatCard
                     icon={<TrendingUpIcon sx={{ fontSize: 28 }} />}
                     title="Trend"
@@ -389,10 +371,9 @@ const DataUsage = () => {
                           background: analytics?.weeklyTrend === 'increasing'
                             ? `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`
                             : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-                          color: 'white',
+                          color: 'text.primary',
                           fontWeight: 500,
-                          textTransform: 'capitalize',
-                        }}
+                          textTransform: 'capitalize' }}
                       />
                     }
                     color={theme.palette.warning.main}
@@ -403,9 +384,9 @@ const DataUsage = () => {
           </GlassCard>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12 }} lg={4}>
           <GlassCard>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Usage Distribution
               </Typography>
@@ -432,8 +413,7 @@ const DataUsage = () => {
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: getUsageColor(),
-                  }}
+                    color: getUsageColor() }}
                 >
                   {currentUsage ? formatBytes(currentUsage.totalLimit - currentUsage.totalUsed) : '0 MB'}
                 </Typography>
@@ -448,9 +428,9 @@ const DataUsage = () => {
 
       {/* Usage Charts */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12 }} lg={8}>
           <GlassCard>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Daily Usage Trend (Last 30 Days)
               </Typography>
@@ -473,9 +453,8 @@ const DataUsage = () => {
                     contentStyle={{
                       background: alpha(theme.palette.background.paper, 0.9),
                       border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: '8px',
-                      backdropFilter: 'blur(20px)',
-                    }}
+                      
+                      backdropFilter: 'blur(20px)' }}
                   />
                   <Area
                     type="monotone"
@@ -490,9 +469,9 @@ const DataUsage = () => {
           </GlassCard>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12 }} lg={4}>
           <GlassCard>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Upload vs Download (Last 7 Days)
               </Typography>
@@ -506,9 +485,8 @@ const DataUsage = () => {
                     contentStyle={{
                       background: alpha(theme.palette.background.paper, 0.9),
                       border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: '8px',
-                      backdropFilter: 'blur(20px)',
-                    }}
+                      
+                      backdropFilter: 'blur(20px)' }}
                   />
                   <Bar dataKey="downloaded" fill={theme.palette.charts.blue} name="Downloaded" radius={[2, 2, 0, 0]} />
                   <Bar dataKey="uploaded" fill={theme.palette.charts.purple} name="Uploaded" radius={[2, 2, 0, 0]} />
@@ -525,12 +503,11 @@ const DataUsage = () => {
           severity="error"
           sx={{
             mb: 3,
-            borderRadius: '12px',
+            
             background: alpha(theme.palette.error.main, 0.1),
             border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
             backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          }}
+            WebkitBackdropFilter: 'blur(20px)' }}
         >
           <Typography variant="body1" fontWeight="medium">
             Data Usage Alert
@@ -544,12 +521,11 @@ const DataUsage = () => {
           severity="warning"
           sx={{
             mb: 3,
-            borderRadius: '12px',
+            
             background: alpha(theme.palette.warning.main, 0.1),
             border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
             backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          }}
+            WebkitBackdropFilter: 'blur(20px)' }}
         >
           <Typography variant="body1" fontWeight="medium">
             Data Usage Warning
@@ -560,7 +536,7 @@ const DataUsage = () => {
 
       {/* Data Saving Tips */}
       <GlassCard>
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             Data Saving Tips
           </Typography>
@@ -570,41 +546,35 @@ const DataUsage = () => {
                 icon: '📺',
                 title: 'Video Streaming',
                 description: 'Lower video quality to reduce data consumption',
-                color: theme.palette.error.main,
-              },
+                color: theme.palette.error.main },
               {
                 icon: '📱',
                 title: 'App Updates',
                 description: 'Update apps only when connected to Wi-Fi',
-                color: theme.palette.info.main,
-              },
+                color: theme.palette.info.main },
               {
                 icon: '🔄',
                 title: 'Background Apps',
                 description: 'Disable background data for unused apps',
-                color: theme.palette.success.main,
-              },
+                color: theme.palette.success.main },
               {
                 icon: '🗜️',
                 title: 'Data Compression',
                 description: 'Enable data saver mode in your browser',
-                color: theme.palette.warning.main,
-              },
+                color: theme.palette.warning.main },
             ].map((tip, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                 <Box
                   sx={{
                     p: 3,
-                    borderRadius: '12px',
+                    
                     background: `${alpha(tip.color, 0.1)}`,
                     border: `1px solid ${alpha(tip.color, 0.2)}`,
                     textAlign: 'center',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-2px)',
-                      boxShadow: `0 8px 25px ${alpha(tip.color, 0.2)}`,
-                    },
-                  }}
+                      boxShadow: `0 8px 25px ${alpha(tip.color, 0.2)}` } }}
                 >
                   <Typography variant="h4" sx={{ mb: 1 }}>
                     {tip.icon}

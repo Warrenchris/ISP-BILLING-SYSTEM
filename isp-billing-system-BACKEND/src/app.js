@@ -41,8 +41,8 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minute
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5000, // Very high limit for development
   message: {
     success: false,
     message: "Too many requests from this IP, please try again later."
@@ -50,7 +50,10 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use(limiter);
+
+if (process.env.NODE_ENV === "production") {
+  app.use(limiter);
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: "1mb" }));

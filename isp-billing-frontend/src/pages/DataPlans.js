@@ -284,21 +284,21 @@ const DataPlans = () => {
           }
         }}
       >
-        <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <CardContent sx={{ flexGrow: 1, p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-            <Box sx={{ width: '60%', height: 20, bgcolor: theme.palette.action.hover, borderRadius: 1 }} />
-            <Box sx={{ width: 50, height: 20, bgcolor: theme.palette.action.hover, borderRadius: 1 }} />
+            <Box sx={{ width: '60%', height: 20, bgcolor: theme.palette.action.hover }} />
+            <Box sx={{ width: 50, height: 20, bgcolor: theme.palette.action.hover }} />
           </Box>
-          <Box sx={{ width: '40%', height: 16, bgcolor: theme.palette.action.hover, borderRadius: 1, mb: 2 }} />
-          <Box sx={{ width: '70%', height: 32, bgcolor: theme.palette.action.hover, borderRadius: 1, mb: 2 }} />
+          <Box sx={{ width: '40%', height: 16, bgcolor: theme.palette.action.hover,  mb: 2 }} />
+          <Box sx={{ width: '70%', height: 32, bgcolor: theme.palette.action.hover,  mb: 2 }} />
           <Stack spacing={0.5}>
-            <Box sx={{ width: '100%', height: 14, bgcolor: theme.palette.action.hover, borderRadius: 1 }} />
-            <Box sx={{ width: '90%', height: 14, bgcolor: theme.palette.action.hover, borderRadius: 1 }} />
-            <Box sx={{ width: '95%', height: 14, bgcolor: theme.palette.action.hover, borderRadius: 1 }} />
+            <Box sx={{ width: '100%', height: 14, bgcolor: theme.palette.action.hover }} />
+            <Box sx={{ width: '90%', height: 14, bgcolor: theme.palette.action.hover }} />
+            <Box sx={{ width: '95%', height: 14, bgcolor: theme.palette.action.hover }} />
           </Stack>
         </CardContent>
         <CardActions sx={{ p: 2, pt: 0 }}>
-          <Box sx={{ width: '100%', height: 32, bgcolor: theme.palette.action.hover, borderRadius: 1 }} />
+          <Box sx={{ width: '100%', height: 32, bgcolor: theme.palette.action.hover }} />
         </CardActions>
       </Card>
     </Fade>
@@ -321,11 +321,10 @@ const DataPlans = () => {
             right: 0,
             bottom: 0,
             background: alpha(theme.palette.background.default, 0.9),
-            backdropFilter: 'blur(10px)',
-          }
+            backdropFilter: 'blur(10px)' }
         }}
       >
-        <Container maxWidth="xl" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
+        <Container maxWidth="xl" sx={{ py: 3, position: 'relative', zIndex: 1 }}>
           <Box textAlign="center" mb={6}>
             <Fade in={true} timeout={500}>
               <Typography
@@ -352,7 +351,7 @@ const DataPlans = () => {
 
           <Grid container spacing={isMobile ? 2 : 3}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={i}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }} key={i}>
                 <PlanSkeleton index={i} />
               </Grid>
             ))}
@@ -378,11 +377,10 @@ const DataPlans = () => {
           right: 0,
           bottom: 0,
           background: alpha(theme.palette.background.default, 0.95),
-          backdropFilter: 'blur(20px)',
-        }
+          backdropFilter: 'blur(20px)' }
       }}
     >
-      <Container maxWidth="xl" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xl" sx={{ py: 3, position: 'relative', zIndex: 1 }}>
         {/* Header Section */}
         <Fade in={true} timeout={500}>
           <Box
@@ -427,14 +425,13 @@ const DataPlans = () => {
                   size={isMobile ? "medium" : "large"}
                   sx={{
                     background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                    borderRadius: 3,
+                    
                     px: 3,
                     py: 1.5,
                     boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
                     '&:hover': {
                       transform: 'translateY(-2px)',
-                      boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
-                    },
+                      boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}` },
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -451,7 +448,7 @@ const DataPlans = () => {
               severity={alert.severity}
               sx={{
                 mb: 4,
-                borderRadius: 3,
+                
                 backdropFilter: 'blur(10px)',
                 background: alpha(theme.palette.background.paper, 0.9),
                 boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
@@ -471,7 +468,7 @@ const DataPlans = () => {
             const isHovered = hoveredCard === plan.id;
 
             return (
-              <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={plan.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }} key={plan.id}>
                 <Fade in={true} timeout={300 + index * 100}>
                   <Card
                     onMouseEnter={() => setHoveredCard(plan.id)}
@@ -483,7 +480,7 @@ const DataPlans = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       position: 'relative',
-                      borderRadius: 4,
+                      
                       border: `2px solid ${isPopular ? config.borderColor : 'transparent'}`,
                       background: isHovered ? config.bgGradient : alpha(theme.palette.background.paper, 0.9),
                       backdropFilter: 'blur(20px)',
@@ -503,11 +500,9 @@ const DataPlans = () => {
                         right: -2,
                         bottom: -2,
                         background: config.gradient,
-                        borderRadius: 4,
+                        
                         zIndex: -1,
-                        opacity: 0.8,
-                      } : {},
-                    }}
+                        opacity: 0.8 } : {} }}
                   >
                     {/* Popular Badge */}
                     {isPopular && (
@@ -518,14 +513,13 @@ const DataPlans = () => {
                             top: -12,
                             left: '50%',
                             transform: 'translateX(-50%)',
-                            zIndex: 3,
-                          }}
+                            zIndex: 3 }}
                         >
                           <Chip
                             label="🔥 Most Popular"
                             sx={{
                               background: config.gradient,
-                              color: 'white',
+                              color: 'text.primary',
                               fontWeight: 'bold',
                               fontSize: '0.75rem',
                               px: 2,
@@ -564,8 +558,7 @@ const DataPlans = () => {
                           backdropFilter: 'blur(10px)',
                           '&:hover': {
                             background: 'rgba(244, 67, 54, 0.1)',
-                            transform: 'scale(1.1)',
-                          },
+                            transform: 'scale(1.1)' },
                           transition: 'all 0.2s ease'
                         }}
                       >
@@ -585,14 +578,13 @@ const DataPlans = () => {
                         <Box
                           sx={{
                             p: 1,
-                            borderRadius: 2,
+                            
                             background: config.gradient,
-                            color: 'white',
+                            color: 'text.primary',
                             mr: 1.5,
                             display: 'flex',
                             alignItems: 'center',
-                            boxShadow: `0 4px 16px ${config.shadowColor}`,
-                          }}
+                            boxShadow: `0 4px 16px ${config.shadowColor}` }}
                         >
                           {config.icon}
                         </Box>
@@ -606,8 +598,7 @@ const DataPlans = () => {
                               background: config.gradient,
                               backgroundClip: 'text',
                               WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: 'transparent',
-                            }}
+                              WebkitTextFillColor: 'transparent' }}
                           >
                             {plan.name}
                           </Typography>
@@ -638,8 +629,7 @@ const DataPlans = () => {
                             background: config.gradient,
                             backgroundClip: 'text',
                             WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                          }}
+                            WebkitTextFillColor: 'transparent' }}
                         >
                           {formatPrice(plan.price)}
                         </Typography>
@@ -715,17 +705,15 @@ const DataPlans = () => {
                           background: config.gradient,
                           fontSize: '0.9rem',
                           fontWeight: 'bold',
-                          borderRadius: 3,
+                          
                           py: 1.2,
                           minHeight: 44, // FIXED: Ensure consistent button height
                           boxShadow: `0 8px 32px ${config.shadowColor}`,
                           '&:hover': {
                             transform: 'translateY(-2px)',
-                            boxShadow: `0 12px 40px ${config.shadowColor}`,
-                          },
+                            boxShadow: `0 12px 40px ${config.shadowColor}` },
                           '&:active': {
-                            transform: 'translateY(0)',
-                          },
+                            transform: 'translateY(0)' },
                           transition: 'all 0.2s ease'
                         }}
                       >
@@ -746,8 +734,8 @@ const DataPlans = () => {
               sx={{
                 textAlign: 'center',
                 py: 8,
-                px: 4,
-                borderRadius: 4,
+                px: 3,
+                
                 background: alpha(theme.palette.background.paper, 0.9),
                 backdropFilter: 'blur(20px)',
                 border: `2px dashed ${theme.palette.primary.light}`,
@@ -767,7 +755,7 @@ const DataPlans = () => {
                 startIcon={<DataUsageIcon />}
                 sx={{
                   background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                  borderRadius: 3,
+                  
                   px: 3,
                   py: 1.5,
                   mt: 2
@@ -788,7 +776,7 @@ const DataPlans = () => {
           TransitionComponent={Zoom}
           PaperProps={{
             sx: {
-              borderRadius: 4,
+              
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',
               boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
@@ -838,7 +826,7 @@ const DataPlans = () => {
                 <Paper
                   sx={{
                     p: 3,
-                    borderRadius: 3,
+                    
                     background: getCategoryConfig(selectedPlan.category).bgGradient,
                     border: `2px solid ${getCategoryConfig(selectedPlan.category).borderColor}`,
                     boxShadow: `0 8px 32px ${getCategoryConfig(selectedPlan.category).shadowColor}`
@@ -849,7 +837,7 @@ const DataPlans = () => {
                   </Typography>
 
                   <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Data Allowance
                       </Typography>
@@ -857,7 +845,7 @@ const DataPlans = () => {
                         {formatBytes(selectedPlan.dataLimit)}
                       </Typography>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Validity Period
                       </Typography>
@@ -865,7 +853,7 @@ const DataPlans = () => {
                         {selectedPlan.validityPeriod} days
                       </Typography>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Divider sx={{ my: 1 }} />
                       <Typography variant="body2" color="text.secondary">
                         Total Amount
@@ -877,8 +865,7 @@ const DataPlans = () => {
                           background: getCategoryConfig(selectedPlan.category).gradient,
                           backgroundClip: 'text',
                           WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                        }}
+                          WebkitTextFillColor: 'transparent' }}
                       >
                         {formatPrice(selectedPlan.price)}
                       </Typography>
@@ -912,7 +899,7 @@ const DataPlans = () => {
                   onClick={() => setConfirmDialog(false)}
                   disabled={subscribing}
                   size="large"
-                  sx={{ borderRadius: 2 }}
+                  sx={{ }}
                 >
                   Cancel
                 </Button>
@@ -923,7 +910,7 @@ const DataPlans = () => {
                   size="large"
                   sx={{
                     minWidth: 140,
-                    borderRadius: 2,
+                    
                     background: selectedPlan ? getCategoryConfig(selectedPlan.category).gradient : 'linear-gradient(45deg, #667eea, #764ba2)',
                     boxShadow: selectedPlan ? `0 8px 32px ${getCategoryConfig(selectedPlan.category).shadowColor}` : '0 8px 32px rgba(102, 126, 234, 0.3)'
                   }}
@@ -949,7 +936,7 @@ const DataPlans = () => {
           TransitionProps={{ direction: 'up' }}
           PaperProps={{
             sx: {
-              borderRadius: 4,
+              
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)'
             }
@@ -969,7 +956,7 @@ const DataPlans = () => {
                 severity="warning"
                 sx={{
                   mt: 2,
-                  borderRadius: 2,
+                  
                   background: 'rgba(255, 193, 7, 0.1)',
                   border: '1px solid rgba(255, 193, 7, 0.3)'
                 }}
@@ -985,7 +972,7 @@ const DataPlans = () => {
               onClick={() => setDeleteDialog(false)}
               disabled={deleting}
               size="large"
-              sx={{ borderRadius: 2 }}
+              sx={{ }}
             >
               Cancel
             </Button>
@@ -997,7 +984,7 @@ const DataPlans = () => {
               size="large"
               sx={{
                 minWidth: 100,
-                borderRadius: 2,
+                
                 background: 'linear-gradient(45deg, #f44336, #d32f2f)',
                 boxShadow: '0 8px 32px rgba(244, 67, 54, 0.3)'
               }}

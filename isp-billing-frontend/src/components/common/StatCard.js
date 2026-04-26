@@ -28,8 +28,7 @@ const StatCard = ({
                         className="flex items-center justify-center w-12 h-12 rounded-xl"
                         style={{
                             backgroundColor: alpha(color, 0.15),
-                            color: color,
-                        }}
+                            color: color }}
                     >
                         {React.cloneElement(icon, { sx: { fontSize: 24, color: 'inherit' } })}
                     </div>

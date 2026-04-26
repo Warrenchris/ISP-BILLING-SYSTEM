@@ -3,8 +3,7 @@ import {
     Visibility as VisibilityIcon,
     Edit as EditIcon,
     Block as BlockIcon,
-    CheckCircleOutline as ActivateIcon,
-} from '@mui/icons-material';
+    CheckCircleOutline as ActivateIcon } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
 
 const RecentUsersTable = ({ users, onAction }) => {

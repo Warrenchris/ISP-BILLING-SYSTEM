@@ -19,8 +19,7 @@ import {
   Divider,
   IconButton,
   Tooltip,
-  useTheme,
-} from "@mui/material";
+  useTheme } from "@mui/material";
 import {
   DataUsage as DataUsageIcon,
   Schedule as ScheduleIcon,
@@ -29,8 +28,7 @@ import {
   Refresh as RefreshIcon,
   Info as InfoIcon,
   Payment as PaymentIcon,
-  CreditCard as PayIcon,
-} from "@mui/icons-material";
+  CreditCard as PayIcon } from "@mui/icons-material";
 import { CheckCircle as CheckIcon } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useApi } from "../contexts/ApiContext";
@@ -483,12 +481,12 @@ export default function Subscriptions() {
                 <LinearProgress
                   variant="determinate"
                   value={usagePct(currentSub)}
-                  sx={{ height: 8, borderRadius: 4, mt: 0.5 }}
+                  sx={{ height: 8,  mt: 0.5 }}
                 />
               </Box>
 
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Box display="flex" alignItems="center" mb={1}>
                     <ScheduleIcon sx={{ mr: 1 }} fontSize="small" />
                     <Typography variant="body2">
@@ -496,7 +494,7 @@ export default function Subscriptions() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Box display="flex" alignItems="center" mb={1}>
                     <SpeedIcon sx={{ mr: 1 }} fontSize="small" />
                     <Typography variant="body2">
@@ -504,7 +502,7 @@ export default function Subscriptions() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Box display="flex" alignItems="center" mb={1}>
                     <DataUsageIcon sx={{ mr: 1 }} fontSize="small" />
                     <Typography variant="body2">
@@ -512,7 +510,7 @@ export default function Subscriptions() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Box display="flex" alignItems="center" mb={1}>
                     <PaymentIcon sx={{ mr: 1 }} fontSize="small" />
                     <Typography variant="body2">
@@ -548,7 +546,7 @@ export default function Subscriptions() {
           </Typography>
           <Grid container spacing={3}>
             {activeSubs.filter(s => !s?.isCurrent).map((s) => (
-              <Grid item xs={12} md={6} lg={4} key={s.id}>
+              <Grid size={{ xs: 12, md: 6 }} lg={4} key={s.id}>
                 <Card>
                   <CardContent>
                     <Box display="flex" justifyContent="space-between" mb={1}>
@@ -576,7 +574,7 @@ export default function Subscriptions() {
                       <LinearProgress
                         variant="determinate"
                         value={usagePct(s)}
-                        sx={{ height: 8, borderRadius: 4, mt: 0.5 }}
+                        sx={{ height: 8,  mt: 0.5 }}
                       />
                     </Box>
 

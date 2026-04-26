@@ -17,8 +17,7 @@ import {
   DialogActions,
   useTheme,
   alpha,
-  Zoom,
-} from '@mui/material';
+  Zoom } from '@mui/material';
 import {
   Person as PersonIcon,
   Edit as EditIcon,
@@ -27,8 +26,7 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
   LocationOn as LocationIcon,
-  Badge as BadgeIcon,
-} from '@mui/icons-material';
+  Badge as BadgeIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../contexts/ApiContext';
 
@@ -49,14 +47,12 @@ const Profile = () => {
     phoneNumber: user?.phoneNumber || '',
     nationalId: user?.nationalId || '',
     county: user?.county || '',
-    city: user?.city || '',
-  });
+    city: user?.city || '' });
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: '',
-  });
+    confirmPassword: '' });
 
   // Modern Glass Card Component
   const GlassCard = ({ children, sx = {}, ...props }) => (
@@ -66,17 +62,15 @@ const Profile = () => {
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
         border: `1px solid ${theme.palette.divider}`,
-        borderRadius: '16px',
+        
         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'visible',
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-          borderColor: 'rgba(255, 255, 255, 0.15)',
-        },
-        ...sx,
-      }}
+          borderColor: 'rgba(255, 255, 255, 0.15)' },
+        ...sx }}
       {...props}
     >
       {children}
@@ -124,16 +118,14 @@ const Profile = () => {
 
       await authApi.changePassword({
         currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
+        newPassword: passwordData.newPassword });
 
       showAlert('Password changed successfully', 'success');
       setPasswordDialog(false);
       setPasswordData({
         currentPassword: '',
         newPassword: '',
-        confirmPassword: '',
-      });
+        confirmPassword: '' });
     } catch (error) {
       console.error('Password change error:', error);
       showAlert(
@@ -148,15 +140,13 @@ const Profile = () => {
   const handleInputChange = (field, value) => {
     setProfileData(prev => ({
       ...prev,
-      [field]: value,
-    }));
+      [field]: value }));
   };
 
   const handlePasswordInputChange = (field, value) => {
     setPasswordData(prev => ({
       ...prev,
-      [field]: value,
-    }));
+      [field]: value }));
   };
 
   const getInitials = () => {
@@ -176,8 +166,7 @@ const Profile = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            mb: 1,
-          }}
+            mb: 1 }}
         >
           My Profile
         </Typography>
@@ -192,7 +181,7 @@ const Profile = () => {
             severity={alert.severity}
             sx={{
               mb: 3,
-              borderRadius: 2,
+              
               backdropFilter: 'blur(10px)',
               background: alert.severity === 'error'
                 ? alpha(theme.palette.error.main, 0.1)
@@ -200,8 +189,7 @@ const Profile = () => {
               border: `1px solid ${alert.severity === 'error' ? alpha(theme.palette.error.main, 0.2) : alpha(theme.palette.success.main, 0.2)}`,
               color: alert.severity === 'error' ? theme.palette.error.main : theme.palette.success.main,
               '& .MuiAlert-icon': {
-                color: alert.severity === 'error' ? theme.palette.error.main : theme.palette.success.main,
-              }
+                color: alert.severity === 'error' ? theme.palette.error.main : theme.palette.success.main }
             }}
           >
             {alert.message}
@@ -211,9 +199,9 @@ const Profile = () => {
 
       <Grid container spacing={3}>
         {/* Profile Information */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <GlassCard>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center">
                   <Avatar
@@ -235,12 +223,11 @@ const Profile = () => {
                   onClick={editing ? handleProfileUpdate : () => setEditing(true)}
                   disabled={loading}
                   sx={{
-                    borderRadius: '12px',
+                    
                     textTransform: 'none',
                     fontWeight: 500,
                     ...(editing ? {} : {
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                    })
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)` })
                   }}
                 >
                   {editing ? (loading ? <CircularProgress size={20} /> : 'Save Changes') : 'Edit Profile'}
@@ -248,7 +235,7 @@ const Profile = () => {
               </Box>
 
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="First Name"
@@ -256,16 +243,15 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     disabled={!editing}
                     InputProps={{
-                      startAdornment: <PersonIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
-                    }}
+                      startAdornment: <PersonIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="Last Name"
@@ -274,12 +260,12 @@ const Profile = () => {
                     disabled={!editing}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="Email Address"
@@ -288,16 +274,15 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     disabled={!editing}
                     InputProps={{
-                      startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
-                    }}
+                      startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="Phone Number"
@@ -305,17 +290,16 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                     disabled={!editing}
                     InputProps={{
-                      startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
-                    }}
+                      startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> }}
                     helperText="Format: +254712345678 or 0712345678"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="National ID"
@@ -323,16 +307,15 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('nationalId', e.target.value)}
                     disabled={!editing}
                     InputProps={{
-                      startAdornment: <BadgeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
-                    }}
+                      startAdornment: <BadgeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="County"
@@ -340,16 +323,15 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('county', e.target.value)}
                     disabled={!editing}
                     InputProps={{
-                      startAdornment: <LocationIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
-                    }}
+                      startAdornment: <LocationIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="City"
@@ -358,7 +340,7 @@ const Profile = () => {
                     disabled={!editing}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
+                        
                       }
                     }}
                   />
@@ -379,11 +361,10 @@ const Profile = () => {
                         phoneNumber: user?.phoneNumber || '',
                         nationalId: user?.nationalId || '',
                         county: user?.county || '',
-                        city: user?.city || '',
-                      });
+                        city: user?.city || '' });
                     }}
                     disabled={loading}
-                    sx={{ borderRadius: '8px' }}
+                    sx={{ }}
                   >
                     Cancel
                   </Button>
@@ -394,9 +375,9 @@ const Profile = () => {
         </Grid>
 
         {/* Profile Summary */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <GlassCard sx={{ mb: 3 }}>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
                 <Box
                   sx={{
@@ -423,10 +404,9 @@ const Profile = () => {
                       right: 0,
                       width: 24,
                       height: 24,
-                      borderRadius: '50%',
+                      
                       bgcolor: theme.palette.success.main,
-                      border: `4px solid ${theme.palette.background.paper}`,
-                    }}
+                      border: `4px solid ${theme.palette.background.paper}` }}
                   />
                 </Box>
                 <Typography variant="h5" fontWeight={700}>
@@ -449,13 +429,13 @@ const Profile = () => {
                     alignItems: 'center',
                     px: 1.5,
                     py: 0.5,
-                    borderRadius: '8px',
+                    
                     bgcolor: alpha(theme.palette.success.main, 0.1),
                     color: theme.palette.success.main,
                     border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
                   }}
                 >
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: theme.palette.success.main, mr: 1 }} />
+                  <Box sx={{ width: 6, height: 6,  bgcolor: theme.palette.success.main, mr: 1 }} />
                   <Typography variant="body2" fontWeight={600}>
                     Active
                   </Typography>
@@ -490,15 +470,14 @@ const Profile = () => {
                 startIcon={<LockIcon />}
                 onClick={() => setPasswordDialog(true)}
                 sx={{
-                  borderRadius: '12px',
+                  
                   textTransform: 'none',
                   fontWeight: 500,
                   borderColor: 'rgba(255, 255, 255, 0.2)',
                   color: 'text.primary',
                   '&:hover': {
                     borderColor: theme.palette.primary.main,
-                    background: alpha(theme.palette.primary.main, 0.1),
-                  }
+                    background: alpha(theme.palette.primary.main, 0.1) }
                 }}
               >
                 Change Password
@@ -508,7 +487,7 @@ const Profile = () => {
 
           {/* Account Security */}
           <GlassCard>
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom fontWeight={600}>
                 Account Security
               </Typography>
@@ -526,17 +505,13 @@ const Profile = () => {
                   sx={{
                     width: '100%',
                     height: 6,
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: 3,
-                  }}
+                    bgcolor: 'rgba(255, 255, 255, 0.1)' }}
                 >
                   <Box
                     sx={{
                       width: '85%',
                       height: '100%',
-                      background: `linear-gradient(90deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)`,
-                      borderRadius: 3,
-                    }}
+                      background: `linear-gradient(90deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)` }}
                   />
                 </Box>
               </Box>
@@ -557,7 +532,7 @@ const Profile = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '24px',
+            
             padding: '16px',
             background: 'rgba(26, 26, 46, 0.95)',
             backdropFilter: 'blur(20px)',
@@ -571,7 +546,7 @@ const Profile = () => {
             sx={{
               width: 60,
               height: 60,
-              borderRadius: '50%',
+              
               bgcolor: 'rgba(102, 126, 234, 0.1)',
               display: 'flex',
               alignItems: 'center',
@@ -599,7 +574,7 @@ const Profile = () => {
             onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
             sx={{
               mb: 3,
-              '& .MuiOutlinedInput-root': { borderRadius: '12px' }
+              '& .MuiOutlinedInput-root': { }
             }}
           />
 
@@ -611,7 +586,7 @@ const Profile = () => {
             onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
             sx={{
               mb: 3,
-              '& .MuiOutlinedInput-root': { borderRadius: '12px' }
+              '& .MuiOutlinedInput-root': { }
             }}
           />
 
@@ -628,7 +603,7 @@ const Profile = () => {
                 : ''
             }
             sx={{
-              '& .MuiOutlinedInput-root': { borderRadius: '12px' }
+              '& .MuiOutlinedInput-root': { }
             }}
           />
         </DialogContent>
@@ -638,7 +613,7 @@ const Profile = () => {
             disabled={loading}
             sx={{
               color: 'text.secondary',
-              borderRadius: '8px',
+              
               px: 3
             }}
           >
@@ -655,8 +630,8 @@ const Profile = () => {
             }
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              borderRadius: '8px',
-              px: 4,
+              
+              px: 3,
               boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
             }}
           >

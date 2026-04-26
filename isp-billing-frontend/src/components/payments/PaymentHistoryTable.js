@@ -4,8 +4,7 @@ import {
     Tooltip,
     CircularProgress,
     Button,
-    useTheme,
-} from '@mui/material';
+    useTheme } from '@mui/material';
 import {
     Visibility as VisibilityIcon,
     CheckCircle as CheckCircleIcon,
@@ -15,8 +14,7 @@ import {
     AccountBalance as BankIcon,
     CreditCard as CardIcon,
     Payment as PaymentIcon,
-    Refresh as RefreshIcon,
-} from '@mui/icons-material';
+    Refresh as RefreshIcon } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import CustomCard from '../common/CustomCard';
 
@@ -55,8 +53,7 @@ const PaymentHistoryTable = ({
             completed: theme.palette.success.main,
             pending: theme.palette.warning.main,
             failed: theme.palette.error.main,
-            cancelled: theme.palette.text.secondary,
-        };
+            cancelled: theme.palette.text.secondary };
         return colors[status] || theme.palette.text.secondary;
     };
     return (
@@ -76,9 +73,7 @@ const PaymentHistoryTable = ({
                             color: 'rgba(255, 255, 255, 0.7)',
                             '&:hover': {
                                 borderColor: 'rgba(255, 255, 255, 0.2)',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                            },
-                        }}
+                                background: 'rgba(255, 255, 255, 0.05)' } }}
                     >
                         Refresh
                     </Button>
@@ -175,8 +170,7 @@ const PaymentHistoryTable = ({
                                                                         border: '1px solid rgba(0, 212, 170, 0.2)',
                                                                         '&:hover': { bgcolor: 'rgba(0, 212, 170, 0.2)' },
                                                                         width: 32,
-                                                                        height: 32,
-                                                                    }}
+                                                                        height: 32 }}
                                                                 >
                                                                     {processing ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon fontSize="small" />}
                                                                 </IconButton>
@@ -194,8 +188,7 @@ const PaymentHistoryTable = ({
                                                                         border: '1px solid rgba(255, 107, 107, 0.2)',
                                                                         '&:hover': { bgcolor: 'rgba(255, 107, 107, 0.2)' },
                                                                         width: 32,
-                                                                        height: 32,
-                                                                    }}
+                                                                        height: 32 }}
                                                                 >
                                                                     {processing ? <CircularProgress size={16} color="inherit" /> : <CancelIcon fontSize="small" />}
                                                                 </IconButton>

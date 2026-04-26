@@ -146,8 +146,7 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     isAuthenticated,
     isAdmin,
-    isSupport,
-  };
+    isSupport };
 
   return (
     <AuthContext.Provider value={value}>

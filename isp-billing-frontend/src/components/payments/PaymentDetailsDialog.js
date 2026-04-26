@@ -10,15 +10,13 @@ import {
     Box,
     Chip,
     alpha,
-    useTheme,
-} from '@mui/material';
+    useTheme } from '@mui/material';
 import {
     Phone as PhoneIcon,
     MonetizationOn as CashIcon,
     AccountBalance as BankIcon,
     CreditCard as CardIcon,
-    Payment as PaymentIcon,
-} from '@mui/icons-material';
+    Payment as PaymentIcon } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 
 
@@ -42,8 +40,7 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
             completed: theme.palette.success.main,
             pending: theme.palette.warning.main,
             failed: theme.palette.error.main,
-            cancelled: theme.palette.text.secondary,
-        };
+            cancelled: theme.palette.text.secondary };
         return colors[status] || theme.palette.text.secondary;
     };
 
@@ -59,10 +56,7 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
                 sx: {
                     background: 'background.paper',
                     color: 'text.primary',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 2,
-                },
-            }}
+                    border: '1px solid rgba(255, 255, 255, 0.1)' } }}
         >
             <DialogTitle sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <Typography variant="h6" fontWeight="bold">
@@ -71,11 +65,11 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
             </DialogTitle>
             <DialogContent sx={{ pt: 3 }}>
                 <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Box
                             sx={{
-                                p: 2,
-                                borderRadius: 2,
+                                p: 3,
+                                
                                 bgcolor: 'rgba(255, 255, 255, 0.05)',
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -90,17 +84,17 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
                         </Box>
                     </Grid>
 
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <Typography variant="caption" color="gray">Transaction ID</Typography>
                         <Typography variant="body1" fontWeight="medium">{payment.transactionId}</Typography>
                     </Grid>
 
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <Typography variant="caption" color="gray">Date</Typography>
                         <Typography variant="body1">{formatDate(payment.createdAt)}</Typography>
                     </Grid>
 
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <Typography variant="caption" color="gray">Method</Typography>
                         <Box display="flex" alignItems="center" gap={1}>
                             {getPaymentMethodIcon(payment.method)}
@@ -110,7 +104,7 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
                         </Box>
                     </Grid>
 
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <Typography variant="caption" color="gray">Status</Typography>
                         <Box mt={0.5}>
                             <Chip
@@ -128,16 +122,16 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
                     </Grid>
 
                     {payment.description && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Typography variant="caption" color="gray">Description</Typography>
-                            <Typography variant="body1" sx={{ bgcolor: 'rgba(255,255,255,0.02)', p: 1, borderRadius: 1, mt: 0.5 }}>
+                            <Typography variant="body1" sx={{ bgcolor: 'rgba(255,255,255,0.02)', p: 1,  mt: 0.5 }}>
                                 {payment.description}
                             </Typography>
                         </Grid>
                     )}
 
                     {payment.phoneNumber && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Typography variant="caption" color="gray">Phone Number</Typography>
                             <Typography variant="body1" fontFamily="monospace">
                                 {payment.phoneNumber}
@@ -145,9 +139,9 @@ const PaymentDetailsDialog = ({ open, payment, onClose }) => {
                         </Grid>
                     )}
 
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Typography variant="caption" color="gray">Customer Info</Typography>
-                        <Box sx={{ mt: 0.5, p: 1.5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1 }}>
+                        <Box sx={{ mt: 0.5, p: 1.5, border: '1px solid rgba(255,255,255,0.1)' }}>
                             <Typography variant="body2" fontWeight="bold">
                                 {payment.customerInfo?.name || 'Unknown'}
                             </Typography>

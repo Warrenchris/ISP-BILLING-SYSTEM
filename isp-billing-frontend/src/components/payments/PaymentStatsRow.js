@@ -14,7 +14,7 @@ const PaymentStatsRow = ({ stats }) => {
 
     return (
         <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                     icon={<PaymentIcon />}
                     title="Total Payments"
@@ -22,7 +22,7 @@ const PaymentStatsRow = ({ stats }) => {
                     color={theme.palette.primary.main}
                 />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                     icon={<CheckCircleIcon />}
                     title="Completed"
@@ -31,7 +31,7 @@ const PaymentStatsRow = ({ stats }) => {
                     color={theme.palette.success.main}
                 />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                     icon={<ScheduleIcon />}
                     title="Pending"
@@ -40,7 +40,7 @@ const PaymentStatsRow = ({ stats }) => {
                     color={theme.palette.warning.main}
                 />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                     icon={<MoneyIcon />}
                     title="Total Amount"

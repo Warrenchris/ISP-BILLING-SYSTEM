@@ -67,7 +67,7 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
             <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>Notifications Log</Typography>
 
             {loading ? <LinearProgress /> : error ? <Alert severity="error">{error}</Alert> : (
-                <Paper sx={{ borderRadius: '16px', background: alpha(theme.palette.background.paper, 0.6) }}>
+                <Paper sx={{  background: alpha(theme.palette.background.paper, 0.6) }}>
                     <List>
                         {notifications.length === 0 ? (
                             <ListItem><ListItemText primary="No notifications found" /></ListItem>
@@ -76,7 +76,7 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
                                 <React.Fragment key={notif.id}>
                                     <ListItem>
                                         <ListItemAvatar>
-                                            <Avatar sx={{ bgcolor: theme.palette.primary.main, color: 'black' }}>
+                                            <Avatar sx={{ bgcolor: theme.palette.primary.main, color: 'primary.contrastText' }}>
                                                 {getIcon(notif.type)}
                                             </Avatar>
                                         </ListItemAvatar>

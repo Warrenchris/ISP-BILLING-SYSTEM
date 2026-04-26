@@ -50,8 +50,7 @@ export const useApi = () => {
       executeRequest(() => authApi.updateProfile(userData)), [executeRequest]),
     
     changePassword: useCallback((passwordData) => 
-      executeRequest(() => authApi.changePassword(passwordData)), [executeRequest]),
-  };
+      executeRequest(() => authApi.changePassword(passwordData)), [executeRequest]) };
 
   // Data Plans operations
   const dataPlans = {
@@ -68,8 +67,7 @@ export const useApi = () => {
       executeRequest(() => dataPlansApi.update(id, planData)), [executeRequest]),
     
     delete: useCallback((id) => 
-      executeRequest(() => dataPlansApi.delete(id)), [executeRequest]),
-  };
+      executeRequest(() => dataPlansApi.delete(id)), [executeRequest]) };
 
   // Subscriptions operations
   const subscriptions = {
@@ -89,8 +87,7 @@ export const useApi = () => {
       executeRequest(() => subscriptionsApi.update(id, subscriptionData)), [executeRequest]),
     
     cancel: useCallback((id, reason) => 
-      executeRequest(() => subscriptionsApi.cancel(id, reason)), [executeRequest]),
-  };
+      executeRequest(() => subscriptionsApi.cancel(id, reason)), [executeRequest]) };
 
   // Payments operations
   const payments = {
@@ -104,8 +101,7 @@ export const useApi = () => {
       executeRequest(() => paymentsApi.initiateMpesa(paymentData)), [executeRequest]),
     
     checkStatus: useCallback((transactionId) => 
-      executeRequest(() => paymentsApi.checkStatus(transactionId)), [executeRequest]),
-  };
+      executeRequest(() => paymentsApi.checkStatus(transactionId)), [executeRequest]) };
 
   // Invoices operations
   const invoices = {
@@ -119,8 +115,7 @@ export const useApi = () => {
       executeRequest(() => invoicesApi.downloadPdf(id)), [executeRequest]),
     
     pay: useCallback((id, paymentData) => 
-      executeRequest(() => invoicesApi.pay(id, paymentData)), [executeRequest]),
-  };
+      executeRequest(() => invoicesApi.pay(id, paymentData)), [executeRequest]) };
 
   // Data Usage operations
   const dataUsage = {
@@ -143,8 +138,7 @@ export const useApi = () => {
       executeRequest(() => dataUsageApi.endSession(sessionId)), [executeRequest]),
     
     getActiveSessions: useCallback(() => 
-      executeRequest(() => dataUsageApi.getActiveSessions()), [executeRequest]),
-  };
+      executeRequest(() => dataUsageApi.getActiveSessions()), [executeRequest]) };
 
   // Admin operations
   const admin = {
@@ -159,8 +153,7 @@ export const useApi = () => {
         executeRequest(() => adminApi.users.update(id, userData)), [executeRequest]),
       
       delete: useCallback((id) => 
-        executeRequest(() => adminApi.users.delete(id)), [executeRequest]),
-    },
+        executeRequest(() => adminApi.users.delete(id)), [executeRequest]) },
     
     stats: {
       getDashboard: useCallback(() => 
@@ -170,17 +163,14 @@ export const useApi = () => {
         executeRequest(() => adminApi.stats.getRevenue(params)), [executeRequest]),
       
       getUsage: useCallback((params) => 
-        executeRequest(() => adminApi.stats.getUsage(params)), [executeRequest]),
-    },
+        executeRequest(() => adminApi.stats.getUsage(params)), [executeRequest]) },
     
     system: {
       getHealth: useCallback(() => 
         executeRequest(() => adminApi.system.getHealth()), [executeRequest]),
       
       getLogs: useCallback((params) => 
-        executeRequest(() => adminApi.system.getLogs(params)), [executeRequest]),
-    },
-  };
+        executeRequest(() => adminApi.system.getLogs(params)), [executeRequest]) } };
 
   return {
     loading,
@@ -192,8 +182,7 @@ export const useApi = () => {
     payments,
     invoices,
     dataUsage,
-    admin,
-  };
+    admin };
 };
 
 export default useApi;

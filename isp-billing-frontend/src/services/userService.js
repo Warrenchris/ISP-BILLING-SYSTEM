@@ -19,5 +19,4 @@ export const userService = {
     getStaff: () => api.get('/admin/users', { params: { role: 'staff' } }), // Adjust based on backend API
 
     // Dashboard / Stats
-    getStats: () => api.get('/admin/stats/users'),
-};
+    getStats: () => api.get('/admin/stats/users') };

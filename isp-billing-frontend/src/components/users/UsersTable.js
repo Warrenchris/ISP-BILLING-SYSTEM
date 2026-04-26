@@ -3,8 +3,7 @@ import {
     Edit as EditIcon,
     Delete as DeleteIcon,
     DataUsage as DataUsageIcon,
-    Person as PersonIcon,
-} from '@mui/icons-material';
+    Person as PersonIcon } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
 // import { getStatusColor, formatDate } from '../../utils/helpers';
 

@@ -17,8 +17,7 @@ import {
   TextField,
   CircularProgress,
   useTheme,
-  alpha,
-} from '@mui/material';
+  alpha } from '@mui/material';
 import {
   DataUsage as DataUsageIcon,
   Payment as PaymentIcon,
@@ -28,8 +27,7 @@ import {
   AdminPanelSettings as AdminIcon,
   Security as SecurityIcon,
   Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+  CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../contexts/ApiContext';
@@ -65,8 +63,7 @@ const Dashboard = () => {
     currentSubscription: null,
     recentPayments: [],
     pendingInvoices: [],
-    usageHistory: [],
-  });
+    usageHistory: [] });
 
   // Admin-specific state
   const [adminStats, setAdminStats] = useState({
@@ -82,8 +79,7 @@ const Dashboard = () => {
     totalRevenue: 0,
     monthlyRevenue: 0,
     recentUsers: [],
-    adminUsers: [],
-  });
+    adminUsers: [] });
 
   const isAdmin = user?.role === 'admin';
 
@@ -103,8 +99,7 @@ const Dashboard = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days.map(day => ({
       day,
-      usage: Math.floor(Math.random() * 500) + 100,
-    }));
+      usage: Math.floor(Math.random() * 500) + 100 }));
   };
 
   const formatBytes = (bytes) => {
@@ -137,7 +132,7 @@ const Dashboard = () => {
 
       const [subscriptionRes, paymentsRes, invoicesRes] = await Promise.allSettled([
         subscriptionsApi.getCurrent(),
-        paymentsApi.getPaymentHistory({ limit: 5 }),
+        paymentsApi.getMyPayments({ limit: 5 }),
         invoicesApi.getMy({ status: 'pending', limit: 5 }),
       ]);
 
@@ -151,8 +146,7 @@ const Dashboard = () => {
         pendingInvoices: invoicesRes.status === 'fulfilled' && invoicesRes.value?.data?.success
           ? invoicesRes.value.data.data.invoices
           : [],
-        usageHistory: generateMockUsageHistory(),
-      };
+        usageHistory: generateMockUsageHistory() };
 
       setDashboardData(newData);
     } catch (error) {
@@ -355,15 +349,15 @@ const Dashboard = () => {
   ];
 
   const userStatusData = [
-    { name: 'Active', value: adminStats.activeUsers, color: '#00d4aa' },
-    { name: 'Inactive', value: adminStats.inactiveUsers, color: '#ffb800' },
-    { name: 'Suspended', value: adminStats.suspendedUsers, color: '#ff6b6b' },
+    { name: 'Active', value: adminStats.activeUsers, color: '#22C55E' },
+    { name: 'Inactive', value: adminStats.inactiveUsers, color: theme.palette.warning.main },
+    { name: 'Suspended', value: adminStats.suspendedUsers, color: '#EF4444' },
   ];
 
   const subscriptionStatusData = [
-    { name: 'Active', value: adminStats.activeSubscriptions, color: '#00d4aa' },
-    { name: 'Expired', value: adminStats.expiredSubscriptions, color: '#ff6b6b' },
-    { name: 'Pending', value: adminStats.pendingSubscriptions, color: '#ffb800' },
+    { name: 'Active', value: adminStats.activeSubscriptions, color: '#22C55E' },
+    { name: 'Expired', value: adminStats.expiredSubscriptions, color: '#EF4444' },
+    { name: 'Pending', value: adminStats.pendingSubscriptions, color: theme.palette.warning.main },
     { name: 'Suspended', value: adminStats.suspendedSubscriptions, color: '#9e9e9e' },
   ];
 
@@ -385,7 +379,7 @@ const Dashboard = () => {
           Dashboard
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-          <LinearProgress sx={{ width: '50%', borderRadius: 2 }} />
+          <LinearProgress sx={{ width: '50%' }} />
         </Box>
       </Box>
     );
@@ -405,8 +399,7 @@ const Dashboard = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-                mb: 1,
-              }}
+                mb: 1 }}
             >
               Admin Dashboard
             </Typography>
@@ -421,8 +414,7 @@ const Dashboard = () => {
               sx={{
                 background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
                 color: theme.palette.primary.contrastText,
-                fontWeight: 500,
-              }}
+                fontWeight: 500 }}
             />
             <Button
               variant="outlined"
@@ -433,10 +425,9 @@ const Dashboard = () => {
               }}
               disabled={refreshing}
               sx={{
-                borderRadius: '12px',
+                
                 textTransform: 'none',
-                fontWeight: 500,
-              }}
+                fontWeight: 500 }}
             >
               {refreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
@@ -451,9 +442,7 @@ const Dashboard = () => {
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 500,
-                fontSize: '1rem',
-              },
-            }}
+                fontSize: '1rem' } }}
           >
             <Tab label="Overview" icon={<DataUsageIcon />} iconPosition="start" />
             <Tab label="User Statistics" icon={<PeopleIcon />} iconPosition="start" />
@@ -491,9 +480,9 @@ const Dashboard = () => {
         <TabPanel value={tabValue} index={2}>
           {/* Admin Privileges */}
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <CustomCard>
-                <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                     Administrator Privileges
                   </Typography>
@@ -505,10 +494,9 @@ const Dashboard = () => {
                     <Box
                       sx={{
                         p: 3,
-                        borderRadius: '12px',
+                        
                         background: 'rgba(102, 126, 234, 0.1)',
-                        border: '1px solid rgba(102, 126, 234, 0.2)',
-                      }}
+                        border: '1px solid rgba(102, 126, 234, 0.2)' }}
                     >
                       <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                         System Administration
@@ -526,10 +514,9 @@ const Dashboard = () => {
                     <Box
                       sx={{
                         p: 3,
-                        borderRadius: '12px',
+                        
                         background: 'rgba(0, 212, 170, 0.1)',
-                        border: '1px solid rgba(0, 212, 170, 0.2)',
-                      }}
+                        border: '1px solid rgba(0, 212, 170, 0.2)' }}
                     >
                       <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                         Financial Management
@@ -547,10 +534,9 @@ const Dashboard = () => {
                     <Box
                       sx={{
                         p: 3,
-                        borderRadius: '12px',
+                        
                         background: 'rgba(255, 184, 0, 0.1)',
-                        border: '1px solid rgba(255, 184, 0, 0.2)',
-                      }}
+                        border: '1px solid rgba(255, 184, 0, 0.2)' }}
                     >
                       <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                         Data & Analytics
@@ -586,8 +572,7 @@ const Dashboard = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            mb: 1,
-          }}
+            mb: 1 }}
         >
           Welcome back, {user?.firstName}!
         </Typography>
@@ -605,14 +590,14 @@ const Dashboard = () => {
               Pay Now
             </Button>
           }
-          sx={{ mb: 4, borderRadius: 2 }}
+          sx={{ mb: 4 }}
         >
           Your current subscription payment is pending. Services may be limited.
         </Alert>
       )}
 
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<DataUsageIcon />}
             title="Data Usage"
@@ -621,45 +606,45 @@ const Dashboard = () => {
             color="#667eea"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<PaymentIcon />}
             title="Recent Payments"
             value={dashboardData.recentPayments.length}
             subtitle="this month"
-            color="#00d4aa"
+            color="#22C55E"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<ReceiptIcon />}
             title="Pending Invoices"
             value={dashboardData.pendingInvoices.length}
             subtitle="require attention"
-            color="#ffb800"
+            color={theme.palette.warning.main}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<WifiIcon />}
             title="Connection"
             value="Active"
             subtitle="stable connection"
-            color="#74b9ff"
+            color="#3B82F6"
           />
         </Grid>
       </Grid>
 
       {/* Current Subscription Card */}
       <CustomCard className="mb-8">
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: 3 }}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             Current Subscription
           </Typography>
 
           {dashboardData.currentSubscription ? (
             <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }}>
                 <Box mb={3}>
                   <Typography variant="h6" gutterBottom>
                     {dashboardData.currentSubscription.DataPlan?.name || 'Current Plan'}
@@ -672,20 +657,17 @@ const Dashboard = () => {
                     value={getUsagePercentage()}
                     sx={{
                       height: 12,
-                      borderRadius: 6,
+                      
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
                       '& .MuiLinearProgress-bar': {
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-                        borderRadius: 6,
-                      },
-                    }}
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)` } }}
                   />
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                     {getUsagePercentage().toFixed(1)}% used
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
                   {dashboardData.currentSubscription.paymentStatus === 'pending' ? (
                     <Box textAlign="center">
@@ -697,7 +679,7 @@ const Dashboard = () => {
                         variant="contained"
                         color="warning"
                         onClick={handlePayClick}
-                        sx={{ borderRadius: 2 }}
+                        sx={{ }}
                       >
                         Pay Now
                       </Button>
@@ -737,12 +719,11 @@ const Dashboard = () => {
                 sx={{
                   background: theme.palette.primary.main,
                   color: theme.palette.primary.contrastText,
-                  borderRadius: '12px',
+                  
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    background: theme.palette.primary.dark,
-                  }
+                    background: theme.palette.primary.dark }
                 }}
               >
                 View Plans
@@ -754,7 +735,7 @@ const Dashboard = () => {
 
       {/* Usage Chart */}
       <CustomCard>
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             Weekly Usage Trend
           </Typography>

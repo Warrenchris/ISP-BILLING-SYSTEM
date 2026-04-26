@@ -65,8 +65,7 @@ const UserDetails = () => {
                 const mockUsage = Array.from({ length: 7 }, (_, i) => ({
                     day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
                     upload: Math.floor(Math.random() * 50),
-                    download: Math.floor(Math.random() * 150),
-                }));
+                    download: Math.floor(Math.random() * 150) }));
                 setUsageData(mockUsage);
 
             } catch (err) {
@@ -117,13 +116,13 @@ const UserDetails = () => {
 
             <Grid container spacing={3}>
                 {/* Left Column: User Info & Subscription */}
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 0, overflow: 'hidden', borderRadius: '16px', mb: 3, border: `1px solid ${theme.palette.divider}` }}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                    <Paper sx={{ p: 0, overflow: 'hidden',  mb: 3, border: `1px solid ${theme.palette.divider}` }}>
                         <Box sx={{ p: 3, background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.background.paper, 0.1)} 100%)` }}>
                             <Box display="flex" justifyContent="center" mb={2}>
                                 <Box sx={{
-                                    width: 80, height: 80, borderRadius: '50%',
-                                    bgcolor: theme.palette.primary.main, color: 'black',
+                                    width: 80, height: 80, 
+                                    bgcolor: theme.palette.primary.main, color: 'primary.contrastText',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                 }}>
                                     <PersonIcon sx={{ fontSize: 40 }} />
@@ -157,7 +156,7 @@ const UserDetails = () => {
                         </List>
                     </Paper>
 
-                    <Paper sx={{ p: 3, borderRadius: '16px', border: `1px solid ${theme.palette.divider}` }}>
+                    <Paper sx={{ p: 3,  border: `1px solid ${theme.palette.divider}` }}>
                         <Typography variant="h6" gutterBottom>Current Subscription</Typography>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography color="text.secondary">Plan</Typography>
@@ -173,16 +172,16 @@ const UserDetails = () => {
                                 {user.subscription?.endDate ? new Date(user.subscription.endDate).toLocaleDateString() : 'N/A'}
                             </Typography>
                         </Box>
-                        <Button fullWidth variant="outlined" color="primary" sx={{ borderRadius: '10px' }}>
+                        <Button fullWidth variant="outlined" color="primary" sx={{ }}>
                             Manage Subscription
                         </Button>
                     </Paper>
                 </Grid>
 
                 {/* Right Column: Usage & Payments */}
-                <Grid item xs={12} md={8}>
+                <Grid size={{ xs: 12, md: 8 }}>
                     {/* Usage Chart */}
-                    <Paper sx={{ p: 3, borderRadius: '16px', mb: 3, border: `1px solid ${theme.palette.divider}` }}>
+                    <Paper sx={{ p: 3,  mb: 3, border: `1px solid ${theme.palette.divider}` }}>
                         <Typography variant="h6" gutterBottom>Data Usage Summary (Last 7 Days)</Typography>
                         <Box height={300}>
                             <ResponsiveContainer width="100%" height="100%">
@@ -190,7 +189,7 @@ const UserDetails = () => {
                                     <XAxis dataKey="day" stroke={theme.palette.text.secondary} />
                                     <YAxis stroke={theme.palette.text.secondary} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: theme.palette.background.paper, borderRadius: '8px' }}
+                                        contentStyle={{ backgroundColor: theme.palette.background.paper }}
                                     />
                                     <Line type="monotone" dataKey="download" stroke={theme.palette.primary.main} strokeWidth={3} dot={{ r: 4 }} name="Download (GB)" />
                                     <Line type="monotone" dataKey="upload" stroke={theme.palette.secondary.main} strokeWidth={3} dot={{ r: 4 }} name="Upload (GB)" />
@@ -200,7 +199,7 @@ const UserDetails = () => {
                     </Paper>
 
                     {/* Payment History */}
-                    <Paper sx={{ p: 3, borderRadius: '16px', border: `1px solid ${theme.palette.divider}` }}>
+                    <Paper sx={{ p: 3,  border: `1px solid ${theme.palette.divider}` }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography variant="h6">Payment & Invoice History</Typography>
                             <Button startIcon={<HistoryIcon />}>View All</Button>

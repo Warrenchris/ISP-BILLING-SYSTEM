@@ -14,8 +14,7 @@ import {
   Avatar,
   Fade,
   Grow,
-  useTheme,
-} from '@mui/material';
+  useTheme } from '@mui/material';
 import { Lock as LockIcon, Visibility, VisibilityOff, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 
@@ -77,14 +76,13 @@ const ResetPassword = () => {
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
         border: `1px solid ${theme.palette.divider}`,
-        borderRadius: '24px',
+        
         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
         position: 'relative',
         overflow: 'hidden',
         maxWidth: 450,
         width: '100%',
-        ...sx,
-      }}
+        ...sx }}
       {...props}
     >
       {children}
@@ -101,12 +99,11 @@ const ResetPassword = () => {
         background: theme.palette.mode === 'dark'
           ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`
           : `linear-gradient(135deg, ${theme.palette.grey[50]} 0%, ${theme.palette.grey[200]} 100%)`,
-        p: 3,
-      }}
+        p: 3 }}
     >
       <Grow in={mounted} timeout={800}>
         <GlassCard>
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: 3 }}>
             <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
               <Avatar
                 sx={{
@@ -114,8 +111,7 @@ const ResetPassword = () => {
                   height: 64,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                   mb: 2,
-                  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
-                }}
+                  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)' }}
               >
                 <LockIcon fontSize="large" />
               </Avatar>
@@ -129,7 +125,7 @@ const ResetPassword = () => {
 
             {success ? (
               <Fade in={success}>
-                <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Box sx={{ textAlign: 'center', py: 3 }}>
                   <CheckCircleIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
                   <Typography variant="h5" gutterBottom sx={{ color: 'text.primary' }}>
                     Password Reset!
@@ -142,7 +138,7 @@ const ResetPassword = () => {
             ) : (
               <form onSubmit={handleSubmit}>
                 {error && (
-                  <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }}>
+                  <Alert severity="error" sx={{ mb: 3 }}>
                     {error}
                   </Alert>
                 )}
@@ -165,13 +161,12 @@ const ResetPassword = () => {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
-                          sx={{ color: 'rgba(255,255,255,0.5)' }}
+                          sx={{ color: 'text.secondary' }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>
-                    ),
-                  }}
+                    ) }}
                 />
 
                 <TextField
@@ -186,8 +181,7 @@ const ResetPassword = () => {
                       <InputAdornment position="start">
                         <LockIcon sx={{ color: 'text.secondary' }} />
                       </InputAdornment>
-                    ),
-                  }}
+                    ) }}
                 />
 
                 <Button
@@ -199,13 +193,12 @@ const ResetPassword = () => {
                     py: 1.5,
                     fontSize: '1rem',
                     fontWeight: 600,
-                    borderRadius: '12px',
+                    
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                     '&:hover': {
                       background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
-                      transform: 'translateY(-2px)',
-                    }
+                      transform: 'translateY(-2px)' }
                   }}
                 >
                   {loading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}

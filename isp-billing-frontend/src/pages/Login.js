@@ -22,8 +22,7 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
-  alpha,
-} from '@mui/material';
+  alpha } from '@mui/material';
 import {
   Email as EmailIcon,
   Lock as LockIcon,
@@ -34,8 +33,7 @@ import {
   Person,
   Phone,
   Router,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+  CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { Google, Facebook } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -79,20 +77,18 @@ const ToggleThemeButton = ({ darkMode, toggleDarkMode }) => {
         top: 24,
         right: 24,
         zIndex: 10,
-        background: 'rgba(26, 26, 46, 0.4)',
+        bgcolor: 'background.paper',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        color: 'white',
+        color: 'text.primary',
         width: 48,
         height: 48,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           background: 'rgba(255, 255, 255, 0.1)',
           transform: 'translateY(-2px)',
-          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)',
-        },
-      }}
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)' } }}
     >
       {darkMode ? <Brightness7 /> : <Brightness4 />}
     </IconButton>
@@ -102,15 +98,13 @@ const ToggleThemeButton = ({ darkMode, toggleDarkMode }) => {
 const Login = ({ darkMode, toggleDarkMode }) => {
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-  });
+    password: '' });
   const [accessRequestData, setAccessRequestData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phoneNumber: '',
-    routerIp: '',
-  });
+    routerIp: '' });
   const [loading, setLoading] = useState(false);
   // const [error, setError] = useState(''); // Removed in favor of global notifications
   const [mounted, setMounted] = useState(false);
@@ -148,16 +142,14 @@ const Login = ({ darkMode, toggleDarkMode }) => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
-    });
+      [e.target.name]: e.target.value });
     // setError('');
   };
 
   const handleAccessRequestChange = (e) => {
     setAccessRequestData({
       ...accessRequestData,
-      [e.target.name]: e.target.value,
-    });
+      [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -202,8 +194,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
           lastName: '',
           email: '',
           phoneNumber: '',
-          routerIp: '',
-        });
+          routerIp: '' });
       }, 2000);
     } catch (err) {
       notifyError('Failed to submit access request. Please try again.');
@@ -237,9 +228,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                radial-gradient(circle at 80% 20%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 50%)`,
           zIndex: 0,
           animation: `${gradientShift} 15s ease-in-out infinite`,
-          backgroundSize: '200% 200%',
-        },
-      }}
+          backgroundSize: '200% 200%' } }}
     >
       <ToggleThemeButton darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
 
@@ -253,7 +242,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
               background: darkMode
                 ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`
                 : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
-              borderRadius: '50%',
+              
               animation: `${floatAnimation} ${12 + i * 2}s ease-in-out infinite`,
               animationDelay: `${i * 1.5}s`,
               zIndex: 0,
@@ -262,18 +251,15 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 width: '80px',
                 height: '80px',
                 top: `${15 + i * 8}%`,
-                left: `${8 + i * 6}%`,
-              } : i % 3 === 1 ? {
+                left: `${8 + i * 6}%` } : i % 3 === 1 ? {
                 width: '120px',
                 height: '120px',
                 bottom: `${12 + i * 6}%`,
-                right: `${5 + i * 8}%`,
-              } : {
+                right: `${5 + i * 8}%` } : {
                 width: '60px',
                 height: '60px',
                 top: `${50 + i * 3}%`,
-                left: `${70 + i * 2}%`,
-              })
+                left: `${70 + i * 2}%` })
             }}
           />
         ))
@@ -296,8 +282,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderRight: `1px solid ${theme.palette.divider}`,
-            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-          }}
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}` }}
         >
           <Grow in={mounted} timeout={1200}>
             <Box
@@ -306,8 +291,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 zIndex: 2,
                 maxWidth: '600px',
                 textAlign: 'center',
-                color: theme.palette.text.primary,
-              }}
+                color: theme.palette.text.primary }}
             >
               {/* Modern ISP Logo */}
               <Box
@@ -327,9 +311,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     transform: 'scale(1.05)',
                     filter: darkMode
                       ? `drop-shadow(0 12px 24px ${alpha(theme.palette.primary.main, 0.4)})`
-                      : `drop-shadow(0 12px 24px ${alpha(theme.palette.primary.main, 0.3)})`,
-                  },
-                }}
+                      : `drop-shadow(0 12px 24px ${alpha(theme.palette.primary.main, 0.3)})` } }}
               />
 
               <Typography
@@ -342,8 +324,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  letterSpacing: '-0.025em',
-                }}
+                  letterSpacing: '-0.025em' }}
               >
                 ISP Billing Pro
               </Typography>
@@ -356,8 +337,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   mb: 4,
                   opacity: 0.9,
                   lineHeight: 1.6,
-                  color: theme.palette.text.secondary,
-                }}
+                  color: theme.palette.text.secondary }}
               >
                 Next-generation billing solutions for modern internet service providers
               </Typography>
@@ -367,8 +347,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   display: 'flex',
                   justifyContent: 'center',
                   gap: 3,
-                  mt: 4,
-                }}
+                  mt: 4 }}
               >
                 {[
                   { icon: '🚀', text: 'Fast & Reliable' },
@@ -383,9 +362,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         opacity: 1,
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
+                        transform: 'translateY(-2px)' } }}
                   >
                     <Typography variant="h4" sx={{ mb: 1 }}>
                       {feature.icon}
@@ -410,8 +387,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
           justifyContent: 'center',
           alignItems: 'center',
           p: { xs: 3, sm: 6 },
-          position: 'relative',
-        }}
+          position: 'relative' }}
       >
         <Zoom in={mounted} style={{ transitionDelay: mounted ? '400ms' : '0ms' }}>
           <Box
@@ -424,7 +400,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
               backdropFilter: 'blur(25px)',
               WebkitBackdropFilter: 'blur(25px)',
               p: { xs: 4, sm: 6 },
-              borderRadius: '24px',
+              
               boxShadow: darkMode
                 ? '0 20px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                 : '0 20px 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
@@ -440,16 +416,13 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 left: 0,
                 right: 0,
                 height: '1px',
-                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-              },
+                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)' },
               '&:hover': {
                 transform: 'translateY(-2px)',
                 boxShadow: darkMode
                   ? '0 25px 70px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                  : '0 25px 70px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-              },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
+                  : '0 25px 70px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9)' },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
           >
             <Fade in={mounted} timeout={1000}>
               <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -460,10 +433,9 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     margin: '0 auto 24px',
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
-                    animation: `${pulseAnimation} 4s ease-in-out infinite`,
-                  }}
+                    animation: `${pulseAnimation} 4s ease-in-out infinite` }}
                 >
-                  <LockIcon sx={{ fontSize: '32px', color: 'white' }} />
+                  <LockIcon sx={{ fontSize: '32px', color: 'text.primary' }} />
                 </Avatar>
 
                 <Typography
@@ -473,8 +445,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     fontWeight: 700,
                     mb: 1,
                     color: theme.palette.text.primary,
-                    letterSpacing: '-0.025em',
-                  }}
+                    letterSpacing: '-0.025em' }}
                 >
                   Welcome back
                 </Typography>
@@ -484,8 +455,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   sx={{
                     fontSize: '1rem',
                     color: theme.palette.text.secondary,
-                    lineHeight: 1.6,
-                  }}
+                    lineHeight: 1.6 }}
                 >
                   Sign in to your ISP Billing account
                 </Typography>
@@ -503,7 +473,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   onClick={() => handleSocialLogin('google')}
                   sx={{
                     py: 1.5,
-                    borderRadius: '12px',
+                    
                     textTransform: 'none',
                     fontWeight: 500,
                     position: 'relative',
@@ -516,12 +486,9 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       width: '100%',
                       height: '100%',
                       background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                      transition: 'left 0.5s',
-                    },
+                      transition: 'left 0.5s' },
                     '&:hover::before': {
-                      left: '100%',
-                    },
-                  }}
+                      left: '100%' } }}
                 >
                   Google
                 </Button>
@@ -532,7 +499,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   onClick={() => handleSocialLogin('facebook')}
                   sx={{
                     py: 1.5,
-                    borderRadius: '12px',
+                    
                     textTransform: 'none',
                     fontWeight: 500,
                     position: 'relative',
@@ -545,12 +512,9 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       width: '100%',
                       height: '100%',
                       background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                      transition: 'left 0.5s',
-                    },
+                      transition: 'left 0.5s' },
                     '&:hover::before': {
-                      left: '100%',
-                    },
-                  }}
+                      left: '100%' } }}
                 >
                   Facebook
                 </Button>
@@ -564,8 +528,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 '&::before, &::after': {
                   borderColor: darkMode
                     ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(0, 0, 0, 0.1)',
-                }
+                    : 'rgba(0, 0, 0, 0.1)' }
               }}>
                 OR
               </Divider>
@@ -590,8 +553,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       <InputAdornment position="start">
                         <EmailIcon sx={{ color: theme.palette.text.secondary }} />
                       </InputAdornment>
-                    ),
-                  }}
+                    ) }}
                   sx={{ mb: 3 }}
                 />
               </Fade>
@@ -626,8 +588,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>
-                    ),
-                  }}
+                    ) }}
                   sx={{ mb: 3 }}
                 />
               </Fade>
@@ -643,9 +604,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       textDecoration: 'none',
                       fontWeight: 500,
                       '&:hover': {
-                        textDecoration: 'underline',
-                      },
-                    }}
+                        textDecoration: 'underline' } }}
                   >
                     Forgot password?
                   </Link>
@@ -658,9 +617,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       textDecoration: 'none',
                       fontWeight: 500,
                       '&:hover': {
-                        textDecoration: 'underline',
-                      },
-                    }}
+                        textDecoration: 'underline' } }}
                   >
                     Request Access
                   </Link>
@@ -677,7 +634,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     py: 1.75,
                     fontSize: '1rem',
                     fontWeight: 600,
-                    borderRadius: '12px',
+                    
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                     position: 'relative',
@@ -690,21 +647,16 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       width: '100%',
                       height: '100%',
                       background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-                      transition: 'left 0.5s',
-                    },
+                      transition: 'left 0.5s' },
                     '&:hover::before': {
-                      left: '100%',
-                    },
+                      left: '100%' },
                     '&:hover': {
                       background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                       boxShadow: '0 12px 35px rgba(102, 126, 234, 0.4)',
-                      transform: 'translateY(-2px)',
-                    },
+                      transform: 'translateY(-2px)' },
                     '&:disabled': {
                       background: 'rgba(102, 126, 234, 0.3)',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                    },
-                  }}
+                      color: 'text.secondary' } }}
                 >
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
@@ -726,7 +678,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '20px',
+            
             background: darkMode
               ? 'rgba(26, 26, 46, 0.9)'
               : 'rgba(255, 255, 255, 0.9)',
@@ -734,9 +686,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
             WebkitBackdropFilter: 'blur(30px)',
             border: darkMode
               ? '1px solid rgba(255, 255, 255, 0.1)'
-              : '1px solid rgba(0, 0, 0, 0.1)',
-          },
-        }}
+              : '1px solid rgba(0, 0, 0, 0.1)' } }}
       >
         <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
           <Typography variant="h5" fontWeight={600}>
@@ -794,7 +744,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '20px',
+            
             background: darkMode
               ? 'rgba(26, 26, 46, 0.9)'
               : 'rgba(255, 255, 255, 0.9)',
@@ -802,9 +752,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
             WebkitBackdropFilter: 'blur(30px)',
             border: darkMode
               ? '1px solid rgba(255, 255, 255, 0.1)'
-              : '1px solid rgba(0, 0, 0, 0.1)',
-          },
-        }}
+              : '1px solid rgba(0, 0, 0, 0.1)' } }}
       >
         <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
           <Typography variant="h5" fontWeight={600}>
@@ -813,7 +761,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           {accessRequestSuccess ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Box sx={{ textAlign: 'center', py: 3 }}>
               <CheckCircleIcon sx={{ fontSize: 72, color: 'success.main', mb: 2 }} />
               <Typography variant="h5" gutterBottom fontWeight={600}>
                 Request Submitted!
@@ -840,8 +788,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       <InputAdornment position="start">
                         <Person sx={{ color: 'text.secondary' }} />
                       </InputAdornment>
-                    ),
-                  }}
+                    ) }}
                 />
                 <TextField
                   required
@@ -854,8 +801,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                       <InputAdornment position="start">
                         <Person sx={{ color: 'text.secondary' }} />
                       </InputAdornment>
-                    ),
-                  }}
+                    ) }}
                 />
               </Box>
 
@@ -873,8 +819,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     <InputAdornment position="start">
                       <EmailIcon sx={{ color: 'text.secondary' }} />
                     </InputAdornment>
-                  ),
-                }}
+                  ) }}
               />
 
               <TextField
@@ -890,8 +835,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     <InputAdornment position="start">
                       <Phone sx={{ color: 'text.secondary' }} />
                     </InputAdornment>
-                  ),
-                }}
+                  ) }}
               />
 
               <TextField
@@ -906,8 +850,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     <InputAdornment position="start">
                       <Router sx={{ color: 'text.secondary' }} />
                     </InputAdornment>
-                  ),
-                }}
+                  ) }}
               />
             </Box>
           )}

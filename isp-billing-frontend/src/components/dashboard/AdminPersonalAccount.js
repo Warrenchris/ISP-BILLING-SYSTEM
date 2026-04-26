@@ -3,8 +3,7 @@ import {
     DataUsage as DataUsageIcon,
     Speed as SpeedIcon,
     Payment as PaymentIcon,
-    Receipt as ReceiptIcon,
-} from '@mui/icons-material';
+    Receipt as ReceiptIcon } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
 import { useTheme, alpha } from '@mui/material';
 

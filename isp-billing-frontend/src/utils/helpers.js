@@ -2,15 +2,14 @@
 const VALIDATION_PATTERNS = {
   EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   KENYAN_PHONE: /^(?:254|\+254|0)?(7[0-9]{8})$/,
-  PASSWORD: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, // Minimum 8 chars, at least one letter and one number
+  PASSWORD: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8 }$/, // Minimum 8 chars, at least one letter and one number
 };
 
 const ERROR_MESSAGES = {
   REQUIRED_FIELD: 'This field is required',
   EMAIL_INVALID: 'Please enter a valid email address',
   PHONE_INVALID: 'Please enter a valid Kenyan phone number',
-  PASSWORD_WEAK: 'Password must be at least 8 characters with letters and numbers',
-};
+  PASSWORD_WEAK: 'Password must be at least 8 characters with letters and numbers' };
 
 // Format bytes to human readable format
 export const formatBytes = (bytes, decimals = 2) => {
@@ -33,8 +32,7 @@ export const formatCurrency = (amount, currency = 'KSh') => {
 
   return `${currency} ${amount.toLocaleString('en-KE', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+    maximumFractionDigits: 2 })}`;
 };
 
 // Format date
@@ -44,8 +42,7 @@ export const formatDate = (date, options = {}) => {
   const defaultOptions = {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
-  };
+    day: 'numeric' };
 
   const formatOptions = { ...defaultOptions, ...options };
 
@@ -61,8 +58,7 @@ export const formatDateTime = (date) => {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit',
-  });
+    minute: '2-digit' });
 };
 
 // Get relative time (e.g., "2 hours ago")
@@ -104,8 +100,7 @@ export const validatePhoneNumber = (phoneNumber) => {
   const isValid = VALIDATION_PATTERNS.KENYAN_PHONE.test(phoneNumber);
   return {
     isValid,
-    message: isValid ? '' : ERROR_MESSAGES.PHONE_INVALID,
-  };
+    message: isValid ? '' : ERROR_MESSAGES.PHONE_INVALID };
 };
 
 // Validate email
@@ -117,8 +112,7 @@ export const validateEmail = (email) => {
   const isValid = VALIDATION_PATTERNS.EMAIL.test(email);
   return {
     isValid,
-    message: isValid ? '' : ERROR_MESSAGES.EMAIL_INVALID,
-  };
+    message: isValid ? '' : ERROR_MESSAGES.EMAIL_INVALID };
 };
 
 // Validate password
@@ -130,8 +124,7 @@ export const validatePassword = (password) => {
   const isValid = VALIDATION_PATTERNS.PASSWORD.test(password);
   return {
     isValid,
-    message: isValid ? '' : ERROR_MESSAGES.PASSWORD_WEAK,
-  };
+    message: isValid ? '' : ERROR_MESSAGES.PASSWORD_WEAK };
 };
 
 // Validate required field
@@ -139,8 +132,7 @@ export const validateRequired = (value, fieldName = 'Field') => {
   const isValid = value && value.toString().trim() !== '';
   return {
     isValid,
-    message: isValid ? '' : `${fieldName} is required`,
-  };
+    message: isValid ? '' : `${fieldName} is required` };
 };
 
 // Format phone number for display
@@ -221,28 +213,23 @@ export const getStatusColor = (status, type = 'default') => {
       expired: 'error',
       suspended: 'warning',
       cancelled: 'default',
-      pending: 'info',
-    },
+      pending: 'info' },
     payment: {
       completed: 'success',
       pending: 'warning',
       failed: 'error',
-      cancelled: 'default',
-    },
+      cancelled: 'default' },
     invoice: {
       paid: 'success',
       pending: 'warning',
       overdue: 'error',
-      cancelled: 'default',
-    },
+      cancelled: 'default' },
     default: {
       active: 'success',
       inactive: 'default',
       pending: 'warning',
       error: 'error',
-      success: 'success',
-    },
-  };
+      success: 'success' } };
 
   return statusColors[type]?.[status] || statusColors.default[status] || 'default';
 };
@@ -369,8 +356,7 @@ export const storage = {
       console.error('Error clearing localStorage:', error);
       return false;
     }
-  },
-};
+  } };
 
 const helpers = {
   formatBytes,
@@ -396,8 +382,7 @@ const helpers = {
   groupBy,
   downloadFile,
   copyToClipboard,
-  storage,
-};
+  storage };
 
 export default helpers;
 

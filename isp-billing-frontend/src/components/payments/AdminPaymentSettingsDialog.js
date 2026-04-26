@@ -35,10 +35,9 @@ const AdminPaymentSettingsDialog = ({
                     background: 'rgba(26, 26, 46, 0.95)',
                     backdropFilter: 'blur(30px)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '20px',
-                    color: 'white'
-                },
-            }}
+                    
+                    color: 'text.primary'
+                } }}
         >
             <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
                 <Avatar
@@ -46,8 +45,7 @@ const AdminPaymentSettingsDialog = ({
                         width: 64,
                         height: 64,
                         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                        margin: '0 auto 16px',
-                    }}
+                        margin: '0 auto 16px' }}
                 >
                     <SettingsIcon sx={{ fontSize: 32 }} />
                 </Avatar>
@@ -97,12 +95,11 @@ const AdminPaymentSettingsDialog = ({
                     variant="contained"
                     onClick={onSave}
                     sx={{
-                        borderRadius: '10px',
+                        
                         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                        color: 'white',
+                        color: 'text.primary',
                         '&:hover': {
-                            background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
-                        }
+                            background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)` }
                     }}
                 >
                     Save Settings

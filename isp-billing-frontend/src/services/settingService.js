@@ -5,5 +5,4 @@ export const settingService = {
     updateCompanyInfo: (data) => api.put('/admin/settings/company', data),
 
     getPaymentSettings: () => api.get('/admin/settings/payments'),
-    updatePaymentSettings: (data) => api.put('/admin/settings/payments', data),
-};
+    updatePaymentSettings: (data) => api.put('/admin/settings/payments', data) };

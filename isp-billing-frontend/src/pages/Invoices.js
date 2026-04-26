@@ -17,8 +17,7 @@ import {
   DialogActions,
   useTheme,
   alpha,
-  Avatar,
-} from '@mui/material';
+  Avatar } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
   Download as DownloadIcon,
@@ -26,8 +25,7 @@ import {
   Cancel as CancelIcon,
   Refresh as RefreshIcon,
   Schedule as ScheduleIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+  CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useApi } from '../contexts/ApiContext';
 
@@ -109,8 +107,7 @@ const Invoices = () => {
       paid: theme.palette.success.main,
       pending: theme.palette.warning.main,
       overdue: theme.palette.error.main,
-      cancelled: theme.palette.text.disabled,
-    };
+      cancelled: theme.palette.text.disabled };
     return colors[status] || theme.palette.text.disabled;
   };
 
@@ -136,11 +133,11 @@ const Invoices = () => {
   const GlassCard = ({ children, sx = {}, ...props }) => (
     <Card
       sx={{
-        background: 'rgba(26, 26, 46, 0.6)',
+        background: 'rgba(15, 15, 15, 0.85)',
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '16px',
+        
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
@@ -152,15 +149,12 @@ const Invoices = () => {
           left: 0,
           right: 0,
           height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-        },
+          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)' },
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-          borderColor: 'rgba(255, 255, 255, 0.15)',
-        },
-        ...sx,
-      }}
+          borderColor: 'rgba(255, 255, 255, 0.15)' },
+        ...sx }}
       {...props}
     >
       {children}
@@ -178,8 +172,7 @@ const Invoices = () => {
               height: 56,
               background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
               mr: 2,
-              boxShadow: `0 8px 25px ${alpha(color, 0.3)}`,
-            }}
+              boxShadow: `0 8px 25px ${alpha(color, 0.3)}` }}
           >
             {icon}
           </Avatar>
@@ -198,8 +191,7 @@ const Invoices = () => {
                 background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
+                backgroundClip: 'text' }}
             >
               {value}
             </Typography>
@@ -223,8 +215,7 @@ const Invoices = () => {
         <Typography variant="body2" fontWeight="medium" sx={{ color: theme.palette.primary.main }}>
           {params.value}
         </Typography>
-      ),
-    },
+      ) },
     {
       field: 'totalAmount',
       headerName: 'Amount',
@@ -233,8 +224,7 @@ const Invoices = () => {
         <Typography variant="body2" fontWeight="medium">
           KSh {params.value}
         </Typography>
-      ),
-    },
+      ) },
     {
       field: 'status',
       headerName: 'Status',
@@ -251,12 +241,10 @@ const Invoices = () => {
               color: color,
               border: `1px solid ${alpha(color, 0.3)}`,
               fontWeight: 500,
-              textTransform: 'capitalize',
-            }}
+              textTransform: 'capitalize' }}
           />
         );
-      },
-    },
+      } },
     {
       field: 'issueDate',
       headerName: 'Issue Date',
@@ -265,8 +253,7 @@ const Invoices = () => {
         <Typography variant="body2">
           {new Date(params.value).toLocaleDateString()}
         </Typography>
-      ),
-    },
+      ) },
     {
       field: 'dueDate',
       headerName: 'Due Date',
@@ -275,8 +262,7 @@ const Invoices = () => {
         <Typography variant="body2">
           {new Date(params.value).toLocaleDateString()}
         </Typography>
-      ),
-    },
+      ) },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -294,9 +280,7 @@ const Invoices = () => {
                 color: theme.palette.info.main,
                 '&:hover': {
                   background: 'rgba(116, 185, 255, 0.2)',
-                  transform: 'translateY(-1px)',
-                },
-              }}
+                  transform: 'translateY(-1px)' } }}
             >
               <VisibilityIcon fontSize="small" />
             </IconButton>
@@ -312,12 +296,9 @@ const Invoices = () => {
                 color: theme.palette.primary.main,
                 '&:hover': {
                   background: 'rgba(102, 126, 234, 0.2)',
-                  transform: 'translateY(-1px)',
-                },
+                  transform: 'translateY(-1px)' },
                 '&:disabled': {
-                  opacity: 0.5,
-                },
-              }}
+                  opacity: 0.5 } }}
             >
               {downloading[params.row.id] ? (
                 <CircularProgress size={16} />
@@ -327,8 +308,7 @@ const Invoices = () => {
             </IconButton>
           </Tooltip>
         </Box>
-      ),
-    },
+      ) },
   ];
 
   const pendingInvoices = invoices.filter(inv => inv.status === 'pending');
@@ -349,8 +329,7 @@ const Invoices = () => {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              mb: 1,
-            }}
+              mb: 1 }}
           >
             Invoices
           </Typography>
@@ -363,19 +342,17 @@ const Invoices = () => {
           startIcon={<RefreshIcon />}
           onClick={fetchInvoices}
           sx={{
-            borderRadius: '12px',
+            
             textTransform: 'none',
             fontWeight: 500,
-            background: 'rgba(26, 26, 46, 0.4)',
+            background: 'rgba(15, 15, 15, 0.75)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             '&:hover': {
               background: 'rgba(255, 255, 255, 0.1)',
               borderColor: 'rgba(255, 255, 255, 0.2)',
-              transform: 'translateY(-1px)',
-            },
-          }}
+              transform: 'translateY(-1px)' } }}
         >
           Refresh
         </Button>
@@ -386,12 +363,11 @@ const Invoices = () => {
           severity={alert.severity}
           sx={{
             mb: 3,
-            borderRadius: '12px',
+            
             background: 'rgba(26, 26, 46, 0.8)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}
+            border: '1px solid rgba(255, 255, 255, 0.1)' }}
         >
           {alert.message}
         </Alert>
@@ -399,7 +375,7 @@ const Invoices = () => {
 
       {/* Invoice Summary */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<ReceiptIcon />}
             title="Total Invoices"
@@ -407,30 +383,30 @@ const Invoices = () => {
             color="#667eea"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<ScheduleIcon />}
             title="Pending Amount"
             value={`KSh ${totalPending.toFixed(2)}`}
-            color="#ffb800"
+            color={theme.palette.warning.main}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<CancelIcon />}
             title="Overdue"
             value={overdueInvoices.length}
             subtitle="invoices"
-            color="#ff6b6b"
+            color="#EF4444"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<CheckCircleIcon />}
             title="Paid"
             value={invoices.filter(inv => inv.status === 'paid').length}
             subtitle="invoices"
-            color="#00d4aa"
+            color="#22C55E"
           />
         </Grid>
       </Grid>
@@ -441,12 +417,11 @@ const Invoices = () => {
           severity="error"
           sx={{
             mb: 3,
-            borderRadius: '12px',
+            
             background: 'rgba(255, 107, 107, 0.1)',
             border: '1px solid rgba(255, 107, 107, 0.2)',
             backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          }}
+            WebkitBackdropFilter: 'blur(20px)' }}
         >
           You have {overdueInvoices.length} overdue invoice(s). Please make payment to avoid service interruption.
         </Alert>
@@ -454,7 +429,7 @@ const Invoices = () => {
 
       {/* Invoices Table */}
       <GlassCard>
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             All Invoices
           </Typography>
@@ -470,26 +445,19 @@ const Invoices = () => {
                 border: 'none',
                 '& .MuiDataGrid-cell': {
                   borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: 'text.primary',
-                },
+                  color: 'text.primary' },
                 '& .MuiDataGrid-columnHeaders': {
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                   '& .MuiDataGrid-columnHeader': {
                     color: 'text.primary',
-                    fontWeight: 600,
-                  },
-                },
+                    fontWeight: 600 } },
                 '& .MuiDataGrid-row': {
                   '&:hover': {
-                    background: 'rgba(255, 255, 255, 0.05)',
-                  },
-                },
+                    background: 'rgba(255, 255, 255, 0.05)' } },
                 '& .MuiDataGrid-footerContainer': {
                   borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                  background: 'rgba(255, 255, 255, 0.02)',
-                },
-              }}
+                  background: 'rgba(255, 255, 255, 0.02)' } }}
             />
           </Box>
         </CardContent>
@@ -502,8 +470,7 @@ const Invoices = () => {
               width: 80,
               height: 80,
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              margin: '0 auto 16px',
-            }}
+              margin: '0 auto 16px' }}
           >
             <ReceiptIcon sx={{ fontSize: 40 }} />
           </Avatar>
@@ -528,10 +495,8 @@ const Invoices = () => {
             backdropFilter: 'blur(30px)',
             WebkitBackdropFilter: 'blur(30px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-          },
-        }}
+            
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)' } }}
       >
         <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
           <Typography variant="h5" fontWeight={600}>
@@ -542,7 +507,7 @@ const Invoices = () => {
           {selectedInvoice && (
             <Box>
               <Grid container spacing={3} mb={4}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Invoice Number
                   </Typography>
@@ -550,7 +515,7 @@ const Invoices = () => {
                     {selectedInvoice.invoiceNumber}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Status
                   </Typography>
@@ -561,11 +526,10 @@ const Invoices = () => {
                       color: getStatusColor(selectedInvoice.status),
                       border: `1px solid ${alpha(getStatusColor(selectedInvoice.status), 0.3)}`,
                       fontWeight: 500,
-                      textTransform: 'capitalize',
-                    }}
+                      textTransform: 'capitalize' }}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Issue Date
                   </Typography>
@@ -573,7 +537,7 @@ const Invoices = () => {
                     {new Date(selectedInvoice.issueDate).toLocaleDateString()}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Due Date
                   </Typography>
@@ -589,10 +553,9 @@ const Invoices = () => {
               <Box
                 sx={{
                   background: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '12px',
+                  
                   p: 3,
-                  mb: 3,
-                }}
+                  mb: 3 }}
               >
                 {selectedInvoice.InvoiceItems && selectedInvoice.InvoiceItems.length > 0 ? (
                   selectedInvoice.InvoiceItems.map((item, index) => (
@@ -619,9 +582,8 @@ const Invoices = () => {
                 sx={{
                   p: 3,
                   background: 'rgba(102, 126, 234, 0.1)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(102, 126, 234, 0.2)',
-                }}
+                  
+                  border: '1px solid rgba(102, 126, 234, 0.2)' }}
               >
                 <Typography variant="h6" fontWeight={600}>
                   Total Amount
@@ -633,8 +595,7 @@ const Invoices = () => {
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                    backgroundClip: 'text' }}
                 >
                   KSh {selectedInvoice.totalAmount}
                 </Typography>
@@ -646,10 +607,9 @@ const Invoices = () => {
           <Button
             onClick={() => setInvoiceDialog(false)}
             sx={{
-              borderRadius: '12px',
+              
               textTransform: 'none',
-              fontWeight: 500,
-            }}
+              fontWeight: 500 }}
           >
             Close
           </Button>
@@ -660,15 +620,13 @@ const Invoices = () => {
               onClick={() => handleDownloadPdf(selectedInvoice)}
               disabled={downloading[selectedInvoice.id]}
               sx={{
-                borderRadius: '12px',
+                
                 textTransform: 'none',
                 fontWeight: 500,
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #7c8df0 0%, #8b5fb8 100%)',
-                  transform: 'translateY(-1px)',
-                },
-              }}
+                  transform: 'translateY(-1px)' } }}
             >
               {downloading[selectedInvoice.id] ? 'Downloading...' : 'Download PDF'}
             </Button>

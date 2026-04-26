@@ -80,7 +80,7 @@ const StaffRoles = () => {
             </Box>
 
             {loading ? <LinearProgress /> : error ? <Alert severity="error">{error}</Alert> : (
-                <TableContainer component={Paper} sx={{ borderRadius: '16px', background: alpha(theme.palette.background.paper, 0.6) }}>
+                <TableContainer component={Paper} sx={{  background: alpha(theme.palette.background.paper, 0.6) }}>
                     <Table>
                         <TableHead>
                             <TableRow>

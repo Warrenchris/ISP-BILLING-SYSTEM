@@ -46,11 +46,10 @@ const CashPaymentDialog = ({
                     background: 'rgba(26, 26, 46, 0.95)',
                     backdropFilter: 'blur(30px)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '20px',
+                    
                     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-                    color: 'white'
-                },
-            }}
+                    color: 'text.primary'
+                } }}
         >
             <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
                 <Avatar
@@ -58,8 +57,7 @@ const CashPaymentDialog = ({
                         width: 64,
                         height: 64,
                         background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`, // Blue-ish for Cash
-                        margin: '0 auto 16px',
-                    }}
+                        margin: '0 auto 16px' }}
                 >
                     <CashIcon sx={{ fontSize: 32 }} />
                 </Avatar>
@@ -87,14 +85,13 @@ const CashPaymentDialog = ({
                             InputLabelProps={{ style: { color: '#aaa' } }}
                             InputProps={{
                                 ...params.InputProps,
-                                style: { color: 'white' },
+                                style: { color: 'text.primary' },
                                 endAdornment: (
                                     <React.Fragment>
                                         {userSearchLoading ? <CircularProgress color="inherit" size={20} /> : null}
                                         {params.InputProps.endAdornment}
                                     </React.Fragment>
-                                ),
-                            }}
+                                ) }}
                         />
                     )}
                     sx={{ mb: 3 }}
@@ -109,12 +106,11 @@ const CashPaymentDialog = ({
                 {userSubscription && (
                     <Box
                         sx={{
-                            p: 2,
+                            p: 3,
                             mb: 3,
-                            borderRadius: '12px',
+                            
                             background: 'rgba(0, 212, 170, 0.1)',
-                            border: '1px solid rgba(0, 212, 170, 0.2)',
-                        }}
+                            border: '1px solid rgba(0, 212, 170, 0.2)' }}
                     >
                         <Typography variant="subtitle2" gutterBottom sx={{ color: 'success.main' }}>
                             Active Subscription Found
@@ -127,7 +123,7 @@ const CashPaymentDialog = ({
                 )}
 
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                             fullWidth
                             label="Amount (KSh)"
@@ -137,10 +133,10 @@ const CashPaymentDialog = ({
                             placeholder="1000"
                             sx={{ mb: 2 }}
                             InputLabelProps={{ style: { color: '#aaa' } }}
-                            InputProps={{ style: { color: 'white' } }}
+                            InputProps={{ style: { color: 'text.primary' } }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                             fullWidth
                             label="Reference Number"
@@ -149,7 +145,7 @@ const CashPaymentDialog = ({
                             placeholder="CASH-001"
                             sx={{ mb: 2 }}
                             InputLabelProps={{ style: { color: '#aaa' } }}
-                            InputProps={{ style: { color: 'white' } }}
+                            InputProps={{ style: { color: 'text.primary' } }}
                         />
                     </Grid>
                 </Grid>
@@ -163,7 +159,7 @@ const CashPaymentDialog = ({
                     onChange={(e) => setCashDescription(e.target.value)}
                     placeholder="Payment description..."
                     InputLabelProps={{ style: { color: '#aaa' } }}
-                    InputProps={{ style: { color: 'white' } }}
+                    InputProps={{ style: { color: 'text.primary' } }}
                 />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
@@ -180,13 +176,12 @@ const CashPaymentDialog = ({
                     onClick={onPay}
                     disabled={processing || !selectedUser || !cashAmount || !cashReference}
                     sx={{
-                        borderRadius: '10px',
+                        
                         background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)`,
-                        color: 'white',
-                        px: 4,
+                        color: 'text.primary',
+                        px: 3,
                         '&:hover': {
-                            background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)`,
-                        }
+                            background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)` }
                     }}
                 >
                     {processing ? <CircularProgress size={20} color="inherit" /> : 'Record Payment'}

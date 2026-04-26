@@ -37,7 +37,7 @@ const Reports = () => {
                 // Fetch reports data concurrently
                 // Using reportService methods
                 const [revenueRes, growthRes, overviewRes] = await Promise.allSettled([
-                    reportService.getRevenueReports({ period }),
+                    reportService.getRevenueStats({ period }),
                     reportService.getSubscriberGrowth({ period }),
                     // Assuming an overview endpoint akin to dashboard stats but possibly scoped
                     // For now mocking or reusing dashboard stats if available, or just mocking for this view
@@ -102,7 +102,7 @@ const Reports = () => {
     }, [period, reportService]);
 
     const StatCard = ({ title, value, change, icon, color }) => (
-        <Card sx={{ borderRadius: '16px', background: alpha(theme.palette.background.paper, 0.6), height: '100%' }}>
+        <Card sx={{  background: alpha(theme.palette.background.paper, 0.6), height: '100%' }}>
             <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                     <Box>
@@ -116,10 +116,9 @@ const Reports = () => {
                     <Box
                         sx={{
                             p: 1.5,
-                            borderRadius: '12px',
+                            
                             bgcolor: alpha(color, 0.1),
-                            color: color,
-                        }}
+                            color: color }}
                     >
                         {icon}
                     </Box>
@@ -151,35 +150,35 @@ const Reports = () => {
                     <Typography color="text.secondary">Revenue analysis and key metrics</Typography>
                 </Box>
                 <Box display="flex" gap={2}>
-                    <TextField select value={period} onChange={(e) => setPeriod(e.target.value)} size="small" sx={{ width: 150, borderRadius: '12px' }}>
+                    <TextField select value={period} onChange={(e) => setPeriod(e.target.value)} size="small" sx={{ width: 150 }}>
                         <MenuItem value="daily">Daily</MenuItem>
                         <MenuItem value="monthly">Monthly</MenuItem>
                         <MenuItem value="yearly">Yearly</MenuItem>
                     </TextField>
-                    <Button variant="outlined" sx={{ borderRadius: '12px' }}>Export PDF</Button>
+                    <Button variant="outlined" sx={{ }}>Export PDF</Button>
                 </Box>
             </Box>
 
             {loading ? <LinearProgress sx={{ mb: 4 }} /> : (
                 <>
                     <Grid container spacing={3} mb={4}>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <StatCard title="Total Revenue" value={stats.revenue} change={stats.revenueChange} icon={<AttachMoney />} color={theme.palette.success.main} />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <StatCard title="Active Subscribers" value={stats.activeSubscribers} change={stats.subscribersChange} icon={<People />} color={theme.palette.info.main} />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <StatCard title="Avg. Revenue Per User" value={stats.arpu} change={stats.arpuChange} icon={<TrendingDown />} color={theme.palette.warning.main} />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <StatCard title="Churn Rate" value={stats.churnRate} change={stats.churnChange} icon={<TrendingUp />} color={theme.palette.error.main} />
                         </Grid>
                     </Grid>
 
                     <Grid container spacing={3}>
-                        <Grid item xs={12} lg={8}>
-                            <Paper sx={{ p: 3, borderRadius: '16px', height: 400, background: alpha(theme.palette.background.paper, 0.6) }}>
+                        <Grid size={{ xs: 12, lg: 8 }}>
+                            <Paper sx={{ p: 3,  height: 400, background: alpha(theme.palette.background.paper, 0.6) }}>
                                 <Typography variant="h6" gutterBottom>Revenue Growth</Typography>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={revenueData}>
@@ -191,20 +190,20 @@ const Reports = () => {
                                         </defs>
                                         <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
                                         <YAxis stroke={theme.palette.text.secondary} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.paper, borderRadius: '12px', border: 'none', boxShadow: theme.shadows[4] }} />
+                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.paper,  border: 'none', boxShadow: theme.shadows[4] }} />
                                         <Area type="monotone" dataKey="revenue" stroke={theme.palette.primary.main} fillOpacity={1} fill="url(#colorRev)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </Paper>
                         </Grid>
-                        <Grid item xs={12} lg={4}>
-                            <Paper sx={{ p: 3, borderRadius: '16px', height: 400, background: alpha(theme.palette.background.paper, 0.6) }}>
+                        <Grid size={{ xs: 12, lg: 4 }}>
+                            <Paper sx={{ p: 3,  height: 400, background: alpha(theme.palette.background.paper, 0.6) }}>
                                 <Typography variant="h6" gutterBottom>Subscriber Growth</Typography>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={growthData}>
                                         <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
                                         <YAxis stroke={theme.palette.text.secondary} />
-                                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: theme.palette.background.paper, borderRadius: '12px' }} />
+                                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: theme.palette.background.paper }} />
                                         <Legend />
                                         <Bar dataKey="active" fill={theme.palette.info.main} radius={[4, 4, 0, 0]} />
                                         <Bar dataKey="newUsers" fill={theme.palette.success.main} radius={[4, 4, 0, 0]} />

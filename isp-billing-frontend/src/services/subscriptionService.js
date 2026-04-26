@@ -14,5 +14,4 @@ export const subscriptionService = {
     getPlanById: (id) => api.get(`/plans/${id}`),
     createPlan: (data) => api.post('/plans', data),
     updatePlan: (id, data) => api.put(`/plans/${id}`, data),
-    deletePlan: (id) => api.delete(`/plans/${id}`),
-};
+    deletePlan: (id) => api.delete(`/plans/${id}`) };

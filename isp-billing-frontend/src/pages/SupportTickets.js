@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import AppBadge from '../components/AppBadge';
 import {
     Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Chip, IconButton, Button, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, MenuItem, Avatar, Grid
-} from '@mui/material';
+    DialogContent, DialogActions, TextField, MenuItem, Avatar, Grid,
+    Skeleton, Alert, Pagination, Collapse, Drawer, Divider,
+    Menu, ListItemIcon, ListItemText, Tooltip, CircularProgress } from '@mui/material';
 import {
     Add as AddIcon,
     FilterList as FilterListIcon,
@@ -11,184 +13,590 @@ import {
     BugReport as BugIcon,
     Payment as PaymentIcon,
     NetworkCheck as NetworkIcon,
-    Help as HelpIcon
-} from '@mui/icons-material';
+    Help as HelpIcon,
+    ShoppingCart as ShoppingCartIcon,
+    Refresh as RefreshIcon,
+    Close as CloseIcon,
+    Edit as EditIcon,
+    DeleteOutline as DeleteIcon,
+    AssignmentInd as AssignIcon,
+    CheckCircleOutline as ResolveIcon,
+    PlayCircleOutline as ProgressIcon,
+    Search as SearchIcon } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 
-const MOCK_TICKETS = [
-    { id: 'TKT-2029', user: 'Warren Chris', subject: 'Internet Slow', priority: 'High', status: 'Open', category: 'Technical', assignedTo: null, date: '2025-01-10' },
-    { id: 'TKT-2028', user: 'John Doe', subject: 'Payment Issue', priority: 'Medium', status: 'In Progress', category: 'Billing', assignedTo: 'Admin', date: '2025-01-09' },
-    { id: 'TKT-2027', user: 'Jane Smith', subject: 'Router Config', priority: 'Low', status: 'Closed', category: 'Technical', assignedTo: 'Tech Support', date: '2025-01-08' },
-    { id: 'TKT-2026', user: 'Mike Ross', subject: 'Plan Upgrade', priority: 'Medium', status: 'Open', category: 'Sales', assignedTo: null, date: '2025-01-08' },
-];
+import useTickets from '../hooks/useTickets';
+import { supportService } from '../services/supportService';
+import { formatDate, debounce } from '../utils/helpers';
 
-// const MOCK_STAFF = ['Admin', 'Tech Support', 'Sales Team'];
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
 
-const SupportTickets = () => {
-    const theme = useTheme();
-    const [tickets, setTickets] = useState(MOCK_TICKETS);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [newTicket, setNewTicket] = useState({ subject: '', category: 'Technical', priority: 'Medium', description: '' });
+const ICON_MAP = {
+    NetworkCheck:  <NetworkIcon    fontSize="small" />,
+    Payment:       <PaymentIcon    fontSize="small" />,
+    ShoppingCart:  <ShoppingCartIcon fontSize="small" />,
+    Help:          <HelpIcon       fontSize="small" />,
+    BugReport:     <BugIcon        fontSize="small" /> };
 
-    const handleCreate = () => {
-        setTickets([{
-            id: `TKT-${2030 + tickets.length}`,
-            user: 'Current User',
-            ...newTicket,
-            status: 'Open',
-            assignedTo: null,
-            date: new Date().toISOString().split('T')[0]
-        }, ...tickets]);
-        setOpenDialog(false);
+const ACTION_META = {
+    edit:        { label: 'Edit',         Icon: EditIcon,     color: 'inherit'  },
+    assign:      { label: 'Assign',       Icon: AssignIcon,   color: 'inherit'  },
+    in_progress: { label: 'Mark In Progress', Icon: ProgressIcon, color: 'inherit' },
+    resolve:     { label: 'Mark Resolved',Icon: ResolveIcon,  color: 'success.main' },
+    close:       { label: 'Close Ticket', Icon: CloseIcon,    color: 'warning.main' },
+    delete:      { label: 'Delete',       Icon: DeleteIcon,   color: 'error.main'   } };
+
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    return parts.length >= 2
+        ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+        : parts[0][0].toUpperCase();
+}
+
+/* ─── Sub-components ──────────────────────────────────────────────────────── */
+
+function SkeletonRows({ count = 5 }) {
+    return Array.from({ length: count }).map((_, i) => (
+        <TableRow key={i}>
+            {Array.from({ length: 8 }).map((__, j) => (
+                <TableCell key={j}><Skeleton variant="text" animation="wave" /></TableCell>
+            ))}
+        </TableRow>
+    ));
+}
+
+function StatusBadge({ status, labelsConfig }) {
+    const cfg  = labelsConfig?.statuses?.[status] || {};
+    const hex  = cfg.hex  || '#6b7280';
+    const label = status?.replace('_', ' ') || status;
+    return (
+        <Chip
+            label={label}
+            size="small"
+            sx={{
+                bgcolor:      alpha(hex, 0.12),
+                color:        hex,
+                
+                fontWeight:   600,
+                textTransform: 'capitalize' }}
+        />
+    );
+}
+
+function PriorityBadge({ priority, labelsConfig }) {
+    const cfg = labelsConfig?.priorities?.[priority] || {};
+    const hex = cfg.hex || '#6b7280';
+    return (
+        <Typography variant="body2" sx={{ color: hex, fontWeight: 700, textTransform: 'capitalize' }}>
+            {priority}
+        </Typography>
+    );
+}
+
+function CategoryChip({ category, categories }) {
+    const cat  = categories.find(c => c.value === category);
+    const icon = cat ? (ICON_MAP[cat.icon] || <HelpIcon fontSize="small" />) : <HelpIcon fontSize="small" />;
+    return (
+        <Chip
+            icon={icon}
+            label={cat?.label || category}
+            size="small"
+            sx={{  textTransform: 'capitalize' }}
+        />
+    );
+}
+
+function AssigneeCell({ staff }) {
+    if (!staff) {
+        return <Typography variant="caption" color="text.secondary">Unassigned</Typography>;
+    }
+    const name = `${staff.firstName} ${staff.lastName}`;
+    return (
+        <Chip
+            avatar={<Avatar sx={{ width: 24, height: 24, fontSize: 11 }}>{getInitials(name)}</Avatar>}
+            label={name}
+            size="small"
+            variant="outlined"
+        />
+    );
+}
+
+/* ─── Filter Drawer ──────────────────────────────────────────────────────── */
+
+function FilterDrawer({ open, onClose, categories, priorities, statuses, staff, filters, onApply }) {
+    const [local, setLocal] = useState(filters);
+
+    const set = (key, val) => setLocal(prev => ({ ...prev, [key]: val }));
+
+    const handleApply = () => {
+        // Strip empty strings
+        const cleaned = Object.fromEntries(
+            Object.entries(local).filter(([, v]) => v && v !== '')
+        );
+        onApply(cleaned);
+        onClose();
     };
 
-    const getPriorityColor = (p) => {
-        if (p === 'High') return theme.palette.error.main;
-        if (p === 'Medium') return theme.palette.warning.main;
-        return theme.palette.success.main;
-    };
-
-    const getStatusColor = (s) => {
-        if (s === 'Open') return theme.palette.info.main;
-        if (s === 'In Progress') return theme.palette.warning.main;
-        return theme.palette.success.main;
-    };
-
-    const getCategoryIcon = (c) => {
-        if (c === 'Technical') return <NetworkIcon fontSize="small" />;
-        if (c === 'Billing') return <PaymentIcon fontSize="small" />;
-        if (c === 'Sales') return <BugIcon fontSize="small" />;
-        return <HelpIcon fontSize="small" />;
+    const handleClear = () => {
+        setLocal({});
+        onApply({});
+        onClose();
     };
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        Support Tickets
-                    </Typography>
-                    <Typography color="text.secondary">Manage and track customer support requests</Typography>
-                </Box>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setOpenDialog(true)}
-                    sx={{ borderRadius: '12px', background: theme.palette.primary.main, color: 'black' }}
-                >
-                    Create Ticket
-                </Button>
+        <Drawer anchor="right" open={open} onClose={onClose}
+            PaperProps={{ sx: { width: 320, p: 3 } }}
+        >
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h6" fontWeight={700}>Filter Tickets</Typography>
+                <IconButton onClick={onClose}><CloseIcon /></IconButton>
+            </Box>
+            <Divider sx={{ mb: 3 }} />
+
+            <Box display="flex" flexDirection="column" gap={2.5}>
+                <TextField select fullWidth label="Category" value={local.category || ''}
+                    onChange={e => set('category', e.target.value)}>
+                    <MenuItem value="">All Categories</MenuItem>
+                    {categories.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                </TextField>
+
+                <TextField select fullWidth label="Priority" value={local.priority || ''}
+                    onChange={e => set('priority', e.target.value)}>
+                    <MenuItem value="">All Priorities</MenuItem>
+                    {priorities.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+                </TextField>
+
+                <TextField select fullWidth label="Status" value={local.status || ''}
+                    onChange={e => set('status', e.target.value)}>
+                    <MenuItem value="">All Statuses</MenuItem>
+                    {statuses.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                </TextField>
+
+                <TextField select fullWidth label="Assigned To" value={local.assignedTo || ''}
+                    onChange={e => set('assignedTo', e.target.value)}>
+                    <MenuItem value="">All Staff</MenuItem>
+                    {staff.map(s => (
+                        <MenuItem key={s.id} value={s.id}>{s.firstName} {s.lastName}</MenuItem>
+                    ))}
+                </TextField>
             </Box>
 
-            {/* Stats Cards Row could go here */}
+            <Box display="flex" gap={1.5} mt={4}>
+                <Button fullWidth variant="outlined" onClick={handleClear}>Clear</Button>
+                <Button fullWidth variant="contained" onClick={handleApply}>Apply Filters</Button>
+            </Box>
+        </Drawer>
+    );
+}
 
-            <Paper sx={{ p: 2, mb: 3, borderRadius: '16px', background: alpha(theme.palette.background.paper, 0.6) }}>
-                <Box display="flex" gap={2}>
-                    <TextField
-                        fullWidth
-                        placeholder="Search tickets..."
-                        size="small"
-                        InputProps={{ sx: { borderRadius: '12px' } }}
-                    />
-                    <Button variant="outlined" startIcon={<FilterListIcon />} sx={{ borderRadius: '12px' }}>
-                        Filter
+/* ─── Create Ticket Dialog ───────────────────────────────────────────────── */
+
+const EMPTY_FORM = { subject: '', category: '', priority: '', description: '' };
+
+function CreateTicketDialog({ open, onClose, categories, priorities, staff, onSuccess }) {
+    const [form,       setForm]       = useState(EMPTY_FORM);
+    const [submitting, setSubmitting] = useState(false);
+    const [formError,  setFormError]  = useState(null);
+
+    const handleClose = () => {
+        setForm(EMPTY_FORM);
+        setFormError(null);
+        onClose();
+    };
+
+    const handleSubmit = async () => {
+        if (!form.subject.trim()) { setFormError('Subject is required'); return; }
+        if (!form.description.trim()) { setFormError('Description is required'); return; }
+
+        setSubmitting(true);
+        setFormError(null);
+        try {
+            await supportService.create({
+                subject:     form.subject.trim(),
+                description: form.description.trim(),
+                category:    form.category   || 'general',
+                priority:    form.priority   || 'low' });
+            onSuccess();
+            handleClose();
+        } catch (err) {
+            setFormError(err.response?.data?.message || 'Failed to create ticket');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm"
+            PaperProps={{ sx: { } }}>
+            <DialogTitle sx={{ fontWeight: 700 }}>Create New Ticket</DialogTitle>
+            <DialogContent>
+                {formError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>
+                )}
+                <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                    <Grid size={{ xs: 12 }}>
+                        <TextField
+                            fullWidth label="Subject" required
+                            value={form.subject}
+                            onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField select fullWidth label="Category"
+                            value={form.category}
+                            onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
+                            {categories.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                        </TextField>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField select fullWidth label="Priority"
+                            value={form.priority}
+                            onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}>
+                            {priorities.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+                        </TextField>
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <TextField
+                            fullWidth multiline rows={4} label="Description" required
+                            value={form.description}
+                            onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                        />
+                    </Grid>
+                </Grid>
+            </DialogContent>
+            <DialogActions sx={{ p: 3, pt: 1 }}>
+                <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
+                <Button
+                    variant="contained" onClick={handleSubmit}
+                    disabled={submitting}
+                    startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                >
+                    {submitting ? 'Creating…' : 'Create Ticket'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
+/* ─── Row Action Menu ────────────────────────────────────────────────────── */
+
+function RowActionMenu({ ticket, onActionComplete }) {
+    const [anchor,  setAnchor]  = useState(null);
+    const [working, setWorking] = useState(false);
+
+    const allowed = ticket.allowedActions || [];
+
+    const handleAction = async (action) => {
+        setAnchor(null);
+        setWorking(true);
+        try {
+            switch (action) {
+                case 'close':       await supportService.close(ticket.id);                  break;
+                case 'resolve':     await supportService.update(ticket.id, { status: 'resolved' });   break;
+                case 'in_progress': await supportService.update(ticket.id, { status: 'in_progress' }); break;
+                case 'delete':      await supportService.delete(ticket.id);                 break;
+                default: break;
+            }
+            onActionComplete();
+        } catch (err) {
+            console.error('Action failed:', err);
+        } finally {
+            setWorking(false);
+        }
+    };
+
+    const actions = allowed.filter(a => a !== 'view' && ACTION_META[a]);
+
+    if (!actions.length) return null;
+
+    return (
+        <>
+            <IconButton size="small" disabled={working} onClick={e => setAnchor(e.currentTarget)}>
+                {working ? <CircularProgress size={16} /> : <MoreVertIcon />}
+            </IconButton>
+            <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+                {actions.map(action => {
+                    const { label, Icon, color } = ACTION_META[action];
+                    return (
+                        <MenuItem key={action} onClick={() => handleAction(action)}
+                            sx={{ color, gap: 1 }}>
+                            <ListItemIcon sx={{ color }}>
+                                <Icon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{label}</ListItemText>
+                        </MenuItem>
+                    );
+                })}
+            </Menu>
+        </>
+    );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────────────── */
+
+const SupportTickets = () => {
+    const theme = useTheme();
+
+    // ─── Local UI state ───────────────────────────────────────────────────────
+    const [searchInput,    setSearchInput]    = useState('');
+    const [search,         setSearch]         = useState('');
+    const [filters,        setFilters]        = useState({});
+    const [page,           setPage]           = useState(1);
+    const [filterOpen,     setFilterOpen]     = useState(false);
+    const [createOpen,     setCreateOpen]     = useState(false);
+
+    const LIMIT = 20;
+
+    // ─── Data ─────────────────────────────────────────────────────────────────
+    const {
+        tickets, loading, error, pagination, refresh,
+        categories, priorities, statuses, staff, labelsConfig } = useTickets({ search, filters, page, limit: LIMIT });
+
+    // ─── Debounced search ─────────────────────────────────────────────────────
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debouncedSetSearch = useCallback(
+        debounce((val) => { setSearch(val); setPage(1); }, 400),
+        []
+    );
+
+    const handleSearchChange = (e) => {
+        setSearchInput(e.target.value);
+        debouncedSetSearch(e.target.value);
+    };
+
+    const handleApplyFilters = (newFilters) => {
+        setFilters(newFilters);
+        setPage(1);
+    };
+
+    const activeFilterCount = useMemo(() => Object.keys(filters).length, [filters]);
+
+    // ─── Render ───────────────────────────────────────────────────────────────
+    return (
+        <Box sx={{ p: 3 }}>
+            {/* ── Header ── */}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                <Box>
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            fontWeight: 700, mb: 0.5,
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor:  'transparent' }}
+                    >
+                        Support Tickets
+                    </Typography>
+                    <Typography color="text.secondary">
+                        Manage and track customer support requests
+                    </Typography>
+                </Box>
+
+                <Box display="flex" gap={1.5}>
+                    <Tooltip title="Refresh">
+                        <IconButton onClick={refresh} disabled={loading}>
+                            {loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+                        </IconButton>
+                    </Tooltip>
+                    <Button
+                        id="create-ticket-btn"
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setCreateOpen(true)}
+                        sx={{ }}
+                    >
+                        Create Ticket
                     </Button>
                 </Box>
+            </Box>
+
+            {/* ── Search & Filter bar ── */}
+            <Paper sx={{ p: 2, mb: 3,  background: alpha(theme.palette.background.paper, 0.6) }}>
+                <Box display="flex" gap={2}>
+                    <TextField
+                        id="ticket-search"
+                        fullWidth
+                        placeholder="Search tickets by subject…"
+                        size="small"
+                        value={searchInput}
+                        onChange={handleSearchChange}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} fontSize="small" />,
+                            sx: { } }}
+                    />
+                    <Button
+                        id="ticket-filter-btn"
+                        variant={activeFilterCount > 0 ? 'contained' : 'outlined'}
+                        startIcon={<FilterListIcon />}
+                        onClick={() => setFilterOpen(true)}
+                        sx={{  whiteSpace: 'nowrap' }}
+                    >
+                        Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                    </Button>
+                </Box>
+
+                {/* Active filter pills */}
+                {activeFilterCount > 0 && (
+                    <Collapse in>
+                        <Box display="flex" gap={1} mt={1.5} flexWrap="wrap">
+                            {Object.entries(filters).map(([key, val]) => (
+                                <Chip
+                                    key={key}
+                                    label={`${key}: ${val}`}
+                                    size="small"
+                                    onDelete={() => {
+                                        const next = { ...filters };
+                                        delete next[key];
+                                        setFilters(next);
+                                        setPage(1);
+                                    }}
+                                    sx={{  textTransform: 'capitalize' }}
+                                />
+                            ))}
+                        </Box>
+                    </Collapse>
+                )}
             </Paper>
 
-            <TableContainer component={Paper} sx={{ borderRadius: '16px', background: alpha(theme.palette.background.paper, 0.6) }}>
-                <Table>
+            {/* ── Error state ── */}
+            {error && (
+                <Alert
+                    severity="error"
+                    action={<Button color="inherit" size="small" onClick={refresh}>Retry</Button>}
+                    sx={{ mb: 3 }}
+                >
+                    {error}
+                </Alert>
+            )}
+
+            {/* ── Table ── */}
+            <TableContainer
+                component={Paper}
+                sx={{  background: alpha(theme.palette.background.paper, 0.6) }}
+            >
+                <Table id="tickets-table">
                     <TableHead>
                         <TableRow>
-                            <TableCell>Ticket ID</TableCell>
-                            <TableCell>Subject</TableCell>
-                            <TableCell>Category</TableCell>
-                            <TableCell>Priority</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Assigned To</TableCell>
-                            <TableCell>Date</TableCell>
-                            <TableCell align="right">Actions</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Ticket ID</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Priority</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Assigned To</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {tickets.map((t) => (
-                            <TableRow key={t.id} hover>
-                                <TableCell sx={{ fontWeight: 600 }}>{t.id}</TableCell>
-                                <TableCell>
-                                    <Box>
-                                        <Typography variant="body2" fontWeight="500">{t.subject}</Typography>
-                                        <Typography variant="caption" color="text.secondary">{t.user}</Typography>
-                                    </Box>
-                                </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        icon={getCategoryIcon(t.category)}
-                                        label={t.category}
-                                        size="small"
-                                        sx={{ borderRadius: '8px' }}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" color={getPriorityColor(t.priority)} fontWeight="600">
-                                        {t.priority}
+                        {loading ? (
+                            <SkeletonRows count={LIMIT > 8 ? 8 : LIMIT} />
+                        ) : tickets.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                                    <Typography color="text.secondary">
+                                        {error ? 'Could not load tickets.' : 'No tickets found.'}
                                     </Typography>
                                 </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={t.status}
-                                        size="small"
-                                        sx={{
-                                            bgcolor: alpha(getStatusColor(t.status), 0.1),
-                                            color: getStatusColor(t.status),
-                                            borderRadius: '8px'
-                                        }}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    {t.assignedTo ? (
-                                        <Chip avatar={<Avatar sx={{ width: 24, height: 24 }}>{t.assignedTo[0]}</Avatar>} label={t.assignedTo} size="small" variant="outlined" />
-                                    ) : (
-                                        <Typography variant="caption" color="text.secondary">Unassigned</Typography>
-                                    )}
-                                </TableCell>
-                                <TableCell>{t.date}</TableCell>
-                                <TableCell align="right">
-                                    <IconButton size="small"><MoreVertIcon /></IconButton>
-                                </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            tickets.map(ticket => (
+                                <TableRow key={ticket.id} hover>
+                                    {/* Ticket ID */}
+                                    <TableCell sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                                        {ticket.id?.slice(0, 8).toUpperCase() || '—'}
+                                    </TableCell>
+
+                                    {/* Subject + customer name */}
+                                    <TableCell>
+                                        <Box>
+                                            <Typography variant="body2" fontWeight={500}>
+                                                {ticket.subject}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {ticket.customerName ||
+                                                    (ticket.User
+                                                        ? `${ticket.User.firstName} ${ticket.User.lastName}`
+                                                        : '—')}
+                                            </Typography>
+                                        </Box>
+                                    </TableCell>
+
+                                    {/* Category */}
+                                    <TableCell>
+                                        <CategoryChip category={ticket.category} categories={categories} />
+                                    </TableCell>
+
+                                    {/* Priority */}
+                                    <TableCell>
+                                        <PriorityBadge priority={ticket.priority} labelsConfig={labelsConfig} />
+                                    </TableCell>
+
+                                    {/* Status */}
+                                    <TableCell>
+                                        <StatusBadge status={ticket.status} labelsConfig={labelsConfig} />
+                                    </TableCell>
+
+                                    {/* Assigned To */}
+                                    <TableCell>
+                                        <AssigneeCell staff={ticket.Staff} />
+                                    </TableCell>
+
+                                    {/* Date */}
+                                    <TableCell>
+                                        <Typography variant="body2">
+                                            {formatDate(ticket.createdAt)}
+                                        </Typography>
+                                    </TableCell>
+
+                                    {/* Actions */}
+                                    <TableCell align="right">
+                                        <RowActionMenu ticket={ticket} onActionComplete={refresh} />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>
 
-            {/* Create Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
-                <DialogTitle>Create New Ticket</DialogTitle>
-                <DialogContent>
-                    <Grid container spacing={2} sx={{ mt: 1 }}>
-                        <Grid item xs={12}>
-                            <TextField fullWidth label="Subject" value={newTicket.subject} onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })} />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField select fullWidth label="Category" value={newTicket.category} onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value })}>
-                                {['Technical', 'Billing', 'Sales', 'General'].map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField select fullWidth label="Priority" value={newTicket.priority} onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value })}>
-                                {['Low', 'Medium', 'High'].map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField fullWidth multiline rows={4} label="Description" value={newTicket.description} onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })} />
-                        </Grid>
-                    </Grid>
-                </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleCreate}>Create Ticket</Button>
-                </DialogActions>
-            </Dialog>
+            {/* ── Pagination ── */}
+            {pagination.pages > 1 && (
+                <Box display="flex" justifyContent="center" mt={3}>
+                    <Pagination
+                        count={pagination.pages}
+                        page={page}
+                        onChange={(_, val) => setPage(val)}
+                        color="primary"
+                        shape="rounded"
+                    />
+                </Box>
+            )}
+
+            {/* ── Filter Drawer ── */}
+            <FilterDrawer
+                open={filterOpen}
+                onClose={() => setFilterOpen(false)}
+                categories={categories}
+                priorities={priorities}
+                statuses={statuses}
+                staff={staff}
+                filters={filters}
+                onApply={handleApplyFilters}
+            />
+
+            {/* ── Create Ticket Dialog ── */}
+            <CreateTicketDialog
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                categories={categories}
+                priorities={priorities}
+                staff={staff}
+                onSuccess={() => { setPage(1); refresh(); }}
+            />
         </Box>
     );
 };

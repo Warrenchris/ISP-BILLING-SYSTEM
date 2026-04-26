@@ -76,8 +76,8 @@ const Settings = () => {
 
             <Grid container spacing={4}>
                 {/* Company Info */}
-                <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3, borderRadius: '16px', height: '100%', background: alpha(theme.palette.background.paper, 0.6) }}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper sx={{ p: 3,  height: '100%', background: alpha(theme.palette.background.paper, 0.6) }}>
                         <Typography variant="h6" gutterBottom>Company Information</Typography>
                         <Typography variant="body2" color="text.secondary" mb={3}>Details shown on invoices and customer communications</Typography>
                         <Box display="flex" flexDirection="column" gap={2}>
@@ -90,8 +90,8 @@ const Settings = () => {
                 </Grid>
 
                 {/* Payment Settings */}
-                <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3, borderRadius: '16px', height: '100%', background: alpha(theme.palette.background.paper, 0.6) }}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper sx={{ p: 3,  height: '100%', background: alpha(theme.palette.background.paper, 0.6) }}>
                         <Typography variant="h6" gutterBottom>Payment Configuration</Typography>
                         <Typography variant="body2" color="text.secondary" mb={3}>Manage M-Pesa and invoice settings</Typography>
 
@@ -115,13 +115,13 @@ const Settings = () => {
                     </Paper>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <Box display="flex" justifyContent="flex-end">
                         <Button
                             variant="contained"
                             startIcon={<SaveIcon />}
                             size="large"
-                            sx={{ borderRadius: '12px' }}
+                            sx={{ }}
                             onClick={handleSave}
                             disabled={saving}
                         >

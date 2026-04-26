@@ -1,8 +1,7 @@
 import React from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button,
-} from '@mui/material';
+    Button } from '@mui/material';
 import {
     Email, Phone, CalendarToday, Public, Speed, DataUsage, AccountCircle, Router, Edit
 } from '@mui/icons-material';
@@ -35,8 +34,8 @@ const UserDetailsDialog = ({ open, onClose, user, onEdit }) => {
                 style: {
                     backgroundColor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '16px',
-                    color: 'white'
+                    
+                    color: 'text.primary'
                 }
             }}
         >
@@ -136,7 +135,7 @@ const UserDetailsDialog = ({ open, onClose, user, onEdit }) => {
                 >
                     Edit Profile
                 </Button>
-                <Button onClick={onClose} variant="contained" sx={{ bgcolor: 'white', color: 'black', '&:hover': { bgcolor: 'grey.300' } }}>
+                <Button onClick={onClose} variant="contained" sx={{ bgcolor: 'text.primary', color: 'primary.contrastText', '&:hover': { bgcolor: 'grey.300' } }}>
                     Close
                 </Button>
             </DialogActions>

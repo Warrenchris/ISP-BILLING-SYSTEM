@@ -9,5 +9,4 @@ export const authService = {
     changePassword: (data) => api.put('/auth/change-password', data),
 
     // Optional: Verify token validity
-    verifyToken: () => api.get('/auth/verify'),
-};
+    verifyToken: () => api.get('/auth/verify') };

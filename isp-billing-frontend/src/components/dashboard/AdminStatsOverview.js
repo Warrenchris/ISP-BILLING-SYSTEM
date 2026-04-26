@@ -3,8 +3,7 @@ import {
     People as PeopleIcon,
     CheckCircle as CheckCircleIcon,
     Subscriptions as SubscriptionsIcon,
-    MonetizationOn as MoneyIcon,
-} from '@mui/icons-material';
+    MonetizationOn as MoneyIcon } from '@mui/icons-material';
 import StatCard from '../common/StatCard';
 
 import { useTheme } from '@mui/material';

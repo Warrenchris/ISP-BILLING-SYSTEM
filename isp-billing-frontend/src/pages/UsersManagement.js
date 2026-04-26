@@ -18,6 +18,14 @@ import { useNavigate } from 'react-router-dom';
 import { useApi } from '../contexts/ApiContext';
 import usePaginatedFetch from '../hooks/usePaginatedFetch';
 import { TablePagination } from '@mui/material';
+import UserDialog from '../components/users/UserDialog';
+
+const emptyUser = {
+  firstName: '', lastName: '', email: '', phoneNumber: '',
+  routerIp: '', role: 'customer', status: 'active',
+  password: '', confirm: ''
+};
+const MIN_LEN = 8;
 
 const UsersManagement = () => {
     const theme = useTheme();
@@ -27,6 +35,8 @@ const UsersManagement = () => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [userDialogOpen, setUserDialogOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState(emptyUser);
 
     // Use the new hook
     // Note: adminApi.users.getAll must accept { page, limit, search }
@@ -78,6 +88,60 @@ const UsersManagement = () => {
         handleMenuClose();
     };
 
+    const handleEditClick = async () => {
+        handleMenuClose();
+        if (!selectedUser) return;
+        try {
+            const response = await adminApi.users.getById(selectedUser.id);
+            if (!response.data?.success) {
+                setSnackbar({ open: true, message: 'User no longer exists', severity: 'warning' });
+                refresh();
+                return;
+            }
+            setCurrentUser({ ...selectedUser, password: '', confirm: '' });
+            setUserDialogOpen(true);
+        } catch (error) {
+            setSnackbar({ open: true, message: 'Failed to verify user status', severity: 'error' });
+            refresh();
+        }
+    };
+
+    const saveUser = async () => {
+        try {
+            if (!currentUser.id) {
+                if (currentUser.password !== currentUser.confirm) {
+                    setSnackbar({ open: true, message: 'Passwords do not match', severity: 'warning' });
+                    return;
+                }
+                if (currentUser.password.length < MIN_LEN) {
+                    setSnackbar({ open: true, message: `Password must be at least ${MIN_LEN} characters`, severity: 'warning' });
+                    return;
+                }
+                const { confirm, ...payload } = currentUser;
+                await adminApi.users.create(payload);
+                setSnackbar({ open: true, message: 'User created successfully', severity: 'success' });
+                setUserDialogOpen(false);
+                refresh();
+            } else {
+                const { password, confirm, ...payload } = currentUser;
+                await adminApi.users.update(currentUser.id, payload);
+                setSnackbar({ open: true, message: 'User updated successfully', severity: 'success' });
+                setUserDialogOpen(false);
+                refresh();
+            }
+        } catch (error) {
+            let errorMessage = 'Failed to save user';
+            let severity = 'error';
+            if (error.response) {
+                const { status, data } = error.response;
+                if (status === 400) errorMessage = data?.message || 'Invalid request data';
+                else if (status === 404) { errorMessage = data?.message || 'User not found'; severity = 'warning'; }
+                else if (status === 409) errorMessage = 'Email already exists';
+            }
+            setSnackbar({ open: true, message: errorMessage, severity });
+        }
+    };
+
     const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
     // Filter locally is removed as we now rely on backend search via hook
@@ -126,10 +190,14 @@ const UsersManagement = () => {
                     variant="contained"
                     startIcon={<AddIcon />}
                     sx={{
-                        borderRadius: '12px',
+                        
                         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                        color: 'black',
+                        color: 'primary.contrastText',
                         fontWeight: 600
+                    }}
+                    onClick={() => {
+                        setCurrentUser(emptyUser);
+                        setUserDialogOpen(true);
                     }}
                 >
                     Add New User
@@ -138,7 +206,7 @@ const UsersManagement = () => {
 
             {/* Filters */}
             <Paper sx={{
-                p: 2, mb: 3, borderRadius: '16px',
+                p: 2, mb: 3, 
                 background: alpha(theme.palette.background.paper, 0.6),
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${theme.palette.divider}`
@@ -155,7 +223,7 @@ const UsersManagement = () => {
                                     <SearchIcon color="action" />
                                 </InputAdornment>
                             ),
-                            sx: { borderRadius: '12px' }
+                            sx: { }
                         }}
                         variant="outlined"
                         size="small"
@@ -163,7 +231,7 @@ const UsersManagement = () => {
                     <Button
                         variant="outlined"
                         startIcon={<FilterListIcon />}
-                        sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}
+                        sx={{  whiteSpace: 'nowrap' }}
                     >
                         Filters
                     </Button>
@@ -172,7 +240,7 @@ const UsersManagement = () => {
 
             {/* Users Table */}
             <TableContainer component={Paper} sx={{
-                borderRadius: '16px',
+                
                 background: alpha(theme.palette.background.paper, 0.6),
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${theme.palette.divider}`
@@ -200,7 +268,7 @@ const UsersManagement = () => {
                                 <TableRow key={user.id} hover>
                                     <TableCell>
                                         <Box display="flex" alignItems="center" gap={2}>
-                                            <Avatar sx={{ bgcolor: theme.palette.primary.main, color: 'black' }}>
+                                            <Avatar sx={{ bgcolor: theme.palette.primary.main, color: 'primary.contrastText' }}>
                                                 {user.name?.charAt(0) || 'U'}
                                             </Avatar>
                                             <Box>
@@ -218,7 +286,7 @@ const UsersManagement = () => {
                                             label={user.plan || user.subscription?.plan?.name || 'No Plan'}
                                             size="small"
                                             sx={{
-                                                borderRadius: '8px',
+                                                
                                                 bgcolor: alpha(theme.palette.info.main, 0.1),
                                                 color: theme.palette.info.main,
                                                 fontWeight: 600
@@ -230,7 +298,7 @@ const UsersManagement = () => {
                                             label={user.status || 'Unknown'}
                                             size="small"
                                             sx={{
-                                                borderRadius: '8px',
+                                                
                                                 bgcolor: alpha(getStatusColor(user.status), 0.1),
                                                 color: getStatusColor(user.status),
                                                 fontWeight: 600,
@@ -272,7 +340,7 @@ const UsersManagement = () => {
                 onClose={handleMenuClose}
                 PaperProps={{
                     sx: {
-                        borderRadius: '12px',
+                        
                         mt: 1,
                         background: alpha(theme.palette.background.paper, 0.9),
                         backdropFilter: 'blur(10px)',
@@ -283,7 +351,7 @@ const UsersManagement = () => {
                 <MenuItem onClick={handleView}>
                     <ViewIcon fontSize="small" sx={{ mr: 1 }} /> View Details
                 </MenuItem>
-                <MenuItem onClick={handleMenuClose}>
+                <MenuItem onClick={handleEditClick}>
                     <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit User
                 </MenuItem>
                 <MenuItem onClick={handleSuspend} sx={{ color: theme.palette.error.main }}>
@@ -301,6 +369,14 @@ const UsersManagement = () => {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
+
+            <UserDialog
+                open={userDialogOpen}
+                onClose={() => setUserDialogOpen(false)}
+                user={currentUser}
+                setUser={setCurrentUser}
+                onSave={saveUser}
+            />
         </Box>
     );
 };

@@ -6,8 +6,7 @@ import {
     Warning as WarningIcon,
     Block as BlockIcon,
     SupervisorAccount as SupervisorIcon,
-    DataUsage as DataUsageIcon,
-} from '@mui/icons-material';
+    DataUsage as DataUsageIcon } from '@mui/icons-material';
 import StatCard from '../common/StatCard';
 
 const UserStatsRow = ({ stats }) => {

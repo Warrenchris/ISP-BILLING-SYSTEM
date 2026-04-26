@@ -93,8 +93,7 @@ const Payments = () => {
   // Details Modal
   const [paymentDetailsModal, setPaymentDetailsModal] = useState({
     open: false,
-    payment: null,
-  });
+    payment: null });
 
   // User selection for cash payments
   const [users, setUsers] = useState([]);
@@ -327,7 +326,7 @@ const Payments = () => {
                 startIcon={<CashIcon />}
                 onClick={() => setCashDialog(true)}
                 sx={{
-                  borderRadius: '12px',
+                  
                   textTransform: 'none',
                   color: 'text.primary',
                   borderColor: 'divider',
@@ -341,7 +340,7 @@ const Payments = () => {
                 startIcon={<SettingsIcon />}
                 onClick={() => setAdminSettingsDialog(true)}
                 sx={{
-                  borderRadius: '12px',
+                  
                   textTransform: 'none',
                   color: 'text.primary',
                   borderColor: 'divider',
@@ -357,7 +356,7 @@ const Payments = () => {
             startIcon={<PhoneIcon />}
             onClick={() => setMpesaDialog(true)}
             sx={{
-              borderRadius: '12px',
+              
               textTransform: 'none',
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
             }}

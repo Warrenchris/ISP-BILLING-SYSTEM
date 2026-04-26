@@ -37,7 +37,7 @@ const AuditLogs = () => {
             <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>Audit Logs</Typography>
 
             {loading ? <LinearProgress /> : error ? <Alert severity="error">{error}</Alert> : (
-                <Paper sx={{ borderRadius: '16px', background: alpha(theme.palette.background.paper, 0.6) }}>
+                <Paper sx={{  background: alpha(theme.palette.background.paper, 0.6) }}>
                     <TableContainer>
                         <Table>
                             <TableHead>
@@ -55,15 +55,21 @@ const AuditLogs = () => {
                                 ) : (
                                     logs.map((log) => (
                                         <TableRow key={log.id} hover>
-                                            <TableCell sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                                                {log.timestamp ? new Date(log.timestamp).toLocaleString() : (log.createdAt ? new Date(log.createdAt).toLocaleString() : 'N/A')}
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                                                    {log.timestamp ? new Date(log.timestamp).toLocaleString() : (log.createdAt ? new Date(log.createdAt).toLocaleString() : 'N/A')}
+                                                </Typography>
                                             </TableCell>
                                             <TableCell fontWeight="600">{log.user}</TableCell>
                                             <TableCell>
                                                 <Chip label={log.action} size="small" variant="outlined" />
                                             </TableCell>
                                             <TableCell>{log.details}</TableCell>
-                                            <TableCell sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>{log.ip}</TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                                                    {log.ip}
+                                                </Typography>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 )}

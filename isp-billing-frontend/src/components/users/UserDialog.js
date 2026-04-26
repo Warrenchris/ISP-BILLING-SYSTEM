@@ -1,13 +1,12 @@
 import React from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, MenuItem, Button
+    TextField, MenuItem, Button, Typography
 } from '@mui/material';
 const USER_ROLES = {
     ADMIN: 'admin',
     CUSTOMER: 'customer',
-    STAFF: 'staff',
-};
+    STAFF: 'staff' };
 
 // We'll keep using MUI Dialog for modal behavior consistency, but styling content with Tailwind
 const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
@@ -24,7 +23,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                     backgroundColor: 'background.paper',
                     border: '1px solid',
                     borderColor: 'divider',
-                    borderRadius: '16px',
+                    
                     color: 'text.primary'
                 }
             }}
@@ -59,7 +58,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             fullWidth
                             variant="outlined"
                             sx={{
-                                '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                                 '& .MuiInputLabel-root': { color: 'gray' }
                             }}
                         />
@@ -72,7 +71,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                         fullWidth
                         variant="outlined"
                         sx={{
-                            '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                            '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                             '& .MuiInputLabel-root': { color: 'gray' }
                         }}
                     />
@@ -85,7 +84,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             fullWidth
                             variant="outlined"
                             sx={{
-                                '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                                 '& .MuiInputLabel-root': { color: 'gray' }
                             }}
                         />
@@ -96,7 +95,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             fullWidth
                             variant="outlined"
                             sx={{
-                                '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                                 '& .MuiInputLabel-root': { color: 'gray' }
                             }}
                         />
@@ -112,7 +111,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                                 fullWidth
                                 variant="outlined"
                                 sx={{
-                                    '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                                    '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                                     '& .MuiInputLabel-root': { color: 'gray' }
                                 }}
                             />
@@ -124,7 +123,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                                 fullWidth
                                 variant="outlined"
                                 sx={{
-                                    '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                                    '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                                     '& .MuiInputLabel-root': { color: 'gray' }
                                 }}
                             />
@@ -162,9 +161,9 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             fullWidth
                             variant="outlined"
                             sx={{
-                                '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { borderColor: 'white' } },
+                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
                                 '& .MuiInputLabel-root': { color: 'gray' },
-                                '& .MuiSelect-icon': { color: 'white' }
+                                '& .MuiSelect-icon': { color: 'text.primary' }
                             }}
                         >
                             {['active', 'inactive', 'suspended'].map((status) => (
@@ -175,7 +174,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                 </div>
             </DialogContent>
             <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <Button onClick={onClose} sx={{ color: 'gray', '&:hover': { color: 'white' } }}>
+                <Button onClick={onClose} sx={{ color: 'gray', '&:hover': { color: 'text.primary' } }}>
                     Cancel
                 </Button>
                 <Button
@@ -184,7 +183,7 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                     sx={{
                         bgcolor: 'success.main',
                         '&:hover': { bgcolor: 'success.dark' },
-                        color: 'black',
+                        color: 'primary.contrastText',
                         fontWeight: 'bold'
                     }}
                     disabled={!user.firstName || !user.lastName || !user.email}
