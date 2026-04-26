@@ -37,10 +37,11 @@ import AdminStatsOverview from '../components/dashboard/AdminStatsOverview';
 import AdminPersonalAccount from '../components/dashboard/AdminPersonalAccount';
 import DashboardCharts from '../components/dashboard/DashboardCharts';
 import RecentUsersTable from '../components/dashboard/RecentUsersTable';
+import PriorityTicketsWidget from '../components/dashboard/PriorityTicketsWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { subscriptionsApi, paymentsApi, invoicesApi, adminApi } = useApi();
+  const { subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService } = useApi();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -79,7 +80,8 @@ const Dashboard = () => {
     totalRevenue: 0,
     monthlyRevenue: 0,
     recentUsers: [],
-    adminUsers: [] });
+    adminUsers: [],
+    priorityTickets: [] });
 
   const isAdmin = user?.role === 'admin';
 
@@ -172,6 +174,14 @@ const Dashboard = () => {
 
       const subscriptionsResponse = await subscriptionsApi.getAll();
       const subscriptions = subscriptionsResponse.data?.data?.subscriptions || [];
+      
+      let pTickets = [];
+      try {
+        const ticketsRes = await supportService.getAll({ priority: 'high', status: 'open' });
+        pTickets = (ticketsRes.data?.data || []).slice(0, 5); // get top 5 open high-priority tickets
+      } catch (e) {
+        console.error("Failed to load priority tickets", e);
+      }
 
       // Get current month payments for monthly revenue
       const currentDate = new Date();
@@ -224,7 +234,8 @@ const Dashboard = () => {
         totalRevenue, // This is now the total from all completed payments
         monthlyRevenue, // This remains monthly only
         recentUsers: users.slice(0, 5),
-        adminUsers: users.filter(u => u.role === 'admin')
+        adminUsers: users.filter(u => u.role === 'admin'),
+        priorityTickets: pTickets
       });
     } catch (error) {
       console.error('Error fetching admin stats:', error);
@@ -461,6 +472,9 @@ const Dashboard = () => {
             pendingInvoicesCount={dashboardData.pendingInvoices.length}
             usagePercentage={getUsagePercentage()}
           />
+
+          {/* Priority Tickets Widget */}
+          <PriorityTicketsWidget tickets={adminStats.priorityTickets} />
 
           {/* Charts Section */}
           <DashboardCharts

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Menu as MenuIcon,
     NotificationsOutlined as BellIcon,
@@ -11,6 +11,7 @@ import {
     IconButton, Avatar, Badge, Menu, MenuItem,
     Divider, Typography, Box, Tooltip } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApi } from '../../contexts/ApiContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 /* ─── Page title map ─────────────────────────────────────────────────────── */
@@ -51,6 +52,29 @@ const Header = ({ onMenuClick }) => {
 
     const [anchorEl, setAnchorEl]     = useState(null);
     const [searchFocused, setFocused] = useState(false);
+    
+    const { notificationService } = useApi();
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                // Determine if we should fetch admin logs or personal notifications
+                const response = user?.role === 'admin' 
+                    ? await notificationService.getAll()
+                    : await notificationService.getMyNotifications();
+                const data = response.data?.data || response.data || [];
+                const items = Array.isArray(data) ? data : data.notifications || data.items || [];
+                
+                // Assuming unread is when status is 'pending' or 'failed', or they have an isRead prop
+                const unread = items.filter(n => n.status !== 'read' && !n.isRead && !n.read).length;
+                setUnreadCount(unread);
+            } catch (e) {
+                console.error("Failed to load notifications count", e);
+            }
+        };
+        if (user) fetchNotifications();
+    }, [notificationService, user]);
 
     const displayName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User';
     const initials    = displayName.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
@@ -190,7 +214,7 @@ const Header = ({ onMenuClick }) => {
                                 transform: 'scale(1.08)' } }}
                     >
                         <Badge
-                            badgeContent={3}
+                            badgeContent={unreadCount}
                             sx={{
                                 '& .MuiBadge-badge': {
                                     bgcolor:   '#ef4444',

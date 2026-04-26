@@ -11,10 +11,13 @@ import {
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useApi } from '../contexts/ApiContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const NotificationsLog = () => { // Renamed slightly to avoid clash if I import Notifications elsewhere or valid simple name
     const theme = useTheme();
     const { notificationService } = useApi();
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -23,8 +26,10 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
         const fetchNotifications = async () => {
             setLoading(true);
             try {
-                // Fetch notifications (admin view presumably)
-                const response = await notificationService.getAll();
+                // Fetch notifications (admin view or user view depending on role)
+                const response = isAdmin 
+                    ? await notificationService.getAll()
+                    : await notificationService.getMyNotifications();
                 const data = response.data?.data || response.data || [];
                 const items = Array.isArray(data) ? data : data.notifications || data.items || [];
                 setNotifications(items);

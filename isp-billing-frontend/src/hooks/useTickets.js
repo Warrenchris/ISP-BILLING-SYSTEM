@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supportService } from '../services/supportService';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * useTickets({ search, filters, page, limit })
@@ -23,6 +24,9 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
     const [staff,        setStaff]        = useState([]);
     const [labelsConfig, setLabelsConfig] = useState({ statuses: {}, priorities: {} });
     const [metaLoading,  setMetaLoading]  = useState(false);
+    
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     // Prevent stale-closure issues when refresh() is called externally
     const abortRef = useRef(null);
@@ -71,21 +75,28 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
         const loadMeta = async () => {
             setMetaLoading(true);
             try {
-                const [cats, pris, stats, cfg, staffRes] = await Promise.allSettled([
+                const promises = [
                     supportService.getCategories(),
                     supportService.getPriorities(),
                     supportService.getStatuses(),
-                    supportService.getLabelsConfig(),
-                    supportService.getStaff(),
-                ]);
+                    supportService.getLabelsConfig()
+                ];
+                if (isAdmin) {
+                    promises.push(supportService.getStaff());
+                }
+
+                const results = await Promise.allSettled(promises);
 
                 if (cancelled) return;
 
-                if (cats.status   === 'fulfilled') setCategories(cats.value.data?.data   || []);
-                if (pris.status   === 'fulfilled') setPriorities(pris.value.data?.data   || []);
-                if (stats.status  === 'fulfilled') setStatuses(stats.value.data?.data    || []);
-                if (cfg.status    === 'fulfilled') setLabelsConfig(cfg.value.data?.data  || { statuses: {}, priorities: {} });
-                if (staffRes.status === 'fulfilled') setStaff(staffRes.value.data?.data  || []);
+                if (results[0].status === 'fulfilled') setCategories(results[0].value.data?.data || []);
+                if (results[1].status === 'fulfilled') setPriorities(results[1].value.data?.data || []);
+                if (results[2].status === 'fulfilled') setStatuses(results[2].value.data?.data || []);
+                if (results[3].status === 'fulfilled') setLabelsConfig(results[3].value.data?.data || { statuses: {}, priorities: {} });
+                
+                if (isAdmin && results[4]?.status === 'fulfilled') {
+                    setStaff(results[4].value.data?.data || []);
+                }
             } catch (_) {
                 // Metadata failures are non-fatal; the table still renders
             } finally {

@@ -135,7 +135,7 @@ const Payments = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = isAdmin ? await paymentsApi.getAllPayments() : await paymentsApi.getPaymentHistory();
+      const response = isAdmin ? await paymentsApi.getAllPayments() : await paymentsApi.getMyPayments();
       const paymentsData = response.data.data || response.data.payments || [];
 
       const processedPayments = paymentsData.map((payment, index) => ({
