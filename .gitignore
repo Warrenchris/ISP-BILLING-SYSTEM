@@ -1,0 +1,27 @@
+# Environment files - never commit these
+.env
+*.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+ai-service/data/model_coefficients.json
+
+# Node
+node_modules/
+isp-billing-system-BACKEND/node_modules/
+
+# Frontend
+isp-billing-system-FRONTEND/node_modules/
+isp-billing-system-FRONTEND/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

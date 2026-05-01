@@ -11,6 +11,7 @@ const SupportTicket = require('./SupportTicket');
 const Notification = require('./Notification');
 const AuditLog = require('./AuditLog');
 const Setting = require('./Setting');
+const AIInsight = require('./AIInsight');
 
 User.hasMany(Subscription, { foreignKey: 'userId', as: 'Subscriptions' });
 User.hasMany(Payment, { foreignKey: 'userId', as: 'Payments' });
@@ -19,6 +20,9 @@ User.hasMany(DataUsage, { foreignKey: 'userId', as: 'DataUsage' });
 User.hasMany(SupportTicket, { foreignKey: 'userId', as: 'SupportTickets' });
 User.hasMany(Notification, { foreignKey: 'userId', as: 'Notifications' });
 User.hasMany(AuditLog, { foreignKey: 'userId', as: 'AuditLogs' });
+User.hasMany(AIInsight, { foreignKey: 'userId', as: 'AIInsights' });
+
+AIInsight.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 User.hasOne(Subscription, { foreignKey: 'userId', as: 'activeSubscription' });
 
 
@@ -73,5 +77,6 @@ module.exports = {
   Notification,
   AuditLog,
   Setting,
+  AIInsight,
   syncDatabase
 };

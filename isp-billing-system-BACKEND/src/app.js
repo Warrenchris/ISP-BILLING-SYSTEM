@@ -24,6 +24,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const settingRoutes = require("./routes/settingRoutes");
+const aiRoutes = require("./ai/aiRoutes");
 
 // Create Express app
 const app = express();
@@ -115,6 +116,9 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/audit-logs", auditRoutes);
 app.use("/api/admin/settings", settingRoutes);
+
+// AI / Machine Learning Routes
+app.use("/api/ai", aiRoutes);
 
 // Swagger UI
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
