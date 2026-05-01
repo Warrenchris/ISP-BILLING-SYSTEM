@@ -57,6 +57,17 @@ AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 const syncDatabase = async (force = false) => {
   try {
     await sequelize.sync({ force });
+
+    // Align MySQL enum values for existing databases where sync({ force: false })
+    // does not update ENUM definitions automatically.
+    if (sequelize.getDialect() === 'mysql') {
+      await sequelize.query(`
+        ALTER TABLE subscriptions
+        MODIFY COLUMN status ENUM('pending', 'active', 'expired', 'suspended', 'cancelled')
+        NOT NULL DEFAULT 'pending';
+      `);
+    }
+
     console.log('✅ Database synchronized successfully');
   } catch (error) {
     console.error('❌ Database synchronization failed:', error);

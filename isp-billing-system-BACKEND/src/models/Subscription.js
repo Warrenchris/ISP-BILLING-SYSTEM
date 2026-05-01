@@ -23,12 +23,13 @@ const Subscription = sequelize.define('Subscription', {
   },
   status: {
     type: DataTypes.ENUM(
+      SubscriptionStatus.PENDING,
       SubscriptionStatus.ACTIVE,
       SubscriptionStatus.EXPIRED,
       SubscriptionStatus.SUSPENDED,
       SubscriptionStatus.CANCELLED
     ),
-    defaultValue: SubscriptionStatus.ACTIVE
+    defaultValue: SubscriptionStatus.PENDING
   },
   startDate: {
     type: DataTypes.DATE,

@@ -137,10 +137,10 @@ const getUserSubscriptions = async (req, res) => {
           as: 'payments',
           attributes: ['status'],
           limit: 1,
-          order: [['createdAt', 'DESC']]
+          order: [['created_at', 'DESC']]
         }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
       limit: parseInt(limit),
       offset: offset
     });
@@ -213,10 +213,10 @@ const getCurrentSubscription = async (req, res) => {
           as: 'payments',
           attributes: ['status'],
           limit: 1,
-          order: [['createdAt', 'DESC']]
+          order: [['created_at', 'DESC']]
         }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['created_at', 'DESC']]
     });
 
     if (!subscription) {

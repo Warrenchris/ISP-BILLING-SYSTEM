@@ -815,6 +815,7 @@ const Dashboard = () => {
               </Typography>
               <Button
                 variant="contained"
+                onClick={() => navigate('/data-plans')}
                 sx={{
                   background: theme.palette.primary.main,
                   color: theme.palette.primary.contrastText,

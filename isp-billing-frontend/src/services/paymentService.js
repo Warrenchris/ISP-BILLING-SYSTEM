@@ -10,7 +10,14 @@ export const paymentService = {
     // User & Shared
     getMyPayments: (params) => api.get('/payments/history', { params }),
     getById: (id) => api.get(`/payments/${id}`),
-    queryStatus: (id) => api.get(`/payments/${id}/status`),
+    queryStatus: (id) => api.get(`/payments/status/${id}`),
+    checkStatus: (id) => api.get(`/payments/status/${id}`),
+    initiateSubscriptionPayment: (dataOrSubscriptionId, maybePhoneNumber) => {
+        const payload = typeof dataOrSubscriptionId === 'object'
+            ? dataOrSubscriptionId
+            : { subscriptionId: dataOrSubscriptionId, phoneNumber: maybePhoneNumber };
+        return api.post('/payments/subscription', payload);
+    },
 
     // M-Pesa
     initiateMpesa: (data) => api.post('/payments/mpesa/initiate', data),

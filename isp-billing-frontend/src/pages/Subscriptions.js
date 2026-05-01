@@ -30,69 +30,22 @@ import {
   Payment as PaymentIcon,
   CreditCard as PayIcon } from "@mui/icons-material";
 import { CheckCircle as CheckIcon } from "@mui/icons-material";
-import { DataGrid } from "@mui/x-data-grid";
 import { useApi } from "../contexts/ApiContext";
 import { useAuth } from "../contexts/AuthContext";
 import { formatBytes } from "../utils/helpers";
-
-const ErrorBoundary = ({ children, fallback }) => {
-  const [hasError, setHasError] = useState(false);
-
-  //   const handleOnError = (error, errorInfo) => {
-  //     console.error("DataGrid Error:", error, errorInfo);
-  //     setHasError(true);
-  //   };
-
-  if (hasError) {
-    return fallback || <Typography color="error">Error displaying data</Typography>;
-  }
-
-  return children;
-};
 
 const statusColor = (s) =>
 ({
   active: "success",
   expired: "error",
   suspended: "warning",
-  cancelled: "default",
-  pending: "info"
-}[s] ?? "default");
-
-const paymentStatusColor = (s) =>
-({
-  paid: "success",
-  unpaid: "error",
+  cancelled: "secondary",
   pending: "warning",
-  refunded: "info"
+  paid: "success",
+  completed: "success",
+  failed: "error",
+  unpaid: "error"
 }[s] ?? "default");
-
-const safeValueGetter = (params, field, defaultValue = "—") => {
-  try {
-    if (!params || !params.row) return defaultValue;
-    return params.row[field] ?? defaultValue;
-  } catch (error) {
-    console.error("Error in safeValueGetter:", error);
-    return defaultValue;
-  }
-};
-
-// Safe getter for nested properties
-const safeNestedValueGetter = (params, path, defaultValue = "—") => {
-  try {
-    if (!params || !params.row) return defaultValue;
-    const keys = path.split('.');
-    let value = params.row;
-    for (const key of keys) {
-      if (value == null) return defaultValue;
-      value = value[key];
-    }
-    return value ?? defaultValue;
-  } catch (error) {
-    console.error("Error in safeNestedValueGetter:", error);
-    return defaultValue;
-  }
-};
 
 export default function Subscriptions() {
   const { subscriptionsApi, paymentsApi } = useApi();
@@ -282,159 +235,23 @@ export default function Subscriptions() {
     );
   };
 
-  const cols = React.useMemo(() => [
-    {
-      field: "subscriptionNumber",
-      headerName: "Subscription #",
-      width: 160,
-      valueGetter: (params) => safeValueGetter(params, "subscriptionNumber"),
-      renderCell: (params) => {
-        const value = safeValueGetter(params, "subscriptionNumber");
-        const isCurrent = safeValueGetter(params, "isCurrent", false);
-        return (
-          <Box>
-            <Typography fontWeight="medium">{value}</Typography>
-            {isCurrent && (
-              <Chip
-                label="Current"
-                color="primary"
-                size="small"
-                sx={{ mt: 0.5 }}
-              />
-            )}
-          </Box>
-        );
-      }
-    },
-    {
-      field: "planName",
-      headerName: "Plan",
-      width: 180,
-      valueGetter: (params) => safeNestedValueGetter(params, "DataPlan.name", "—"),
-      renderCell: (params) => {
-        const value = safeNestedValueGetter(params, "DataPlan.name", "—");
-        const isCurrent = safeValueGetter(params, "isCurrent", false);
-        return (
-          <Typography fontWeight={isCurrent ? "bold" : "normal"}>
-            {value}
-          </Typography>
-        );
-      }
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 120,
-      valueGetter: (params) => safeValueGetter(params, "status", "unknown"),
-      renderCell: (params) => {
-        const value = safeValueGetter(params, "status", "unknown");
-        return (
-          <Chip
-            label={value}
-            color={statusColor(value)}
-            size="small"
-          />
-        );
-      }
-    },
-    {
-      field: "paymentStatus",
-      headerName: "Payment",
-      width: 120,
-      valueGetter: (params) => safeValueGetter(params, "paymentStatus", "N/A"),
-      renderCell: (params) => {
-        const value = safeValueGetter(params, "paymentStatus", "N/A");
-        return (
-          <Chip
-            label={value}
-            color={paymentStatusColor(value)}
-            size="small"
-            icon={<PaymentIcon fontSize="small" />}
-          />
-        );
-      }
-    },
-    {
-      field: "dataRemaining",
-      headerName: "Data Left",
-      width: 140,
-      valueGetter: (params) => safeValueGetter(params, "dataRemaining", 0),
-      renderCell: (params) => {
-        const value = safeValueGetter(params, "dataRemaining", 0);
-        return <Typography>{formatBytes(value)}</Typography>;
-      }
-    },
-    {
-      field: "endDate",
-      headerName: "Expires",
-      width: 140,
-      valueGetter: (params) => safeValueGetter(params, "endDate"),
-      renderCell: (params) => {
-        const value = safeValueGetter(params, "endDate");
-        return (
-          <Typography>
-            {value ? new Date(value).toLocaleDateString() : "—"}
-          </Typography>
-        );
-      }
-    },
-    {
-      field: "actions",
-      headerName: "",
-      width: 110,
-      sortable: false,
-      renderCell: (params) => {
-        const status = safeValueGetter(params, "status");
-        const row = params?.row;
-        return (
-          <Box>
-            {status === "active" && row && (
-              <Tooltip title="Cancel">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => askCancel(row)}
-                >
-                  <CancelIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {/* Pay Now Button for Pending */}
-            {status !== "active" && row?.paymentStatus === 'pending' && (
-              <Tooltip title="Pay Now">
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={() => handlePayClick(row)}
-                >
-                  <PayIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title="Details">
-              <IconButton size="small" color="primary">
-                <InfoIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        );
-      }
-    }
-  ], []);
-
   if (loading) {
     return (
-      <Box>
-        <Typography variant="h4" gutterBottom>My Subscriptions</Typography>
+      <Box sx={{ p: 3, width: "100%", overflowX: "hidden" }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
+          My Subscriptions
+        </Typography>
         <LinearProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
+    <Box sx={{ p: 3, width: "100%", overflowX: "hidden", bgcolor: "background.default" }}>
       <Box display="flex" justifyContent="space-between" mb={3}>
-        <Typography variant="h4">My Subscriptions</Typography>
+        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+          My Subscriptions
+        </Typography>
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
@@ -616,47 +433,108 @@ export default function Subscriptions() {
           <Typography variant="h6" gutterBottom>
             Subscription History
           </Typography>
-          <Box sx={{ height: 400, width: "100%" }}>
+          <Box sx={{ width: "100%", overflowX: "auto" }}>
             {tableRows.length > 0 ? (
-              <ErrorBoundary fallback={<Typography color="error">Error displaying subscription data</Typography>}>
-                <DataGrid
-                  rows={tableRows}
-                  columns={cols}
-                  pageSize={10}
-                  rowsPerPageOptions={[10, 25, 50]}
-                  disableSelectionOnClick
-                  sx={{
-                    "& .MuiDataGrid-cell": { borderBottom: `1px solid ${theme.palette.divider}` },
-                    "& .MuiDataGrid-columnHeaders": {
-                      background: theme.palette.action.hover,
-                      borderBottom: `2px solid ${theme.palette.divider}`
-                    }
-                  }}
-                />
-              </ErrorBoundary>
+              <Box
+                component="table"
+                sx={{
+                  width: "100%",
+                  minWidth: 900,
+                  tableLayout: "fixed",
+                  borderCollapse: "collapse"
+                }}
+              >
+                <Box component="thead">
+                  <Box component="tr" sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+                    <Box component="th" sx={{ width: "20%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Subscription #</Box>
+                    <Box component="th" sx={{ width: "20%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Plan</Box>
+                    <Box component="th" sx={{ width: "12%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Status</Box>
+                    <Box component="th" sx={{ width: "15%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Payment</Box>
+                    <Box component="th" sx={{ width: "13%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Data Left</Box>
+                    <Box component="th" sx={{ width: "13%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Expires</Box>
+                    <Box component="th" sx={{ width: "7%", minWidth: 80, textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Actions</Box>
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {tableRows.map((row) => (
+                    <Box component="tr" key={row.id} sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Typography component="span" fontWeight="medium">
+                          {row.subscriptionNumber || "N/A"}
+                        </Typography>
+                        {row.isCurrent && (
+                          <Chip label="Current" color="primary" size="small" sx={{ ml: 1 }} />
+                        )}
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Typography component="span">{row?.DataPlan?.name || "—"}</Typography>
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Chip
+                          size="small"
+                          label={row.status || "unknown"}
+                          color={statusColor((row.status || "").toLowerCase())}
+                        />
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Chip
+                          size="small"
+                          icon={<PaymentIcon fontSize="small" />}
+                          label={row.paymentStatus || "pending"}
+                          color={statusColor((row.paymentStatus || "").toLowerCase())}
+                        />
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {formatBytes(row.dataRemaining || 0)}
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {row.endDate ? new Date(row.endDate).toLocaleDateString() : "—"}
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, minWidth: 80 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", minWidth: 80 }}>
+                          {row.status === "active" && (
+                            <Tooltip title="Cancel">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => askCancel(row)}
+                                sx={{ flexShrink: 0 }}
+                              >
+                                <CancelIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {row.status !== "active" && row.paymentStatus === "pending" && (
+                            <Tooltip title="Pay Now">
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() => handlePayClick(row)}
+                                sx={{ flexShrink: 0 }}
+                              >
+                                <PayIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Details">
+                            <IconButton size="small" color="primary" sx={{ flexShrink: 0 }}>
+                              <InfoIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             ) : (
-              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                <Typography>No subscription data available</Typography>
+              <Box display="flex" justifyContent="center" alignItems="center" py={8}>
+                <Typography color="text.secondary">No subscriptions yet</Typography>
               </Box>
             )}
           </Box>
         </CardContent>
       </Card>
-
-      {subs.length === 0 && (
-        <Box textAlign="center" py={8}>
-          <DataUsageIcon sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            No subscriptions found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            You haven't subscribed to any data plans yet.
-          </Typography>
-          <Button variant="contained" href="/data-plans">
-            Browse Plans
-          </Button>
-        </Box>
-      )}
 
       {/* CANCEL DIALOG */}
       <Dialog

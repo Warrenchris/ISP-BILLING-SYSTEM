@@ -776,47 +776,89 @@ const DataPlans = () => {
           TransitionComponent={Zoom}
           PaperProps={{
             sx: {
-              
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
+              background: 'var(--color-surface, var(--color-background-secondary, var(--color-background-primary)))',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-lg, 16px)',
+              boxShadow: 'var(--shadow-lg, none)'
             }
           }}
           BackdropComponent={Backdrop}
           BackdropProps={{
             sx: {
-              background: 'rgba(102, 126, 234, 0.1)',
-              backdropFilter: 'blur(10px)'
+              background: 'var(--overlay-backdrop, rgba(0, 0, 0, 0.5))'
             }
           }}
         >
-          <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h5" fontWeight="bold">
+          <DialogTitle sx={{ pb: 'var(--spacing-2, 8px)', px: 'var(--spacing-6, 24px)', pt: 'var(--spacing-6, 24px)' }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontSize: 'var(--font-size-lg, 1.125rem)',
+                fontWeight: 'var(--font-weight-medium, 600)',
+                color: 'var(--color-text-primary)'
+              }}
+            >
               🎉 Confirm Your Subscription
             </Typography>
           </DialogTitle>
-          <DialogContent sx={{ pt: 2 }}>
+          <DialogContent sx={{ pt: 'var(--spacing-4, 16px)', px: 'var(--spacing-6, 24px)' }}>
             {/* Polling / Status UI */}
             {polling ? (
-              <Box textAlign="center" py={4}>
-                <CircularProgress size={60} thickness={4} sx={{ mb: 3 }} />
-                <Typography variant="h6" gutterBottom>
+              <Box textAlign="center" py="var(--spacing-6, 24px)">
+                <CircularProgress size={60} thickness={4} sx={{ mb: 'var(--spacing-4, 16px)' }} />
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontSize: 'var(--font-size-lg, 1.125rem)',
+                    fontWeight: 'var(--font-weight-medium, 600)',
+                    color: 'var(--color-text-primary)'
+                  }}
+                >
                   Waiting for M-Pesa Payment...
                 </Typography>
-                <Typography variant="body1" color="text.secondary">
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: 'var(--font-size-md, 1rem)',
+                    color: 'var(--color-text-muted, var(--color-text-secondary))'
+                  }}
+                >
                   Please check your phone and enter your PIN.
                 </Typography>
-                <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
+                <Typography
+                  variant="caption"
+                  display="block"
+                  sx={{
+                    mt: 'var(--spacing-3, 12px)',
+                    fontSize: 'var(--font-size-sm, 0.875rem)',
+                    color: 'var(--color-text-muted, var(--color-text-secondary))'
+                  }}
+                >
                   Do not close this window.
                 </Typography>
               </Box>
             ) : paymentStatus === 'completed' ? (
-              <Box textAlign="center" py={4}>
-                <CheckIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
-                <Typography variant="h5" color="success.main" gutterBottom>
+              <Box textAlign="center" py="var(--spacing-6, 24px)">
+                <CheckIcon color="success" sx={{ fontSize: 60, mb: 'var(--spacing-3, 12px)' }} />
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{
+                    fontSize: 'var(--font-size-lg, 1.125rem)',
+                    fontWeight: 'var(--font-weight-medium, 600)',
+                    color: 'var(--color-success, var(--color-text-primary))'
+                  }}
+                >
                   Payment Successful!
                 </Typography>
-                <Typography variant="body1">
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: 'var(--font-size-md, 1rem)',
+                    color: 'var(--color-text-primary)'
+                  }}
+                >
                   Your subscription is now active.
                 </Typography>
               </Box>
@@ -825,47 +867,86 @@ const DataPlans = () => {
               selectedPlan && (
                 <Paper
                   sx={{
-                    p: 3,
-                    
-                    background: getCategoryConfig(selectedPlan.category).bgGradient,
-                    border: `2px solid ${getCategoryConfig(selectedPlan.category).borderColor}`,
-                    boxShadow: `0 8px 32px ${getCategoryConfig(selectedPlan.category).shadowColor}`
+                    p: 'var(--spacing-6, 24px)',
+                    background: 'var(--color-surface, var(--color-background-secondary))',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-lg, 16px)',
+                    boxShadow: 'none'
                   }}
                 >
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                      fontSize: 'var(--font-size-lg, 1.125rem)',
+                      fontWeight: 'var(--font-weight-medium, 600)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  >
                     {selectedPlan.name}
                   </Typography>
 
-                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid container spacing={2} sx={{ mt: 'var(--spacing-2, 8px)' }}>
                     <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: 'var(--font-size-sm, 0.875rem)',
+                          color: 'var(--color-text-muted, var(--color-text-secondary))'
+                        }}
+                      >
                         Data Allowance
                       </Typography>
-                      <Typography variant="body1" fontWeight="medium">
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontSize: 'var(--font-size-lg, 1.125rem)',
+                          fontWeight: 'var(--font-weight-medium, 600)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
                         {formatBytes(selectedPlan.dataLimit)}
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: 'var(--font-size-sm, 0.875rem)',
+                          color: 'var(--color-text-muted, var(--color-text-secondary))'
+                        }}
+                      >
                         Validity Period
                       </Typography>
-                      <Typography variant="body1" fontWeight="medium">
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontSize: 'var(--font-size-lg, 1.125rem)',
+                          fontWeight: 'var(--font-weight-medium, 600)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
                         {selectedPlan.validityPeriod} days
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
+                      <Divider sx={{ my: 'var(--spacing-2, 8px)' }} />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: 'var(--font-size-sm, 0.875rem)',
+                          color: 'var(--color-text-muted, var(--color-text-secondary))'
+                        }}
+                      >
                         Total Amount
                       </Typography>
                       <Typography
                         variant="h5"
-                        fontWeight="bold"
                         sx={{
-                          background: getCategoryConfig(selectedPlan.category).gradient,
-                          backgroundClip: 'text',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent' }}
+                          fontSize: 'var(--font-size-lg, 1.125rem)',
+                          fontWeight: 'var(--font-weight-medium, 600)',
+                          color: 'var(--color-text-primary)'
+                        }}
                       >
                         {formatPrice(selectedPlan.price)}
                       </Typography>
@@ -879,41 +960,74 @@ const DataPlans = () => {
                     placeholder="0712345678"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    sx={{ mt: 3 }}
+                    sx={{
+                      mt: 'var(--spacing-4, 16px)',
+                      '& .MuiInputLabel-root': {
+                        color: 'var(--color-text-muted, var(--color-text-secondary))',
+                        fontSize: 'var(--font-size-sm, 0.875rem)'
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'var(--color-text-primary)',
+                        fontSize: 'var(--font-size-md, 1rem)'
+                      },
+                      '& .MuiOutlinedInput-root': {
+                        background: 'var(--color-input-background, var(--color-background-primary))',
+                        borderRadius: 'var(--radius-md, 10px)',
+                        '& fieldset': {
+                          border: '1px solid var(--color-border)'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'var(--color-border)'
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'var(--color-primary)'
+                        }
+                      },
+                      '& .MuiFormHelperText-root': {
+                        color: 'var(--color-text-muted, var(--color-text-secondary))',
+                        fontSize: 'var(--font-size-sm, 0.875rem)'
+                      }
+                    }}
                     helperText="Enter the number to receive the M-Pesa prompt"
                   />
 
                   {selectedPlan.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    <Alert
+                      severity="info"
+                      variant="outlined"
+                      sx={{
+                        mt: 'var(--spacing-4, 16px)',
+                        borderRadius: 'var(--radius-md, 10px)',
+                        background: 'var(--color-background-secondary, var(--color-surface))',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-muted, var(--color-text-secondary))',
+                        fontSize: 'var(--font-size-sm, 0.875rem)'
+                      }}
+                    >
                       {selectedPlan.description}
-                    </Typography>
+                    </Alert>
                   )}
                 </Paper>
               )
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 1 }}>
+          <DialogActions sx={{ p: 'var(--spacing-6, 24px)', pt: 'var(--spacing-2, 8px)' }}>
             {!polling && paymentStatus !== 'completed' && (
               <>
                 <Button
+                  variant="text"
                   onClick={() => setConfirmDialog(false)}
                   disabled={subscribing}
                   size="large"
-                  sx={{ }}
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="contained"
+                  color="primary"
                   onClick={confirmSubscription}
                   disabled={subscribing}
                   size="large"
-                  sx={{
-                    minWidth: 140,
-                    
-                    background: selectedPlan ? getCategoryConfig(selectedPlan.category).gradient : 'linear-gradient(45deg, #667eea, #764ba2)',
-                    boxShadow: selectedPlan ? `0 8px 32px ${getCategoryConfig(selectedPlan.category).shadowColor}` : '0 8px 32px rgba(102, 126, 234, 0.3)'
-                  }}
                 >
                   {subscribing ? (
                     <CircularProgress size={24} color="inherit" />
