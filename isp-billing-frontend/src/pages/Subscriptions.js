@@ -28,7 +28,8 @@ import {
   Refresh as RefreshIcon,
   Info as InfoIcon,
   Payment as PaymentIcon,
-  CreditCard as PayIcon } from "@mui/icons-material";
+  CreditCard as PayIcon,
+  MonetizationOn as CashIcon } from "@mui/icons-material";
 import { CheckCircle as CheckIcon } from "@mui/icons-material";
 import { useApi } from "../contexts/ApiContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -41,6 +42,7 @@ const statusColor = (s) =>
   suspended: "warning",
   cancelled: "secondary",
   pending: "warning",
+  cash: "success",
   paid: "success",
   completed: "success",
   failed: "error",
@@ -66,6 +68,12 @@ export default function Subscriptions() {
   const [paying, setPaying] = useState(false);
   const [paymentPolling, setPaymentPolling] = useState(false);
   const [payStatus, setPayStatus] = useState(null); // 'pending', 'completed', 'failed'
+  const [cashDlgOpen, setCashDlgOpen] = useState(false);
+  const [cashAmount, setCashAmount] = useState("");
+  const [cashNotes, setCashNotes] = useState("");
+  const [recordingCash, setRecordingCash] = useState(false);
+  const [cashSub, setCashSub] = useState(null);
+  const canRecordCash = ["admin", "staff"].includes((user?.role || "").toLowerCase());
 
   const pop = (msg, sev = "info") => {
     setAlert({ msg, sev });
@@ -216,6 +224,47 @@ export default function Subscriptions() {
       console.error(e);
       setPaying(false);
       pop(e.response?.data?.message || "Payment init failed", "error");
+    }
+  };
+
+  const openCashDialog = (sub) => {
+    if (!sub) return;
+    setCashSub(sub);
+    setCashAmount(sub?.DataPlan?.price ? String(sub.DataPlan.price) : "");
+    setCashNotes("");
+    setCashDlgOpen(true);
+  };
+
+  const confirmCashPayment = async () => {
+    if (!cashSub?.id) return;
+    const amountNumber = Number(cashAmount);
+    if (Number.isNaN(amountNumber) || amountNumber <= 0) {
+      pop("Enter a valid cash amount", "warning");
+      return;
+    }
+
+    try {
+      setRecordingCash(true);
+      await paymentsApi.recordCashPayment({
+        subscriptionId: cashSub.id,
+        amount: amountNumber,
+        receivedBy:
+          `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+          user?.email ||
+          user?.id,
+        notes: cashNotes?.trim() || undefined
+      });
+      pop("Cash payment recorded successfully", "success");
+      setCashDlgOpen(false);
+      setCashSub(null);
+      setCashAmount("");
+      setCashNotes("");
+      await load();
+    } catch (e) {
+      console.error("record cash payment", e);
+      pop(e.response?.data?.message || "Failed to record cash payment", "error");
+    } finally {
+      setRecordingCash(false);
     }
   };
 
@@ -439,7 +488,7 @@ export default function Subscriptions() {
                 component="table"
                 sx={{
                   width: "100%",
-                  minWidth: 900,
+                  minWidth: 1000,
                   tableLayout: "fixed",
                   borderCollapse: "collapse"
                 }}
@@ -452,7 +501,7 @@ export default function Subscriptions() {
                     <Box component="th" sx={{ width: "15%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Payment</Box>
                     <Box component="th" sx={{ width: "13%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Data Left</Box>
                     <Box component="th" sx={{ width: "13%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Expires</Box>
-                    <Box component="th" sx={{ width: "7%", minWidth: 80, textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Actions</Box>
+                    <Box component="th" sx={{ width: "7%", minWidth: 120, textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Actions</Box>
                   </Box>
                 </Box>
                 <Box component="tbody">
@@ -490,8 +539,8 @@ export default function Subscriptions() {
                       <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {row.endDate ? new Date(row.endDate).toLocaleDateString() : "—"}
                       </Box>
-                      <Box component="td" sx={{ py: 1.5, pr: 1, minWidth: 80 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", minWidth: 80 }}>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, minWidth: 120 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, gap: 0.5 }}>
                           {row.status === "active" && (
                             <Tooltip title="Cancel">
                               <IconButton
@@ -513,6 +562,18 @@ export default function Subscriptions() {
                                 sx={{ flexShrink: 0 }}
                               >
                                 <PayIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {canRecordCash && row.status !== "active" && row.paymentStatus === "pending" && (
+                            <Tooltip title="Record cash payment">
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                onClick={() => openCashDialog(row)}
+                                sx={{ flexShrink: 0 }}
+                              >
+                                <CashIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -618,6 +679,48 @@ export default function Subscriptions() {
               </Button>
             </>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* RECORD CASH DIALOG */}
+      <Dialog
+        open={cashDlgOpen}
+        onClose={() => !recordingCash && setCashDlgOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Record Cash Payment</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Subscription: <b>{cashSub?.DataPlan?.name || "Unknown Plan"}</b>
+          </Typography>
+          <TextField
+            fullWidth
+            required
+            type="number"
+            label="Amount (KES)"
+            value={cashAmount}
+            onChange={(e) => setCashAmount(e.target.value)}
+            sx={{ mb: 2 }}
+            inputProps={{ min: 1, step: "0.01" }}
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={2}
+            label="Notes (optional)"
+            value={cashNotes}
+            onChange={(e) => setCashNotes(e.target.value)}
+            placeholder="Any payment notes..."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCashDlgOpen(false)} disabled={recordingCash}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="warning" onClick={confirmCashPayment} disabled={recordingCash}>
+            {recordingCash ? <CircularProgress size={20} color="inherit" /> : "Record cash payment"}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box >

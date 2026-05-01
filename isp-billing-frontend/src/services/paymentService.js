@@ -4,6 +4,7 @@ export const paymentService = {
     // Admin
     getAllPayments: (params) => api.get('/payments', { params }),
     createCashPayment: (data) => api.post('/payments/cash', data),
+    recordCashPayment: (data) => api.post('/payments/record-cash', data),
     confirmPayment: (id) => api.put(`/payments/${id}/confirm`),
     rejectPayment: (id) => api.put(`/payments/${id}/reject`),
 

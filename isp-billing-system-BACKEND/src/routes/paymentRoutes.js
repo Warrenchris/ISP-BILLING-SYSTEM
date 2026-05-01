@@ -13,7 +13,7 @@ const {
   normalizePhoneNumber,
   checkMpesaConfig
 } = require('../middleware/paymentValidation');
-const { createCashPayment, confirmPayment, getAllPayments, initiateSubscriptionPayment, queryPaymentStatus } = require('../controllers/paymentController');
+const { createCashPayment, confirmPayment, getAllPayments, initiateSubscriptionPayment, queryPaymentStatus, recordCashPayment } = require('../controllers/paymentController');
 
 const mpesaService = new MpesaService();
 
@@ -166,6 +166,9 @@ router.get('/mpesa/test-auth', async (req, res) => {
 
 // Admin: Create cash payment
 router.post('/cash', authenticate, authorize(['admin']), createCashPayment);
+
+// Admin/Staff: Record manual cash payment against subscription
+router.post('/record-cash', authenticate, authorize(['admin', 'staff']), recordCashPayment);
 
 // Admin: Confirm pending payment
 router.put('/:paymentId/confirm', authenticate, authorize(['admin']), confirmPayment);

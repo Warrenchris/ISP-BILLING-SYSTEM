@@ -40,6 +40,12 @@ const getPaymentMethod = (payment) => {
 const getCustomerInfo = (payment) => {
   if (payment.customerInfo) return payment.customerInfo;
   if (payment.customer) return payment.customer;
+  if (payment.User) {
+    return {
+      name: `${payment.User.firstName || ''} ${payment.User.lastName || ''}`.trim() || payment.User.email || 'Unknown',
+      email: payment.User.email
+    };
+  }
   if (payment.user) {
     return {
       name: `${payment.user.firstName || ''} ${payment.user.lastName || ''}`.trim() || payment.user.email || 'Unknown',

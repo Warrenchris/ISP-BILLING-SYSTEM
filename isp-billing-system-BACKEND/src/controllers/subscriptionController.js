@@ -135,7 +135,7 @@ const getUserSubscriptions = async (req, res) => {
         {
           model: Payment,
           as: 'payments',
-          attributes: ['status'],
+          attributes: ['status', 'paymentMethod'],
           limit: 1,
           order: [['created_at', 'DESC']]
         }
@@ -168,7 +168,11 @@ const getUserSubscriptions = async (req, res) => {
             formattedDataLimit: subscription.plan.getFormattedDataLimit(),
             validityText: subscription.plan.getValidityText()
           },
-          paymentStatus: subscription.payments?.[0]?.status || 'pending'
+          paymentStatus:
+            subscription.payments?.[0]?.paymentMethod === 'cash' &&
+            subscription.payments?.[0]?.status === 'completed'
+              ? 'cash'
+              : (subscription.payments?.[0]?.status || 'pending')
         })),
         pagination: {
           currentPage: parseInt(page),
@@ -211,7 +215,7 @@ const getCurrentSubscription = async (req, res) => {
         {
           model: Payment,
           as: 'payments',
-          attributes: ['status'],
+          attributes: ['status', 'paymentMethod'],
           limit: 1,
           order: [['created_at', 'DESC']]
         }
@@ -244,7 +248,11 @@ const getCurrentSubscription = async (req, res) => {
             formattedDataLimit: subscription.plan.getFormattedDataLimit(),
             validityText: subscription.plan.getValidityText()
           },
-          paymentStatus: subscription.payments?.[0]?.status || 'pending'
+          paymentStatus:
+            subscription.payments?.[0]?.paymentMethod === 'cash' &&
+            subscription.payments?.[0]?.status === 'completed'
+              ? 'cash'
+              : (subscription.payments?.[0]?.status || 'pending')
         }
       }
     });

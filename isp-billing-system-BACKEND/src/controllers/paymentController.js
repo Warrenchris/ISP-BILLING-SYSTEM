@@ -282,6 +282,69 @@ const createCashPayment = async (req, res) => {
 };
 
 /**
+ * Record a cash payment against a subscription (Admin/Staff)
+ * Body: { subscriptionId, amount, receivedBy, notes }
+ */
+const recordCashPayment = async (req, res) => {
+  try {
+    const { subscriptionId, amount, receivedBy, notes } = req.body;
+    const adminUserId = req.user?.id;
+
+    if (!subscriptionId || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'subscriptionId and amount are required'
+      });
+    }
+
+    const subscription = await Subscription.findByPk(subscriptionId);
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subscription not found'
+      });
+    }
+
+    const numericAmount = Number(amount);
+    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount must be a valid positive number'
+      });
+    }
+
+    const reference = `CASH-${Date.now()}`;
+    const cashier = receivedBy || req.user?.email || req.user?.id;
+    const description = notes?.trim()
+      ? `Cash payment: ${notes.trim()}`
+      : `Cash payment recorded by ${cashier}`;
+
+    const payment = await paymentService.createCashPayment(
+      subscription.userId,
+      numericAmount,
+      reference,
+      description,
+      subscriptionId,
+      adminUserId
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Cash payment recorded successfully',
+      data: {
+        payment
+      }
+    });
+  } catch (error) {
+    console.error('Error recording cash payment:', error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Failed to record cash payment'
+    });
+  }
+};
+
+/**
  * Confirm a pending payment (Admin only)
  */
 const confirmPayment = async (req, res) => {
@@ -335,9 +398,22 @@ const getAllPayments = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
+    const data = rows.map((payment) => {
+      const p = payment.toJSON();
+      const user = p.User || null;
+      return {
+        ...p,
+        // Expose a normalized customer object for frontend consumption
+        customerInfo: user ? {
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown',
+          email: user.email || ''
+        } : null
+      };
+    });
+
     res.json({
       success: true,
-      data: rows,
+      data,
       pagination: { total: count, page, pages: Math.ceil(count / limit) }
     });
   } catch (e) {
@@ -369,6 +445,7 @@ module.exports = {
   retryPayment,
   getPaymentStats,
   createCashPayment,
+  recordCashPayment,
   confirmPayment,
   getAllPayments,
   initiateMpesaPayment
