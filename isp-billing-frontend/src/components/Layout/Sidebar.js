@@ -15,6 +15,10 @@ import {
     AdminPanelSettingsOutlined,
     HistoryOutlined,
     SettingsOutlined,
+    SmartToyOutlined,
+    ShowChartOutlined,
+    WarningAmberOutlined,
+    TrendingDownOutlined,
     LogoutOutlined,
     Close as CloseIcon,
     ChevronLeft,
@@ -65,6 +69,14 @@ const SIDEBAR_SECTIONS = [
             { text: 'Service Status',  icon: RouterOutlined,          path: '/service-status'},
         ] },
     {
+        title: 'AI & ANALYTICS',
+        items: [
+            { text: 'AI Dashboard',     icon: SmartToyOutlined,      path: '/ai-dashboard' },
+            { text: 'Revenue Forecast', icon: ShowChartOutlined,     path: '/ai-dashboard', state: { scrollTo: 'revenue' } },
+            { text: 'Anomalies',        icon: WarningAmberOutlined,  path: '/ai-dashboard', state: { scrollTo: 'anomalies' } },
+            { text: 'Churn Risks',      icon: TrendingDownOutlined,  path: '/ai-dashboard', state: { scrollTo: 'churn' } },
+        ] },
+    {
         title: 'ADMINISTRATION',
         items: [
             { text: 'Staff & Roles', icon: AdminPanelSettingsOutlined, path: '/staff'      },
@@ -77,6 +89,7 @@ const getFilteredSections = (role) => {
     if (role === 'admin') return SIDEBAR_SECTIONS;
     return SIDEBAR_SECTIONS.map(section => {
         if (section.title === 'ADMINISTRATION') return null;
+        if (section.title === 'AI & ANALYTICS') return role === 'support' ? section : null;
         if (section.title === 'BILLING')
             return { ...section, items: section.items.filter(i => i.text !== 'Reports') };
         if (section.title === 'CUSTOMERS')
@@ -139,6 +152,7 @@ function NavItem({ item, collapsed, index, onNavigate }) {
         >
             <NavLink
                 to={item.path}
+                state={item.state}
                 onClick={onNavigate}
                 className="nav-item-animate"
                 style={{ textDecoration: 'none', display: 'block' }}
@@ -464,7 +478,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                                     fontSize:   '0.8rem',
                                     fontWeight: 700,
                                     flexShrink: 0,
-                                    bgcolor: 'primary.main', color: 'primary.contrastText',
+                                    bgcolor: 'primary.main',
                                     color:      '#000',
                                     boxShadow:  `0 0 10px ${T.yellowDim}` }}
                             >

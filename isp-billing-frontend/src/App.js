@@ -1,10 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './contexts/AuthContext';
 import { ApiProvider } from './contexts/ApiContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AiProvider } from './contexts/AiContext';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -27,8 +28,71 @@ import StaffRoles from './pages/StaffRoles';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import AuditLogs from './pages/AuditLogs';
+import AiDashboard from './pages/AiDashboard';
+import ChatWidget from './components/ai/ChatWidget';
+import { useAuth } from './contexts/AuthContext';
 
 import theme from './theme';
+
+function AppRoutes({ darkmode, toggleDarkMode }) {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Router>
+      <Routes>
+        <Route
+          path="/Login"
+          element={
+            <Login
+              darkMode={darkmode}
+              toggleDarkMode={toggleDarkMode}
+            />
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Layout darkMode={darkmode} toggleDarkMode={toggleDarkMode}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/data-plans" element={<DataPlans />} />
+                  <Route path="/subscriptions" element={<Subscriptions />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/invoices" element={<Invoices />} />
+                  <Route path="/data-usage" element={<DataUsage />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/tickets" element={<SupportTickets />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route element={<ProtectedRoute allowedRoles={['admin', 'support']} />}>
+                    <Route
+                      path="/ai-dashboard"
+                      element={<AiDashboard />}
+                    />
+                  </Route>
+
+                  {/* Admin Only Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                    <Route path="/admin/users" element={<AdminUsers />} />
+                    <Route path="/users" element={<UsersManagement />} />
+                    <Route path="/users/:id" element={<UserDetails />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/staff" element={<StaffRoles />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/audit-logs" element={<AuditLogs />} />
+                  </Route>
+                </Routes>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+
+      {isAuthenticated() && <ChatWidget />}
+    </Router>
+  );
+}
 
 function App() {
   const [darkmode, setDarkmode] = React.useState(true); // Default to dark mode for modern look
@@ -43,51 +107,9 @@ function App() {
       <NotificationProvider>
         <ApiProvider>
           <AuthProvider>
-            <Router>
-              <Routes>
-                <Route
-                  path="/Login"
-                  element={
-                    <Login
-                      darkMode={darkmode}
-                      toggleDarkMode={toggleDarkMode}
-                    />
-                  }
-                />
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
-                      <Layout darkMode={darkmode} toggleDarkMode={toggleDarkMode}>
-                        <Routes>
-                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                          <Route path="/dashboard" element={<Dashboard />} />
-                          <Route path="/data-plans" element={<DataPlans />} />
-                          <Route path="/subscriptions" element={<Subscriptions />} />
-                          <Route path="/payments" element={<Payments />} />
-                          <Route path="/invoices" element={<Invoices />} />
-                          <Route path="/data-usage" element={<DataUsage />} />
-                          <Route path="/profile" element={<Profile />} />
-                          <Route path="/tickets" element={<SupportTickets />} />
-                          <Route path="/notifications" element={<Notifications />} />
-
-                          {/* Admin Only Routes */}
-                          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                            <Route path="/admin/users" element={<AdminUsers />} />
-                            <Route path="/users" element={<UsersManagement />} />
-                            <Route path="/users/:id" element={<UserDetails />} />
-                            <Route path="/reports" element={<Reports />} />
-                            <Route path="/staff" element={<StaffRoles />} />
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/audit-logs" element={<AuditLogs />} />
-                          </Route>
-                        </Routes>
-                      </Layout>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </Router>
+            <AiProvider>
+              <AppRoutes darkmode={darkmode} toggleDarkMode={toggleDarkMode} />
+            </AiProvider>
           </AuthProvider>
         </ApiProvider>
       </NotificationProvider>

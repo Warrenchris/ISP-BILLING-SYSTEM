@@ -29,8 +29,10 @@ import {
   Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../contexts/ApiContext';
+import aiService from '../services/aiService';
 import CustomCard from '../components/common/CustomCard';
 import StatCard from '../components/common/StatCard';
 import AdminStatsOverview from '../components/dashboard/AdminStatsOverview';
@@ -41,6 +43,7 @@ import PriorityTicketsWidget from '../components/dashboard/PriorityTicketsWidget
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService } = useApi();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
@@ -82,6 +85,13 @@ const Dashboard = () => {
     recentUsers: [],
     adminUsers: [],
     priorityTickets: [] });
+  const [aiQuickStats, setAiQuickStats] = useState({
+    atRiskCustomers: 0,
+    totalAnomalies: 0,
+    criticalAnomalies: 0,
+    predictedRevenue: 0
+  });
+  const [showCriticalAiBanner, setShowCriticalAiBanner] = useState(false);
 
   const isAdmin = user?.role === 'admin';
 
@@ -245,6 +255,33 @@ const Dashboard = () => {
     }
   }, [adminApi, paymentsApi, subscriptionsApi]);
 
+  const fetchAiQuickStats = useCallback(async () => {
+    try {
+      const [summaryRes, anomaliesRes] = await Promise.allSettled([
+        aiService.getDashboardSummary(),
+        aiService.getAnomalies()
+      ]);
+
+      const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.data || {}) : {};
+      const anomaliesPayload = anomaliesRes.status === 'fulfilled' ? (anomaliesRes.value.data?.data || {}) : {};
+      const anomalyList = Array.isArray(anomaliesPayload.anomalies) ? anomaliesPayload.anomalies : [];
+      const critical = anomalyList.filter((item) => {
+        const severity = String(item.severity || item.level || '').toLowerCase();
+        return severity === 'critical' || severity === 'high';
+      }).length;
+
+      setAiQuickStats({
+        atRiskCustomers: summary?.churn?.totalAtRisk || 0,
+        totalAnomalies: summary?.anomalies?.total || anomalyList.length || 0,
+        criticalAnomalies: summary?.anomalies?.critical ?? critical,
+        predictedRevenue: summary?.revenue?.predicted || 0
+      });
+      setShowCriticalAiBanner((summary?.anomalies?.critical ?? critical) > 0);
+    } catch (error) {
+      console.error('Error fetching AI quick stats:', error);
+    }
+  }, []);
+
   // ACTION HANDLERS
 
   const handleUserAction = async (userId, action) => {
@@ -378,8 +415,9 @@ const Dashboard = () => {
     fetchDashboardData();
     if (isAdmin) {
       fetchAdminStats();
+      fetchAiQuickStats();
     }
-  }, [isAdmin, fetchDashboardData, fetchAdminStats]);
+  }, [isAdmin, fetchDashboardData, fetchAdminStats, fetchAiQuickStats]);
 
   // LOADING STATE
 
@@ -445,6 +483,16 @@ const Dashboard = () => {
           </Box>
         </Box>
 
+        {showCriticalAiBanner && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 3, cursor: 'pointer' }}
+            onClick={() => navigate('/ai-dashboard', { state: { scrollTo: 'anomalies' } })}
+          >
+            ⚠️ {aiQuickStats.criticalAnomalies} critical billing anomalies detected. View Details →
+          </Alert>
+        )}
+
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
           <Tabs
             value={tabValue}
@@ -464,6 +512,43 @@ const Dashboard = () => {
         <TabPanel value={tabValue} index={0}>
           {/* Admin Overview */}
           <AdminStatsOverview stats={adminStats} />
+
+          <CustomCard className="mb-8">
+            <CardContent sx={{ p: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} flexDirection={{ xs: 'column', md: 'row' }} gap={1.5}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  AI Quick Stats
+                </Typography>
+                <Button
+                  variant="text"
+                  onClick={() => navigate('/ai-dashboard')}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                  View AI Dashboard →
+                </Button>
+              </Box>
+              <Grid container spacing={2} mt={0.5}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" color="text.secondary">Churn Risk</Typography>
+                  <Typography variant="h5" sx={{ color: aiQuickStats.atRiskCustomers > 0 ? theme.palette.error.main : 'text.primary', fontWeight: 700 }}>
+                    {aiQuickStats.atRiskCustomers} customers at churn risk
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" color="text.secondary">Anomalies</Typography>
+                  <Typography variant="h5" sx={{ color: aiQuickStats.totalAnomalies > 0 ? theme.palette.warning.main : 'text.primary', fontWeight: 700 }}>
+                    {aiQuickStats.totalAnomalies} active anomalies
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" color="text.secondary">Predicted Revenue</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    KES {Number(aiQuickStats.predictedRevenue || 0).toLocaleString()}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </CustomCard>
 
           {/* Personal Account Section for Admin */}
           <AdminPersonalAccount
