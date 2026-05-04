@@ -44,10 +44,7 @@ exports.getAllUsers = async (req, res, next) => {
           as: "activeSubscription",
           where: {
             status: SubscriptionStatus.ACTIVE,
-            startDate: { [Op.lte]: now() },
-            endDate: { [Op.gte]: now() },
-            cancelledAt: null,
-            suspendedAt: null,
+            endDate: { [Op.gte]: new Date() },
           },
           required: false,
           include: [
@@ -61,12 +58,14 @@ exports.getAllUsers = async (req, res, next) => {
       ],
     });
 
-    /* decorate with daysRemaining on the fly */
+    /* decorate with daysRemaining and derived status on the fly */
     const users = rows.map((u) => {
       const json = u.toJSON();
+      // Derive a status string from the isActive boolean (User model has no status column)
+      json.status = json.isActive ? 'active' : 'inactive';
       if (json.activeSubscription) {
         json.activeSubscription.daysRemaining = days(json.activeSubscription.endDate);
-        // Ensure plan data is properly attached
+        // Ensure plan data is properly attached under both keys
         if (!json.activeSubscription.DataPlan && json.activeSubscription.plan) {
           json.activeSubscription.DataPlan = json.activeSubscription.plan;
         }
@@ -274,9 +273,9 @@ exports.getSystemStats = async (req, res, next) => {
   try {
     // Get user counts
     const totalUsers = await User.count();
-    const activeUsers = await User.count({ where: { status: 'active' } });
-    const inactiveUsers = await User.count({ where: { status: 'inactive' } });
-    const suspendedUsers = await User.count({ where: { status: 'suspended' } });
+    const activeUsers = await User.count({ where: { isActive: true } });
+    const inactiveUsers = await User.count({ where: { isActive: false } });
+    const suspendedUsers = await Subscription.count({ where: { status: SubscriptionStatus.SUSPENDED } });
     const adminUsers = await User.count({ where: { role: UserRole.ADMIN } });
 
     // Get subscription counts
@@ -294,7 +293,7 @@ exports.getSystemStats = async (req, res, next) => {
     const payments = await Payment.findAll({
       where: {
         status: PaymentStatus.COMPLETED,
-        createdAt: {
+        created_at: {
           [Op.between]: [startDate, endDate]
         }
       }
@@ -327,8 +326,8 @@ exports.getSystemStats = async (req, res, next) => {
         },
         recentUsers: await User.findAll({
           limit: 5,
-          order: [['createdAt', 'DESC']],
-          attributes: ['id', 'firstName', 'lastName', 'email', 'createdAt']
+          order: [['created_at', 'DESC']],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'created_at']
         })
       }
     });

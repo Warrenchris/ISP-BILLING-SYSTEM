@@ -25,6 +25,9 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const settingRoutes = require("./routes/settingRoutes");
 const aiRoutes = require("./ai/aiRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const userUsageRoutes = require("./routes/userUsageRoutes");
+const configRoutes = require("./routes/configRoutes");
 
 // Create Express app
 const app = express();
@@ -108,6 +111,9 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/usage", dataUsageRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/users", userUsageRoutes);
+app.use("/api/config", configRoutes);
 app.use("/api/admin", adminRoutes);
 
 // New Routes

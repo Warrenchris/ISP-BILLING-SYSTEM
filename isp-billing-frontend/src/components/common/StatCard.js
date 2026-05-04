@@ -1,7 +1,7 @@
 import React from 'react';
 import { alpha } from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import CustomCard from './CustomCard';
+import GrowthIndicator from './GrowthIndicator';
 
 const StatCard = ({
     icon,
@@ -10,7 +10,6 @@ const StatCard = ({
     subtitle,
     color = 'primary.main', // Default to Primary Yellow
     trend,
-    trendLabel
 }) => {
     return (
         <CustomCard>
@@ -35,19 +34,9 @@ const StatCard = ({
                 </div>
 
                 {(subtitle || trend !== undefined) && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {trend !== undefined && (
-                            <div
-                                className={`flex items-center px-1.5 py-0.5 rounded-md text-xs font-bold ${trend > 0 ? 'text-green-500 bg-green-500/10' : 'text-red-500 bg-red-500/10'
-                                    }`}
-                            >
-                                {trend > 0 ? (
-                                    <TrendingUp sx={{ fontSize: 16, mr: 0.5 }} />
-                                ) : (
-                                    <TrendingDown sx={{ fontSize: 16, mr: 0.5 }} />
-                                )}
-                                {Math.abs(trend)}%
-                            </div>
+                            <GrowthIndicator value={trend} />
                         )}
                         {subtitle && (
                             <span className="text-sm text-gray-400">

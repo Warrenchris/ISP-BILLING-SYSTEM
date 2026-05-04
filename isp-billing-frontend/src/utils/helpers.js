@@ -24,15 +24,63 @@ export const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-// Format currency (Kenyan Shillings)
-export const formatCurrency = (amount, currency = 'KSh') => {
-  if (typeof amount !== 'number') {
-    amount = parseFloat(amount) || 0;
-  }
+const rawEnvCcy =
+  typeof process.env.REACT_APP_DEFAULT_CURRENCY === 'string' &&
+  process.env.REACT_APP_DEFAULT_CURRENCY.trim()
+    ? process.env.REACT_APP_DEFAULT_CURRENCY.trim()
+    : '';
 
-  return `${currency} ${amount.toLocaleString('en-KE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2 })}`;
+const rawEnvLocale =
+  typeof process.env.REACT_APP_DEFAULT_LOCALE === 'string' &&
+  process.env.REACT_APP_DEFAULT_LOCALE.trim()
+    ? process.env.REACT_APP_DEFAULT_LOCALE.trim()
+    : '';
+
+/** ISO 4217 code from env, or fallback when unset */
+export const APP_DEFAULT_CURRENCY = rawEnvCcy ? rawEnvCcy.toUpperCase() : 'KES';
+
+/** BCP 47 locale from env, or fallback when unset */
+export const APP_DEFAULT_LOCALE = rawEnvLocale || 'en-KE';
+
+/**
+ * Currency display using Intl. Defaults come from REACT_APP_DEFAULT_CURRENCY and REACT_APP_DEFAULT_LOCALE.
+ * @param {*} amount Numeric amount
+ * @param {string} [currencyCode] ISO 4217 (overrides env)
+ * @param {string} [localeOverride] BCP 47 locale (overrides env)
+ * @param {{ minimumFractionDigits?: number, maximumFractionDigits?: number }} [formatOverrides]
+ */
+export const formatCurrency = (amount, currencyCode, localeOverride, formatOverrides = {}) => {
+  let n = typeof amount === 'number' ? amount : parseFloat(amount);
+  if (Number.isNaN(n)) n = 0;
+
+  const code =
+    currencyCode !== undefined && currencyCode !== null && String(currencyCode).trim() !== ''
+      ? String(currencyCode).trim().toUpperCase()
+      : APP_DEFAULT_CURRENCY;
+  const locale =
+    localeOverride !== undefined && localeOverride !== null && String(localeOverride).trim() !== ''
+      ? String(localeOverride).trim()
+      : APP_DEFAULT_LOCALE;
+
+  const minFd =
+    typeof formatOverrides.minimumFractionDigits === 'number'
+      ? formatOverrides.minimumFractionDigits
+      : 2;
+  const maxFd =
+    typeof formatOverrides.maximumFractionDigits === 'number'
+      ? formatOverrides.maximumFractionDigits
+      : minFd;
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: code,
+      minimumFractionDigits: minFd,
+      maximumFractionDigits: maxFd,
+    }).format(n);
+  } catch {
+    return `${code} ${n.toFixed(maxFd)}`;
+  }
 };
 
 // Format date

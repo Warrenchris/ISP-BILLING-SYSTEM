@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Search as SearchIcon,
     Refresh as RefreshIcon,
     Add as AddIcon
 } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
+import { useApi } from '../../contexts/ApiContext';
+
+// TODO(API migration): Static fallbacks — remove once GET /api/config/roles is deployed everywhere.
+const FALLBACK_ROLE_FILTER_OPTIONS = [
+    { value: 'customer', label: 'Customer' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'support', label: 'Support' },
+];
 
 const UserFilterBar = ({
     search,
@@ -15,11 +23,39 @@ const UserFilterBar = ({
     onRefresh,
     onAdd
 }) => {
+    const { api } = useApi();
+    const [roleFilterOptions, setRoleFilterOptions] = useState(FALLBACK_ROLE_FILTER_OPTIONS);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await api.get('/config/roles');
+                const raw = res?.data?.data;
+                if (cancelled || !Array.isArray(raw) || !raw.length) return;
+                setRoleFilterOptions(
+                    raw.map((v) => ({
+                        value: v,
+                        label: typeof v === 'string'
+                            ? `${v.slice(0, 1).toUpperCase()}${v.slice(1).toLowerCase()}`
+                            : String(v),
+                    }))
+                );
+            } catch {
+                /* FALLBACK_ROLE_FILTER_OPTIONS */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [api]);
+
     return (
         <div className="mb-6">
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                 <h2 className="text-2xl font-bold text-white">User Management</h2>
                 <button
+                    type="button"
                     onClick={onAdd}
                     className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-light hover:from-primary-dark hover:to-primary text-primary-contrast px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-primary/30"
                 >
@@ -48,9 +84,11 @@ const UserFilterBar = ({
                             className="w-full bg-background-paper border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                         >
                             <option value="all">All Roles</option>
-                            <option value="customer">Customer</option>
-                            <option value="admin">Admin</option>
-                            <option value="support">Support</option>
+                            {roleFilterOptions.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                    {o.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -82,6 +120,7 @@ const UserFilterBar = ({
 
                     <div className="md:col-span-2">
                         <button
+                            type="button"
                             onClick={onRefresh}
                             disabled={loading}
                             className={`w-full flex items-center justify-center gap-2 border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-xl transition-all ${loading ? 'animate-pulse' : ''}`}

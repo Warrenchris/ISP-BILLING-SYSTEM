@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import CustomCard from '../common/CustomCard';
 
+/** usageHistory: [{ date: string (YYYY-MM-DD), usageMB: number }] */
 const DashboardCharts = ({ usageHistory, userStatusData }) => {
     const theme = useTheme();
 
@@ -15,6 +16,12 @@ const DashboardCharts = ({ usageHistory, userStatusData }) => {
         theme.palette.charts.pink,
     ];
 
+    const formatTick = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(`${dateStr}T12:00:00`);
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    };
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div className="lg:col-span-2">
@@ -26,7 +33,8 @@ const DashboardCharts = ({ usageHistory, userStatusData }) => {
                                 <LineChart data={usageHistory}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
                                     <XAxis
-                                        dataKey="day"
+                                        dataKey="date"
+                                        tickFormatter={formatTick}
                                         stroke={theme.palette.text.secondary}
                                         tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                                         axisLine={false}
@@ -40,7 +48,7 @@ const DashboardCharts = ({ usageHistory, userStatusData }) => {
                                     />
                                     <Line
                                         type="monotone"
-                                        dataKey="usage"
+                                        dataKey="usageMB"
                                         stroke={theme.palette.charts.blue}
                                         strokeWidth={3}
                                         dot={{ fill: theme.palette.charts.blue, strokeWidth: 2, r: 4 }}

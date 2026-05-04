@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api';
 
 // Base path matches app.js: /api/support/tickets
 const BASE = '/support/tickets';

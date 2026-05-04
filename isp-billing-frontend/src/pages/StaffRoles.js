@@ -113,12 +113,23 @@ const StaffRoles = () => {
                                         </TableCell>
                                         <TableCell>{member.email}</TableCell>
                                         <TableCell>
-                                            <Box display="flex" gap={1}>
-                                                {/* Permissions might be an array in backend or just implied by role. Mocking display if not present */}
-                                                {(member.permissions || [member.role === 'admin' ? 'All Access' : 'Limited Access']).map((p, idx) => (
-                                                    <Chip key={idx} label={p} size="small" icon={<VerifiedIcon fontSize="small" />} />
-                                                ))}
-                                            </Box>
+                                            {Array.isArray(member.permissions) &&
+                                            member.permissions.length > 0 ? (
+                                                <Box display="flex" gap={1} flexWrap="wrap">
+                                                    {member.permissions.map((p, idx) => (
+                                                        <Chip
+                                                            key={`${member.id}-${idx}`}
+                                                            label={typeof p === 'string' ? p : p?.name || JSON.stringify(p)}
+                                                            size="small"
+                                                            icon={<VerifiedIcon fontSize="small" />}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    —
+                                                </Typography>
+                                            )}
                                         </TableCell>
                                         <TableCell align="right">
                                             <IconButton size="small"><EditIcon /></IconButton>

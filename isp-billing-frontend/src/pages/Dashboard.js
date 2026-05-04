@@ -17,7 +17,8 @@ import {
   TextField,
   CircularProgress,
   useTheme,
-  alpha } from '@mui/material';
+  alpha,
+  Skeleton } from '@mui/material';
 import {
   DataUsage as DataUsageIcon,
   Payment as PaymentIcon,
@@ -40,11 +41,14 @@ import AdminPersonalAccount from '../components/dashboard/AdminPersonalAccount';
 import DashboardCharts from '../components/dashboard/DashboardCharts';
 import RecentUsersTable from '../components/dashboard/RecentUsersTable';
 import PriorityTicketsWidget from '../components/dashboard/PriorityTicketsWidget';
+import EmptyState from '../components/common/EmptyState';
+import ErrorState from '../components/common/ErrorState';
+import { APP_DEFAULT_CURRENCY, formatCurrency } from '../utils/helpers';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService } = useApi();
+  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService } = useApi();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -66,8 +70,11 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     currentSubscription: null,
     recentPayments: [],
-    pendingInvoices: [],
-    usageHistory: [] });
+    pendingInvoices: [] });
+
+  const [usageHistorySeries, setUsageHistorySeries] = useState([]);
+  const [usageHistoryLoading, setUsageHistoryLoading] = useState(true);
+  const [usageHistoryError, setUsageHistoryError] = useState(null);
 
   // Admin-specific state
   const [adminStats, setAdminStats] = useState({
@@ -82,6 +89,12 @@ const Dashboard = () => {
     suspendedSubscriptions: 0,
     totalRevenue: 0,
     monthlyRevenue: 0,
+    totalUsersTrend: null,
+    activeUsersTrend: null,
+    activeSubscriptionsTrend: null,
+    totalRevenueTrend: null,
+    revenuePeriodLabel: '',
+    currency: APP_DEFAULT_CURRENCY,
     recentUsers: [],
     adminUsers: [],
     priorityTickets: [] });
@@ -106,13 +119,6 @@ const Dashboard = () => {
 
 
   // UTILITY FUNCTIONS
-
-  const generateMockUsageHistory = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days.map(day => ({
-      day,
-      usage: Math.floor(Math.random() * 500) + 100 }));
-  };
 
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -157,8 +163,7 @@ const Dashboard = () => {
           : [],
         pendingInvoices: invoicesRes.status === 'fulfilled' && invoicesRes.value?.data?.success
           ? invoicesRes.value.data.data.invoices
-          : [],
-        usageHistory: generateMockUsageHistory() };
+          : [] };
 
       setDashboardData(newData);
     } catch (error) {
@@ -168,9 +173,36 @@ const Dashboard = () => {
     }
   }, [subscriptionsApi, paymentsApi, invoicesApi]);
 
+  const fetchUsageHistory = useCallback(async () => {
+    try {
+      setUsageHistoryLoading(true);
+      setUsageHistoryError(null);
+      const res = await api.get('/dashboard/usage-history', { params: { period: '7d' } });
+      const data = res.data?.data;
+      setUsageHistorySeries(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching dashboard usage history:', err);
+      setUsageHistoryError(err);
+      setUsageHistorySeries([]);
+    } finally {
+      setUsageHistoryLoading(false);
+    }
+  }, [api]);
+
   const fetchAdminStats = useCallback(async () => {
     try {
       setRefreshing(true);
+
+      let revenuePeriodLabel = '';
+      try {
+        const statsRes = await api.get('/dashboard/stats');
+        const label = statsRes?.data?.data?.revenuePeriodLabel;
+        if (label != null && String(label).trim() !== '') {
+          revenuePeriodLabel = String(label).trim();
+        }
+      } catch {
+        /* leave subtitle empty when stats endpoint fails */
+      }
 
       const usersResponse = await adminApi.users.getAll();
       const users = usersResponse.data?.data?.users || [];
@@ -231,6 +263,73 @@ const Dashboard = () => {
         return total + (isNaN(numericAmount) ? 0 : numericAmount);
       }, 0);
 
+      const pctChange = (current, previous) => {
+        if (previous === 0) return current === 0 ? 0 : 100;
+        return ((current - previous) / previous) * 100;
+      };
+
+      const MS_30 = 30 * 24 * 60 * 60 * 1000;
+      const nowTs = Date.now();
+      const endNow = new Date(nowTs);
+      const startCurrent = new Date(nowTs - MS_30);
+      const startPrev = new Date(nowTs - 2 * MS_30);
+      const endPrev = startCurrent;
+
+      const inRange = (dateStr, start, end) => {
+        if (!dateStr) return false;
+        const t = new Date(dateStr).getTime();
+        return t >= start.getTime() && t < end.getTime();
+      };
+
+      const countUsersCreatedBetween = (start, end) =>
+        users.filter((u) => u.createdAt && inRange(u.createdAt, start, end)).length;
+
+      const totalUsersTrend = pctChange(
+        countUsersCreatedBetween(startCurrent, endNow),
+        countUsersCreatedBetween(startPrev, endPrev)
+      );
+
+      const countActiveUsersCreatedBetween = (start, end) =>
+        users.filter(
+          (u) =>
+            u.status === 'active' &&
+            u.createdAt &&
+            inRange(u.createdAt, start, end)
+        ).length;
+
+      const activeUsersTrend = pctChange(
+        countActiveUsersCreatedBetween(startCurrent, endNow),
+        countActiveUsersCreatedBetween(startPrev, endPrev)
+      );
+
+      const countActiveSubsCreatedBetween = (start, end) =>
+        subscriptions.filter(
+          (s) =>
+            s.status === 'active' &&
+            s.createdAt &&
+            inRange(s.createdAt, start, end)
+        ).length;
+
+      const activeSubscriptionsTrend = pctChange(
+        countActiveSubsCreatedBetween(startCurrent, endNow),
+        countActiveSubsCreatedBetween(startPrev, endPrev)
+      );
+
+      const parsePaymentAmount = (p) => {
+        const n = parseFloat(String(p.amount || '0').replace(/[^\d.]/g, ''));
+        return isNaN(n) ? 0 : n;
+      };
+
+      const sumPaymentsBetween = (start, end) =>
+        payments.reduce((sum, p) => {
+          if (!p.createdAt || !inRange(p.createdAt, start, end)) return sum;
+          return sum + parsePaymentAmount(p);
+        }, 0);
+
+      const revenueLast30 = sumPaymentsBetween(startCurrent, endNow);
+      const revenuePrev30 = sumPaymentsBetween(startPrev, endPrev);
+      const totalRevenueTrend = pctChange(revenueLast30, revenuePrev30);
+
       setAdminStats({
         totalUsers,
         activeUsers,
@@ -241,8 +340,14 @@ const Dashboard = () => {
         expiredSubscriptions,
         pendingSubscriptions,
         suspendedSubscriptions,
-        totalRevenue, // This is now the total from all completed payments
-        monthlyRevenue, // This remains monthly only
+        totalRevenue,
+        monthlyRevenue,
+        totalUsersTrend,
+        activeUsersTrend,
+        activeSubscriptionsTrend,
+        totalRevenueTrend,
+        revenuePeriodLabel,
+        currency: APP_DEFAULT_CURRENCY,
         recentUsers: users.slice(0, 5),
         adminUsers: users.filter(u => u.role === 'admin'),
         priorityTickets: pTickets
@@ -253,7 +358,7 @@ const Dashboard = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [adminApi, paymentsApi, subscriptionsApi]);
+  }, [adminApi, api, paymentsApi, subscriptionsApi]);
 
   const fetchAiQuickStats = useCallback(async () => {
     try {
@@ -397,27 +502,21 @@ const Dashboard = () => {
   ];
 
   const userStatusData = [
-    { name: 'Active', value: adminStats.activeUsers, color: '#22C55E' },
+    { name: 'Active', value: adminStats.activeUsers, color: theme.palette.success.main },
     { name: 'Inactive', value: adminStats.inactiveUsers, color: theme.palette.warning.main },
-    { name: 'Suspended', value: adminStats.suspendedUsers, color: '#EF4444' },
-  ];
-
-  const subscriptionStatusData = [
-    { name: 'Active', value: adminStats.activeSubscriptions, color: '#22C55E' },
-    { name: 'Expired', value: adminStats.expiredSubscriptions, color: '#EF4444' },
-    { name: 'Pending', value: adminStats.pendingSubscriptions, color: theme.palette.warning.main },
-    { name: 'Suspended', value: adminStats.suspendedSubscriptions, color: '#9e9e9e' },
+    { name: 'Suspended', value: adminStats.suspendedUsers, color: theme.palette.error.main },
   ];
 
   // EFFECTS
 
   useEffect(() => {
     fetchDashboardData();
+    fetchUsageHistory();
     if (isAdmin) {
       fetchAdminStats();
       fetchAiQuickStats();
     }
-  }, [isAdmin, fetchDashboardData, fetchAdminStats, fetchAiQuickStats]);
+  }, [isAdmin, fetchDashboardData, fetchUsageHistory, fetchAdminStats, fetchAiQuickStats]);
 
   // LOADING STATE
 
@@ -470,6 +569,7 @@ const Dashboard = () => {
               startIcon={<RefreshIcon />}
               onClick={() => {
                 fetchDashboardData();
+                fetchUsageHistory();
                 fetchAdminStats();
               }}
               disabled={refreshing}
@@ -543,7 +643,7 @@ const Dashboard = () => {
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Predicted Revenue</Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    KES {Number(aiQuickStats.predictedRevenue || 0).toLocaleString()}
+                    {formatCurrency(aiQuickStats.predictedRevenue || 0)}
                   </Typography>
                 </Grid>
               </Grid>
@@ -562,10 +662,25 @@ const Dashboard = () => {
           <PriorityTicketsWidget tickets={adminStats.priorityTickets} />
 
           {/* Charts Section */}
-          <DashboardCharts
-            usageHistory={dashboardData.usageHistory}
-            userStatusData={userStatusData}
-          />
+          {usageHistoryLoading ? (
+            <Skeleton variant="rectangular" height={360} sx={{ borderRadius: 2, mb: 4 }} />
+          ) : usageHistoryError ? (
+            <ErrorState
+              message="Failed to load usage data"
+              onRetry={fetchUsageHistory}
+            />
+          ) : usageHistorySeries.length === 0 ? (
+            <EmptyState
+              icon={<DataUsageIcon />}
+              title="No usage data"
+              subtitle="Usage will appear here once data usage sessions are recorded."
+            />
+          ) : (
+            <DashboardCharts
+              usageHistory={usageHistorySeries}
+              userStatusData={userStatusData}
+            />
+          )}
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
@@ -839,24 +954,45 @@ const Dashboard = () => {
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             Weekly Usage Trend
           </Typography>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dashboardData.usageHistory}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-              <XAxis dataKey="day" stroke="#b8c5d6" />
-              <YAxis stroke="#b8c5d6" />
-              <Bar
-                dataKey="usage"
-                fill="url(#colorGradient)"
-                radius={[4, 4, 0, 0]}
-              />
-              <defs>
-                <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#B28F00" stopOpacity={0.8} />
-                </linearGradient>
-              </defs>
-            </BarChart>
-          </ResponsiveContainer>
+          {usageHistoryLoading ? (
+            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+          ) : usageHistoryError ? (
+            <ErrorState
+              message="Failed to load usage data"
+              onRetry={fetchUsageHistory}
+            />
+          ) : usageHistorySeries.length === 0 ? (
+            <EmptyState
+              icon={<DataUsageIcon />}
+              title="No usage data"
+              subtitle="Usage will appear here once data usage sessions are recorded."
+            />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={usageHistorySeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v) =>
+                    v ? new Date(`${v}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
+                  }
+                  stroke="#b8c5d6"
+                />
+                <YAxis stroke="#b8c5d6" />
+                <Bar
+                  dataKey="usageMB"
+                  fill="url(#colorGradient)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <defs>
+                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#B28F00" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </CustomCard>
 

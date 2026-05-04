@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef } from "react";
-import api from "../services/api";
+import api from "../utils/api";
 import { useNotification } from "./NotificationContext";
 import { authService } from "../services/authService";
 import { userService } from "../services/userService";

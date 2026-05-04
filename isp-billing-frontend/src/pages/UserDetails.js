@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box, Typography, Grid, Paper, Divider,
     List, ListItem, ListItemText, Chip, Button, IconButton,
     Table, TableBody, TableCell, TableHead, TableRow, TableContainer,
-    LinearProgress, Alert
+    LinearProgress, Alert, Skeleton
 } from '@mui/material';
 import {
     ArrowBack as ArrowBackIcon,
@@ -14,39 +14,56 @@ import {
     Router as RouterIcon,
     History as HistoryIcon,
     Receipt as ReceiptIcon,
-    CreditCard as CreditCardIcon
+    CreditCard as CreditCardIcon,
+    ShowChart as ShowChartIcon
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useNavigate, useParams } from 'react-router-dom';
+import { formatCurrency } from '../utils/helpers';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useApi } from '../contexts/ApiContext';
+import EmptyState from '../components/common/EmptyState';
+import ErrorState from '../components/common/ErrorState';
 
 const UserDetails = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { id } = useParams();
-    const { adminApi, paymentsApi } = useApi();
+    const { adminApi, paymentsApi, api } = useApi();
 
     const [user, setUser] = useState(null);
     const [payments, setPayments] = useState([]);
     const [usageData, setUsageData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [usageLoading, setUsageLoading] = useState(true);
+    const [usageError, setUsageError] = useState(null);
+
+    const fetchUsageHistory = useCallback(async () => {
+        if (!id) return;
+        try {
+            setUsageLoading(true);
+            setUsageError(null);
+            const res = await api.get(`/users/${id}/usage-history`, { params: { period: '7d' } });
+            const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+            setUsageData(rows);
+        } catch (e) {
+            setUsageError(e.response?.data?.message || 'Could not load usage history');
+            setUsageData([]);
+        } finally {
+            setUsageLoading(false);
+        }
+    }, [api, id]);
 
     useEffect(() => {
         const fetchDetails = async () => {
             if (!id) return;
             setLoading(true);
+            setError(null);
             try {
-                // Fetch user details, payments, and usage concurrently
-                // Note: Real APIs might need adjusting based on exact endpoints.
-                // Assuming adminApi.users.getById(id) returns user object
                 const [userRes, paymentsRes] = await Promise.allSettled([
                     adminApi.users.getById(id),
-                    paymentsApi.getPaymentHistory({ userId: id, limit: 5 }), // Assuming filter by user
-                    // Mock usage data fetch or real if endpoint exists
-                    // We'll mock usage for now if no specific endpoint for "user usage history" exists in the general API context easily accessibly or just use a generic call
-                    Promise.resolve({ data: { data: [] } })
+                    paymentsApi.getPaymentHistory({ userId: id, limit: 5 }),
                 ]);
 
                 if (userRes.status === 'fulfilled') {
@@ -60,14 +77,6 @@ const UserDetails = () => {
                     setPayments(Array.isArray(payData) ? payData : (payData.items || []));
                 }
 
-                // Mocking usage data for visualization as backend might not have this historical granular data ready
-                // In production, wire this to usageRes
-                const mockUsage = Array.from({ length: 7 }, (_, i) => ({
-                    day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-                    upload: Math.floor(Math.random() * 50),
-                    download: Math.floor(Math.random() * 150) }));
-                setUsageData(mockUsage);
-
             } catch (err) {
                 console.error('Error fetching details:', err);
                 setError('Could not load user details.');
@@ -78,6 +87,10 @@ const UserDetails = () => {
 
         fetchDetails();
     }, [id, adminApi.users, paymentsApi]);
+
+    useEffect(() => {
+        fetchUsageHistory();
+    }, [fetchUsageHistory]);
 
     if (loading) return <LinearProgress color="primary" sx={{ mt: 4 }} />;
 
@@ -91,6 +104,10 @@ const UserDetails = () => {
             </Box>
         );
     }
+
+    const usageHasActivity = usageData.some(
+        (row) => (Number(row.download) || 0) + (Number(row.upload) || 0) > 0
+    );
 
     return (
         <Box sx={{ p: 3 }}>
@@ -121,7 +138,7 @@ const UserDetails = () => {
                         <Box sx={{ p: 3, background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.background.paper, 0.1)} 100%)` }}>
                             <Box display="flex" justifyContent="center" mb={2}>
                                 <Box sx={{
-                                    width: 80, height: 80, 
+                                    width: 80, height: 80,
                                     bgcolor: theme.palette.primary.main, color: 'primary.contrastText',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                 }}>
@@ -164,7 +181,9 @@ const UserDetails = () => {
                         </Box>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography color="text.secondary">Price</Typography>
-                            <Typography fontWeight="bold">Ksh {user.subscription?.plan?.price || user.price || '0'}/mo</Typography>
+                            <Typography fontWeight="bold">
+                                {formatCurrency(user.subscription?.plan?.price ?? user.price ?? 0)}/mo
+                            </Typography>
                         </Box>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography color="text.secondary">Renewal Date</Typography>
@@ -184,17 +203,31 @@ const UserDetails = () => {
                     <Paper sx={{ p: 3,  mb: 3, border: `1px solid ${theme.palette.divider}` }}>
                         <Typography variant="h6" gutterBottom>Data Usage Summary (Last 7 Days)</Typography>
                         <Box height={300}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={usageData}>
-                                    <XAxis dataKey="day" stroke={theme.palette.text.secondary} />
-                                    <YAxis stroke={theme.palette.text.secondary} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: theme.palette.background.paper }}
-                                    />
-                                    <Line type="monotone" dataKey="download" stroke={theme.palette.primary.main} strokeWidth={3} dot={{ r: 4 }} name="Download (GB)" />
-                                    <Line type="monotone" dataKey="upload" stroke={theme.palette.secondary.main} strokeWidth={3} dot={{ r: 4 }} name="Upload (GB)" />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            {usageLoading ? (
+                                <Skeleton variant="rounded" height="100%" width="100%" />
+                            ) : usageError ? (
+                                <ErrorState message={usageError} onRetry={fetchUsageHistory} />
+                            ) : !usageHasActivity ? (
+                                <EmptyState
+                                    icon={<ShowChartIcon />}
+                                    title="No usage recorded"
+                                    subtitle="This user has no aggregated upload or download in the selected window."
+                                    action={{ label: 'Retry', onClick: fetchUsageHistory }}
+                                />
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={usageData}>
+                                        <XAxis dataKey="label" stroke={theme.palette.text.secondary} />
+                                        <YAxis tickFormatter={(v) => `${v} MB`} stroke={theme.palette.text.secondary} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: theme.palette.background.paper }}
+                                            formatter={(value, name) => [`${value} MB`, name]}
+                                        />
+                                        <Line type="monotone" dataKey="download" stroke={theme.palette.primary.main} strokeWidth={3} dot={{ r: 4 }} name="Download (MB)" />
+                                        <Line type="monotone" dataKey="upload" stroke={theme.palette.secondary.main} strokeWidth={3} dot={{ r: 4 }} name="Upload (MB)" />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            )}
                         </Box>
                     </Paper>
 

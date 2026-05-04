@@ -20,6 +20,7 @@ import {
 
 import { useApi } from '../contexts/ApiContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatCurrency } from '../utils/helpers';
 import PlanForm from './PlanForm';
 
 const DataPlans = () => {
@@ -112,14 +113,11 @@ const DataPlans = () => {
     return configs[cat?.toLowerCase()] || configs.basic;
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
+  const formatPrice = (price) =>
+    formatCurrency(price, undefined, undefined, {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price).replace('KES', 'KSh');
-  };
+      maximumFractionDigits: 0,
+    });
 
   // -----------------------------------------------------------------
   // fetch plans

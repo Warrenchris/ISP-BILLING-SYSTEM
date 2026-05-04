@@ -1,8 +1,15 @@
 import axios from 'axios';
 
+if (!process.env.REACT_APP_API_URL) {
+  console.error(
+    '[API] REACT_APP_API_URL is not set. ' +
+      'Create a .env file with REACT_APP_API_URL=http://your-backend-url/api'
+  );
+}
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
+  baseURL: process.env.REACT_APP_API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json' } });
@@ -108,4 +115,3 @@ export const adminApi = {
     getLogs: (params = {}) => api.get('/admin/logs', { params }) } };
 
 export default api;
-

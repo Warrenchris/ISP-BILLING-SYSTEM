@@ -15,6 +15,9 @@ import {
     useTheme
 } from '@mui/material';
 import { MonetizationOn as CashIcon } from '@mui/icons-material';
+import { APP_DEFAULT_CURRENCY, formatCurrency } from '../../utils/helpers';
+
+const currencyFieldSuffix = () => APP_DEFAULT_CURRENCY;
 
 const CashPaymentDialog = ({
     open,
@@ -116,8 +119,11 @@ const CashPaymentDialog = ({
                             Active Subscription Found
                         </Typography>
                         <Typography variant="body2" color="gray">
-                            {userSubscription.DataPlan?.name || 'Subscription'} -
-                            KSh {userSubscription.DataPlan?.price || userSubscription.amount || 0}
+                            {userSubscription.DataPlan?.name || 'Subscription'} -{' '}
+                            {formatCurrency(userSubscription.DataPlan?.price ?? userSubscription.amount ?? 0, undefined, undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            })}
                         </Typography>
                     </Box>
                 )}
@@ -126,7 +132,7 @@ const CashPaymentDialog = ({
                     <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                             fullWidth
-                            label="Amount (KSh)"
+                            label={`Amount (${currencyFieldSuffix()})`}
                             type="number"
                             value={cashAmount}
                             onChange={(e) => setCashAmount(e.target.value)}

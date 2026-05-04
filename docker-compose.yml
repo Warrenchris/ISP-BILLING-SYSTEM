@@ -27,6 +27,7 @@ services:
       - ./isp-billing-system-BACKEND:/app
       - /app/node_modules
     restart: unless-stopped
+    stop_grace_period: 10s
     networks:
       - isp-network
 
@@ -82,11 +83,11 @@ services:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: isp_billing_db
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=rootpassword"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 60s
     volumes:
       - mysql_data:/var/lib/mysql
     networks:

@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api';
 
 export const notificationService = {
     getAll: (params) => api.get('/notifications/all', { params }), // System logs

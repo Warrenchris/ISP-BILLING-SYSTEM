@@ -32,6 +32,7 @@ import { Link, useLocation } from 'react-router-dom';
 import aiService from '../services/aiService';
 import { useAi } from '../contexts/AiContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatCurrency } from '../utils/helpers';
 
 const formatDateTime = (value) => {
   if (!value) return 'N/A';
@@ -39,8 +40,6 @@ const formatDateTime = (value) => {
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleString();
 };
-
-const formatKes = (value) => `KES ${Number(value || 0).toLocaleString()}`;
 
 const getRiskColor = (riskLevel, theme) => {
   const normalized = String(riskLevel || '').toUpperCase();
@@ -64,6 +63,16 @@ const normalizeFeatureValue = (item) => {
   return 0;
 };
 
+/** Empty baseline — populate from dashboard summary (`forecastInputs`) when the AI API provides it */
+const INITIAL_FORECAST_PAYLOAD = Object.freeze({
+  activeSubscribers: 0,
+  avgDataUsageMB: 0,
+  paymentDelays: 0,
+  basic: 0,
+  standard: 0,
+  premium: 0,
+});
+
 const AiDashboard = () => {
   const theme = useTheme();
   const location = useLocation();
@@ -85,18 +94,46 @@ const AiDashboard = () => {
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState('');
 
-  const [forecastPayload, setForecastPayload] = useState({
-    activeSubscribers: 100,
-    avgDataUsageMB: 30000,
-    paymentDelays: 5,
-    basic: 40,
-    standard: 40,
-    premium: 20,
-  });
+  const [forecastPayload, setForecastPayload] = useState(() => ({ ...INITIAL_FORECAST_PAYLOAD }));
   const [forecastResult, setForecastResult] = useState(null);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState('');
   const [retrainLoading, setRetrainLoading] = useState(false);
+
+  /** One-time hydrate from AI dashboard summary when `forecastInputs` is present */
+  const forecastHydratedRef = useRef(false);
+
+  useEffect(() => {
+    const fi = dashboardSummary?.forecastInputs;
+    if (forecastHydratedRef.current || !fi || typeof fi !== 'object') return;
+    forecastHydratedRef.current = true;
+    setForecastPayload((prev) => ({
+      activeSubscribers:
+        fi.activeSubscribers != null ? Number(fi.activeSubscribers) : prev.activeSubscribers,
+      avgDataUsageMB:
+        fi.avgDataUsageMB != null ? Number(fi.avgDataUsageMB) : prev.avgDataUsageMB,
+      paymentDelays:
+        fi.paymentDelays != null ? Number(fi.paymentDelays) : prev.paymentDelays,
+      basic:
+        fi.basic != null
+          ? Number(fi.basic)
+          : fi.planDistribution?.basic != null
+          ? Number(fi.planDistribution.basic)
+          : prev.basic,
+      standard:
+        fi.standard != null
+          ? Number(fi.standard)
+          : fi.planDistribution?.standard != null
+          ? Number(fi.planDistribution.standard)
+          : prev.standard,
+      premium:
+        fi.premium != null
+          ? Number(fi.premium)
+          : fi.planDistribution?.premium != null
+          ? Number(fi.planDistribution.premium)
+          : prev.premium,
+    }));
+  }, [dashboardSummary]);
 
   const revenueRef = useRef(null);
   const churnRef = useRef(null);
@@ -352,10 +389,10 @@ const AiDashboard = () => {
           {forecastResult && (
             <Box mt={2.5}>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {formatKes(forecastResult.predictedRevenue)}
+                {formatCurrency(forecastResult.predictedRevenue || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                {formatKes(forecastResult.confidenceInterval?.low)} — {formatKes(forecastResult.confidenceInterval?.high)} (95% CI)
+                {formatCurrency(forecastResult.confidenceInterval?.low ?? 0)} — {formatCurrency(forecastResult.confidenceInterval?.high ?? 0)} (95% CI)
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5 }}>
                 Period: {forecastResult.forecastPeriod || 'N/A'}
@@ -532,10 +569,10 @@ const AiDashboard = () => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
-                    Predicted revenue: <strong>{formatKes(dashboardSummary?.revenue?.predicted)}</strong>
+                    Predicted revenue: <strong>{formatCurrency(dashboardSummary?.revenue?.predicted ?? 0)}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Actual revenue: <strong>{formatKes(dashboardSummary?.revenue?.actual)}</strong>
+                    Actual revenue: <strong>{formatCurrency(dashboardSummary?.revenue?.actual ?? 0)}</strong>
                   </Typography>
                   <Typography variant="body2">
                     Variance: <strong>{dashboardSummary?.revenue?.variancePct ?? 0}%</strong>

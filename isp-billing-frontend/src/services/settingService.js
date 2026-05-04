@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api';
 
 export const settingService = {
     getCompanyInfo: () => api.get('/admin/settings/company'),

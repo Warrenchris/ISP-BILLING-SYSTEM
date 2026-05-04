@@ -7,6 +7,7 @@ import {
     AttachMoney as MoneyIcon
 } from '@mui/icons-material';
 import StatCard from '../common/StatCard';
+import { formatCurrency } from '../../utils/helpers';
 
 const PaymentStatsRow = ({ stats }) => {
     const theme = useTheme();
@@ -44,7 +45,7 @@ const PaymentStatsRow = ({ stats }) => {
                 <StatCard
                     icon={<MoneyIcon />}
                     title="Total Amount"
-                    value={`KSh ${totalPaid.toFixed(2)}`}
+                    value={formatCurrency(totalPaid)}
                     subtitle="completed"
                     color={theme.palette.error.main}
                 />

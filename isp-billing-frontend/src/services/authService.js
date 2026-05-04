@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api';
 
 export const authService = {
     login: (credentials) => api.post('/auth/login', credentials),

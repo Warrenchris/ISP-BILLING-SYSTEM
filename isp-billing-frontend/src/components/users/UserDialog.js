@@ -1,16 +1,60 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, MenuItem, Button, Typography
 } from '@mui/material';
-const USER_ROLES = {
-    ADMIN: 'admin',
-    CUSTOMER: 'customer',
-    STAFF: 'staff' };
+import { useApi } from '../../contexts/ApiContext';
+
+// TODO(API migration): Static fallbacks — remove once GET /api/config/roles & /api/config/user-statuses are deployed everywhere.
+const FALLBACK_USER_ROLE_OPTIONS = ['customer', 'admin', 'support'];
+const FALLBACK_USER_STATUS_OPTIONS = ['active', 'inactive', 'suspended'];
+
+const titleCaseWord = (s) =>
+    typeof s !== 'string' || !s
+        ? ''
+        : `${s.slice(0, 1).toUpperCase()}${s.slice(1).toLowerCase()}`;
+
+const matchCanonical = (allowed, preferred, fallback) => {
+    const pref = preferred != null ? String(preferred).trim().toLowerCase() : '';
+    const hit = allowed.find((a) => String(a).toLowerCase() === pref);
+    if (hit !== undefined) return hit;
+    const fb = fallback != null ? String(fallback).toLowerCase() : '';
+    const fbHit = allowed.find((a) => String(a).toLowerCase() === fb);
+    return fbHit !== undefined ? fbHit : allowed[0];
+};
 
 // We'll keep using MUI Dialog for modal behavior consistency, but styling content with Tailwind
 const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
     const isEdit = !!user.id;
+    const { api } = useApi();
+    const [roleOptions, setRoleOptions] = useState(FALLBACK_USER_ROLE_OPTIONS);
+    const [statusOptions, setStatusOptions] = useState(FALLBACK_USER_STATUS_OPTIONS);
+
+    useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const [rolesRes, stRes] = await Promise.all([
+                    api.get('/config/roles'),
+                    api.get('/config/user-statuses'),
+                ]);
+                const roles = rolesRes?.data?.data;
+                const sts = stRes?.data?.data;
+                if (!cancelled && Array.isArray(roles) && roles.length) {
+                    setRoleOptions(roles);
+                }
+                if (!cancelled && Array.isArray(sts) && sts.length) {
+                    setStatusOptions(sts);
+                }
+            } catch {
+                /* FALLBACK_* */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [open, api]);
 
     return (
         <Dialog
@@ -134,7 +178,8 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                         <TextField
                             select
                             label="Role"
-                            value={user.role || 'customer'}
+                            value={
+                                matchCanonical(roleOptions, user.role, 'customer')}
                             onChange={(e) => setUser({ ...user, role: e.target.value })}
                             fullWidth
                             variant="outlined"
@@ -148,15 +193,18 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                                 '& .MuiSelect-icon': { color: 'text.primary' }
                             }}
                         >
-                            {Object.values(USER_ROLES).map((role) => (
-                                <MenuItem key={role} value={role}>{role}</MenuItem>
+                            {roleOptions.map((role) => (
+                                <MenuItem key={role} value={role}>
+                                    {titleCaseWord(role)}
+                                </MenuItem>
                             ))}
                         </TextField>
 
                         <TextField
                             select
                             label="Status"
-                            value={user.status || 'active'}
+                            value={
+                                matchCanonical(statusOptions, user.status, 'active')}
                             onChange={(e) => setUser({ ...user, status: e.target.value })}
                             fullWidth
                             variant="outlined"
@@ -166,8 +214,10 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                                 '& .MuiSelect-icon': { color: 'text.primary' }
                             }}
                         >
-                            {['active', 'inactive', 'suspended'].map((status) => (
-                                <MenuItem key={status} value={status}>{status}</MenuItem>
+                            {statusOptions.map((status) => (
+                                <MenuItem key={status} value={status}>
+                                    {titleCaseWord(status)}
+                                </MenuItem>
                             ))}
                         </TextField>
                     </div>

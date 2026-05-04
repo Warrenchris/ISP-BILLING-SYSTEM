@@ -150,9 +150,8 @@ const UsersManagement = () => {
     const getStatusColor = (status) => {
         const normalized = (status || '').toLowerCase();
         if (normalized === 'active') return theme.palette.success.main;
-        if (normalized === 'suspended' || normalized === 'inactive') return theme.palette.error.main;
-        if (normalized === 'expired') return theme.palette.warning.main;
-        return theme.palette.text.secondary;
+        if (normalized === 'inactive' || normalized === 'suspended') return theme.palette.error.main;
+        return theme.palette.warning.main;
     };
 
     if (loading && users.length === 0) {
@@ -269,21 +268,21 @@ const UsersManagement = () => {
                                     <TableCell>
                                         <Box display="flex" alignItems="center" gap={2}>
                                             <Avatar sx={{ bgcolor: theme.palette.primary.main, color: 'primary.contrastText' }}>
-                                                {user.name?.charAt(0) || 'U'}
+                                                {`${user.firstName || ''} ${user.lastName || ''}`.trim().charAt(0) || 'U'}
                                             </Avatar>
                                             <Box>
-                                                <Typography variant="subtitle2" fontWeight="600">{user.name || 'Unknown'}</Typography>
+                                                <Typography variant="subtitle2" fontWeight="600">{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Unknown'}</Typography>
                                                 <Typography variant="caption" color="text.secondary">ID: {user.id}</Typography>
                                             </Box>
                                         </Box>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2">{user.email}</Typography>
-                                        <Typography variant="caption" color="text.secondary">{user.phone}</Typography>
+                                        <Typography variant="caption" color="text.secondary">{user.phoneNumber}</Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Chip
-                                            label={user.plan || user.subscription?.plan?.name || 'No Plan'}
+                                            label={user.activeSubscription?.plan?.name || user.activeSubscription?.DataPlan?.name || 'No Plan'}
                                             size="small"
                                             sx={{
                                                 
@@ -295,20 +294,19 @@ const UsersManagement = () => {
                                     </TableCell>
                                     <TableCell>
                                         <Chip
-                                            label={user.status || 'Unknown'}
+                                            label={user.isActive ? 'Active' : 'Inactive'}
                                             size="small"
                                             sx={{
-                                                
-                                                bgcolor: alpha(getStatusColor(user.status), 0.1),
-                                                color: getStatusColor(user.status),
+                                                bgcolor: alpha(getStatusColor(user.isActive ? 'active' : 'inactive'), 0.1),
+                                                color: getStatusColor(user.isActive ? 'active' : 'inactive'),
                                                 fontWeight: 600,
-                                                border: `1px solid ${alpha(getStatusColor(user.status), 0.2)}`
+                                                border: `1px solid ${alpha(getStatusColor(user.isActive ? 'active' : 'inactive'), 0.2)}`
                                             }}
                                         />
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" color="text.secondary">
-                                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                                            {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                                         </Typography>
                                     </TableCell>
                                     <TableCell align="right">

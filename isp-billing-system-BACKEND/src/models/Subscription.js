@@ -59,6 +59,24 @@ const Subscription = sequelize.define('Subscription', {
   notes: DataTypes.TEXT
 }, {
   tableName: 'subscriptions',
+  underscored: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  indexes: [
+    {
+      name: 'idx_subscriptions_user_id',
+      fields: ['user_id']
+    },
+    {
+      name: 'idx_subscriptions_status',
+      fields: ['status']
+    },
+    {
+      name: 'idx_subscriptions_active_lookup',
+      fields: ['user_id', 'status', 'end_date']
+    }
+  ],
   hooks: {
     beforeCreate: (sub) => {
       const timestamp = Date.now().toString().slice(-8);

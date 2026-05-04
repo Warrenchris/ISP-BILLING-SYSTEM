@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api';
 
 export const auditService = {
     getAll: (params) => api.get('/admin/audit-logs', { params }),

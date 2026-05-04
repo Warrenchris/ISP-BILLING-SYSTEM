@@ -33,7 +33,7 @@ import {
 import { CheckCircle as CheckIcon } from "@mui/icons-material";
 import { useApi } from "../contexts/ApiContext";
 import { useAuth } from "../contexts/AuthContext";
-import { formatBytes } from "../utils/helpers";
+import { APP_DEFAULT_CURRENCY, formatBytes } from "../utils/helpers";
 
 const statusColor = (s) =>
 ({
@@ -110,7 +110,7 @@ export default function Subscriptions() {
   const tableRows = React.useMemo(() => {
     const defaultDataPlan = { name: "Unknown Plan", dataLimit: 0 };
     return subs.map((s) => ({
-      id: s?.id || Math.random().toString(36).substring(2, 9),
+      id: s?.id ?? null,
       subscriptionNumber: s?.subscriptionNumber || "N/A",
       status: s?.status || "unknown",
       paymentStatus: s?.paymentStatus || "N/A",
@@ -505,8 +505,8 @@ export default function Subscriptions() {
                   </Box>
                 </Box>
                 <Box component="tbody">
-                  {tableRows.map((row) => (
-                    <Box component="tr" key={row.id} sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+                  {tableRows.map((row, index) => (
+                    <Box component="tr" key={index} sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
                       <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         <Typography component="span" fontWeight="medium">
                           {row.subscriptionNumber || "N/A"}
@@ -698,7 +698,7 @@ export default function Subscriptions() {
             fullWidth
             required
             type="number"
-            label="Amount (KES)"
+            label={`Amount (${APP_DEFAULT_CURRENCY})`}
             value={cashAmount}
             onChange={(e) => setCashAmount(e.target.value)}
             sx={{ mb: 2 }}

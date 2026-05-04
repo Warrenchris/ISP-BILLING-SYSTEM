@@ -7,18 +7,19 @@ import {
   Grid,
   LinearProgress,
   Alert,
-  CircularProgress,
   Chip,
   Button,
   Avatar,
   useTheme,
-  alpha } from '@mui/material';
+  alpha,
+  Skeleton } from '@mui/material';
 import {
   DataUsage as DataUsageIcon,
   TrendingUp as TrendingUpIcon,
   Speed as SpeedIcon,
   NetworkCheck as NetworkCheckIcon,
-  Refresh as RefreshIcon } from '@mui/icons-material';
+  Refresh as RefreshIcon,
+  BarChartOutlined as BarChartOutlinedIcon } from '@mui/icons-material';
 import {
   XAxis,
   YAxis,
@@ -33,82 +34,39 @@ import {
   Pie,
   Cell } from 'recharts';
 import { useApi } from '../contexts/ApiContext';
+import { useAuth } from '../contexts/AuthContext';
+import EmptyState from '../components/common/EmptyState';
+import ErrorState from '../components/common/ErrorState';
 
 const DataUsage = () => {
   const theme = useTheme();
-  const [currentUsage, setCurrentUsage] = useState(null);
-  const [usageHistory, setUsageHistory] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
+  const { user } = useAuth();
+  const { api } = useApi();
+
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
 
-  const { dataUsageApi } = useApi();
-
   const fetchUsageData = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
-
-      const [currentRes, historyRes, analyticsRes] = await Promise.allSettled([
-        dataUsageApi.getCurrent(),
-        dataUsageApi.getHistory({ limit: 30 }),
-        dataUsageApi.getAnalytics({ period: '7d' }),
-      ]);
-
-      if (currentRes.status === 'fulfilled') {
-        setCurrentUsage(currentRes.value.data.data);
-      }
-
-      if (historyRes.status === 'fulfilled') {
-        setUsageHistory(historyRes.value.data.data || []);
-      }
-
-      if (analyticsRes.status === 'fulfilled') {
-        setAnalytics(analyticsRes.value.data.data);
-      }
-
-      if (!currentRes.value?.data?.data) {
-        generateMockData();
-      }
-    } catch (error) {
-      console.error('Error fetching usage data:', error);
-      showAlert('Error loading usage data', 'error');
-      generateMockData();
+      setError(null);
+      const res = await api.get(`/users/${user.id}/data-usage`);
+      setOverview(res.data?.data ?? null);
+    } catch (err) {
+      console.error('Error fetching usage data:', err);
+      setError(err.response?.data?.message || 'Failed to load usage data');
+      setOverview(null);
     } finally {
       setLoading(false);
     }
-  }, [dataUsageApi]);
+  }, [api, user?.id]);
 
   useEffect(() => {
     fetchUsageData();
   }, [fetchUsageData]);
-
-  const generateMockData = () => {
-    setCurrentUsage({
-      totalUsed: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
-      totalLimit: 5 * 1024 * 1024 * 1024, // 5 GB
-      dailyUsage: 150 * 1024 * 1024, // 150 MB today
-      activeSessions: 1,
-      averageSpeed: 25.5, // Mbps
-    });
-
-    const mockHistory = [];
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      mockHistory.push({
-        date: date.toISOString().split('T')[0],
-        downloaded: Math.floor(Math.random() * 500) + 100, // MB
-        uploaded: Math.floor(Math.random() * 100) + 20, // MB
-        sessions: Math.floor(Math.random() * 5) + 1 });
-    }
-    setUsageHistory(mockHistory);
-
-    setAnalytics({
-      weeklyTrend: 'increasing',
-      averageDailyUsage: 180 * 1024 * 1024, // 180 MB
-      peakUsageHour: 20, // 8 PM
-      totalSessions: 45 });
-  };
 
   const showAlert = (message, severity = 'info') => {
     setAlert({ show: true, message, severity });
@@ -116,7 +74,7 @@ const DataUsage = () => {
   };
 
   const formatBytes = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0 || bytes == null) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -124,8 +82,8 @@ const DataUsage = () => {
   };
 
   const getUsagePercentage = () => {
-    if (!currentUsage) return 0;
-    return Math.min((currentUsage.totalUsed / currentUsage.totalLimit) * 100, 100);
+    if (!overview || !overview.totalLimit) return 0;
+    return Math.min((overview.totalUsed / overview.totalLimit) * 100, 100);
   };
 
   const getUsageColor = () => {
@@ -134,6 +92,17 @@ const DataUsage = () => {
     if (percentage >= 75) return theme.palette.warning.main;
     return theme.palette.primary.main;
   };
+
+  const usageHistory = overview?.history ?? [];
+  const hasChartActivity = usageHistory.some(
+    (row) =>
+      (
+        Number(row.usageMB ?? 0) +
+        Number(row.downloaded ?? 0) +
+        Number(row.uploaded ?? 0)
+      ) >
+      0
+  );
 
   // Modern Glass Card Component
   const GlassCard = ({ children, sx = {}, ...props }) => (
@@ -209,54 +178,92 @@ const DataUsage = () => {
     </GlassCard>
   );
 
-  // Prepare chart data
   const chartData = usageHistory.map(item => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    downloaded: item.downloaded,
-    uploaded: item.uploaded,
-    total: item.downloaded + item.uploaded }));
+    dateLabel: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    downloaded: Number(item.downloaded) || 0,
+    uploaded: Number(item.uploaded) || 0,
+    total: (Number(item.downloaded) || 0) + (Number(item.uploaded) || 0) }));
 
-  const pieData = [
-    { name: 'Used', value: getUsagePercentage(), color: getUsageColor() },
-    { name: 'Remaining', value: 100 - getUsagePercentage(), color: alpha(getUsageColor(), 0.2) },
-  ];
+  const pieData =
+    overview && overview.totalLimit > 0
+      ? [
+        { name: 'Used', value: getUsagePercentage(), color: getUsageColor() },
+        { name: 'Remaining', value: 100 - getUsagePercentage(), color: alpha(getUsageColor(), 0.2) },
+      ]
+      : [
+        {
+          name: 'Plan',
+          value: 100,
+          color: theme.palette.action.disabledBackground,
+        },
+      ];
 
-  if (loading) {
+  const pageTitleSx = {
+    fontWeight: 700,
+    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    mb: 4 };
+
+  if (!user?.id) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: 700,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            mb: 4 }}
-        >
+        <Typography variant="h3" sx={pageTitleSx}>
           Data Usage
         </Typography>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress size={60} sx={{ color: theme.palette.primary.main }} />
-        </Box>
+        <EmptyState title="Sign in required" subtitle="Please log in to view your usage." />
       </Box>
     );
   }
+
+  if (loading && !overview) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h3" sx={{ ...pageTitleSx, mb: 2 }}>
+          Data Usage
+        </Typography>
+        <Skeleton variant="rounded" height={280} sx={{ mb: 2 }} />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Skeleton variant="rounded" height={180} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Skeleton variant="rounded" height={180} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Skeleton variant="rounded" height={180} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Skeleton variant="rounded" height={180} />
+          </Grid>
+        </Grid>
+        <Skeleton variant="rounded" height={360} sx={{ mt: 3 }} />
+      </Box>
+    );
+  }
+
+  if (error && !overview) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h3" sx={{ ...pageTitleSx, mb: 2 }}>
+          Data Usage
+        </Typography>
+        <ErrorState message={error} onRetry={fetchUsageData} />
+      </Box>
+    );
+  }
+
+  const remainingBytes =
+    overview && overview.totalLimit > 0
+      ? Math.max(0, overview.totalLimit - overview.totalUsed)
+      : null;
 
   return (
     <Box sx={{ p: 3 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 700,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              mb: 1 }}
-          >
+          <Typography variant="h3" sx={{ ...pageTitleSx, mb: 1 }}>
             Data Usage
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -266,7 +273,10 @@ const DataUsage = () => {
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
-          onClick={fetchUsageData}
+          onClick={() => fetchUsageData().catch(() =>
+            showAlert('Could not refresh', 'error')
+          )}
+          disabled={loading}
           sx={{
             
             textTransform: 'none',
@@ -314,7 +324,7 @@ const DataUsage = () => {
                     Data Used
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {currentUsage ? formatBytes(currentUsage.totalUsed) : '0 MB'} / {currentUsage ? formatBytes(currentUsage.totalLimit) : '0 MB'}
+                    {overview ? formatBytes(overview.totalUsed) : '0 MB'} / {overview?.totalLimit ? formatBytes(overview.totalLimit) : 'No quota'}
                   </Typography>
                 </Box>
                 <LinearProgress
@@ -330,7 +340,9 @@ const DataUsage = () => {
                       boxShadow: `0 2px 8px ${alpha(getUsageColor(), 0.3)}` } }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {getUsagePercentage().toFixed(1)}% of your data plan used
+                  {overview?.totalLimit
+                    ? `${getUsagePercentage().toFixed(1)}% of your data plan used`
+                    : 'No active plan quota on file'}
                 </Typography>
               </Box>
 
@@ -339,7 +351,7 @@ const DataUsage = () => {
                   <StatCard
                     icon={<DataUsageIcon sx={{ fontSize: 28 }} />}
                     title="Today's Usage"
-                    value={currentUsage ? formatBytes(currentUsage.dailyUsage) : '0 MB'}
+                    value={overview ? formatBytes(overview.dailyUsage) : '0 Bytes'}
                     color={theme.palette.primary.main}
                   />
                 </Grid>
@@ -347,7 +359,10 @@ const DataUsage = () => {
                   <StatCard
                     icon={<SpeedIcon sx={{ fontSize: 28 }} />}
                     title="Avg Speed"
-                    value={currentUsage ? `${currentUsage.averageSpeed.toFixed(1)} Mbps` : '0 Mbps'}
+                    value={
+                      overview?.averageSpeedMbps == null
+                        ? '—'
+                        : `${Number(overview.averageSpeedMbps).toFixed(1)} Mbps`}
                     color={theme.palette.success.main}
                   />
                 </Grid>
@@ -355,7 +370,7 @@ const DataUsage = () => {
                   <StatCard
                     icon={<NetworkCheckIcon sx={{ fontSize: 28 }} />}
                     title="Active Sessions"
-                    value={currentUsage ? currentUsage.activeSessions : 0}
+                    value={overview?.activeSessions ?? 0}
                     color={theme.palette.info.main}
                   />
                 </Grid>
@@ -365,10 +380,10 @@ const DataUsage = () => {
                     title="Trend"
                     value={
                       <Chip
-                        label={analytics?.weeklyTrend || 'stable'}
+                        label={overview?.weeklyTrend || 'stable'}
                         size="small"
                         sx={{
-                          background: analytics?.weeklyTrend === 'increasing'
+                          background: overview?.weeklyTrend === 'increasing'
                             ? `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`
                             : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
                           color: 'text.primary',
@@ -405,7 +420,7 @@ const DataUsage = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, 'Usage']} />
+                  <Tooltip formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Usage']} />
                 </PieChart>
               </ResponsiveContainer>
               <Box textAlign="center" mt={2}>
@@ -415,7 +430,7 @@ const DataUsage = () => {
                     fontWeight: 600,
                     color: getUsageColor() }}
                 >
-                  {currentUsage ? formatBytes(currentUsage.totalLimit - currentUsage.totalUsed) : '0 MB'}
+                  {remainingBytes != null ? formatBytes(remainingBytes) : '—'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   remaining this month
@@ -434,37 +449,49 @@ const DataUsage = () => {
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Daily Usage Trend (Last 30 Days)
               </Typography>
-              <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.palette.charts.teal} stopOpacity={0.8} />
-                      <stop offset="95%" stopColor={theme.palette.charts.teal} stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                  <XAxis dataKey="date" stroke={theme.palette.text.secondary} />
-                  <YAxis tickFormatter={(value) => `${value}MB`} stroke={theme.palette.text.secondary} />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      `${value}MB`,
-                      name === 'total' ? 'Total Usage' : name
-                    ]}
-                    contentStyle={{
-                      background: alpha(theme.palette.background.paper, 0.9),
-                      border: `1px solid ${theme.palette.divider}`,
-                      
-                      backdropFilter: 'blur(20px)' }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke={theme.palette.charts.teal}
-                    strokeWidth={3}
-                    fill="url(#colorTotal)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {!hasChartActivity ? (
+                <EmptyState
+                  icon={<BarChartOutlinedIcon />}
+                  title="No usage in this period"
+                  subtitle="Daily totals will appear here once sessions are recorded."
+                  action={{
+                    label: 'Refresh',
+                    onClick: () => fetchUsageData(),
+                  }}
+                />
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={theme.palette.charts.teal} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={theme.palette.charts.teal} stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                    <XAxis dataKey="dateLabel" stroke={theme.palette.text.secondary} />
+                    <YAxis tickFormatter={(value) => `${value} MB`} stroke={theme.palette.text.secondary} />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        `${value} MB`,
+                        name === 'total' ? 'Total Usage' : name,
+                      ]}
+                      contentStyle={{
+                        background: alpha(theme.palette.background.paper, 0.9),
+                        border: `1px solid ${theme.palette.divider}`,
+                        
+                        backdropFilter: 'blur(20px)' }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="total"
+                      stroke={theme.palette.charts.teal}
+                      strokeWidth={3}
+                      fill="url(#colorTotal)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </GlassCard>
         </Grid>
@@ -475,30 +502,42 @@ const DataUsage = () => {
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Upload vs Download (Last 7 Days)
               </Typography>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={chartData.slice(-7)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                  <XAxis dataKey="date" stroke={theme.palette.text.secondary} />
-                  <YAxis tickFormatter={(value) => `${value}MB`} stroke={theme.palette.text.secondary} />
-                  <Tooltip
-                    formatter={(value, name) => [`${value}MB`, name === 'downloaded' ? 'Downloaded' : 'Uploaded']}
-                    contentStyle={{
-                      background: alpha(theme.palette.background.paper, 0.9),
-                      border: `1px solid ${theme.palette.divider}`,
-                      
-                      backdropFilter: 'blur(20px)' }}
-                  />
-                  <Bar dataKey="downloaded" fill={theme.palette.charts.blue} name="Downloaded" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="uploaded" fill={theme.palette.charts.purple} name="Uploaded" radius={[2, 2, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {!hasChartActivity ? (
+                <EmptyState
+                  icon={<BarChartOutlinedIcon />}
+                  title="No breakdown yet"
+                  subtitle="Upload and download totals will chart here once you have usage data."
+                  action={{
+                    label: 'Refresh',
+                    onClick: () => fetchUsageData(),
+                  }}
+                />
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={chartData.slice(-7)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                    <XAxis dataKey="dateLabel" stroke={theme.palette.text.secondary} />
+                    <YAxis tickFormatter={(value) => `${value} MB`} stroke={theme.palette.text.secondary} />
+                    <Tooltip
+                      formatter={(value, name) => [`${value} MB`, name === 'downloaded' ? 'Downloaded' : 'Uploaded']}
+                      contentStyle={{
+                        background: alpha(theme.palette.background.paper, 0.9),
+                        border: `1px solid ${theme.palette.divider}`,
+                        
+                        backdropFilter: 'blur(20px)' }}
+                    />
+                    <Bar dataKey="downloaded" fill={theme.palette.charts.blue} name="Downloaded" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="uploaded" fill={theme.palette.charts.purple} name="Uploaded" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </GlassCard>
         </Grid>
       </Grid>
 
       {/* Usage Alerts */}
-      {getUsagePercentage() >= 90 && (
+      {(overview?.totalLimit ?? 0) > 0 && getUsagePercentage() >= 90 && (
         <Alert
           severity="error"
           sx={{
@@ -516,23 +555,26 @@ const DataUsage = () => {
         </Alert>
       )}
 
-      {getUsagePercentage() >= 75 && getUsagePercentage() < 90 && (
-        <Alert
-          severity="warning"
-          sx={{
-            mb: 3,
-            
-            background: alpha(theme.palette.warning.main, 0.1),
-            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)' }}
-        >
-          <Typography variant="body1" fontWeight="medium">
-            Data Usage Warning
-          </Typography>
-          You have used {getUsagePercentage().toFixed(1)}% of your data plan. You're approaching your limit.
-        </Alert>
-      )}
+      {(overview?.totalLimit ?? 0) > 0 &&
+        getUsagePercentage() >= 75 &&
+        getUsagePercentage() <
+        90 && (
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 3,
+              
+              background: alpha(theme.palette.warning.main, 0.1),
+              border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)' }}
+          >
+            <Typography variant="body1" fontWeight="medium">
+              Data Usage Warning
+            </Typography>
+            You have used {getUsagePercentage().toFixed(1)}% of your data plan. You&apos;re approaching your limit.
+          </Alert>
+        )}
 
       {/* Data Saving Tips */}
       <GlassCard>
@@ -596,4 +638,3 @@ const DataUsage = () => {
 };
 
 export default DataUsage;
-

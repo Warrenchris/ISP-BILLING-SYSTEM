@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -12,6 +12,15 @@ import {
     useTheme
 } from '@mui/material';
 import { Phone as PhoneIcon } from '@mui/icons-material';
+import { useApi } from '../../contexts/ApiContext';
+import { APP_DEFAULT_CURRENCY, formatCurrency } from '../../utils/helpers';
+
+const defaultMpesaLimits = () => ({
+    min: Number(process.env.REACT_APP_MPESA_MIN_AMOUNT) || 1,
+    max: Number(process.env.REACT_APP_MPESA_MAX_AMOUNT) || 150000,
+});
+
+const currencyFieldSuffix = () => APP_DEFAULT_CURRENCY;
 
 const MpesaPaymentDialog = ({
     open,
@@ -24,6 +33,49 @@ const MpesaPaymentDialog = ({
     setAmount
 }) => {
     const theme = useTheme();
+    const { api } = useApi();
+    const [mpesaLimits, setMpesaLimits] = useState(defaultMpesaLimits);
+
+    useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await api.get('/payments/mpesa/limits');
+                const d = res.data?.data;
+                const min = Number(d?.minAmount ?? d?.min ?? d?.minimum);
+                const max = Number(d?.maxAmount ?? d?.max ?? d?.maximum);
+                if (
+                    !cancelled &&
+                    Number.isFinite(min) &&
+                    Number.isFinite(max) &&
+                    min > 0 &&
+                    max >= min
+                ) {
+                    setMpesaLimits({ min, max });
+                    return;
+                }
+            } catch {
+                /* use env defaults */
+            }
+            if (!cancelled) {
+                setMpesaLimits(defaultMpesaLimits());
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [api, open]);
+
+    const minFmt = formatCurrency(mpesaLimits.min, undefined, undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    });
+    const maxFmt = formatCurrency(mpesaLimits.max, undefined, undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    });
+
     return (
         <Dialog
             open={open}
@@ -75,13 +127,17 @@ const MpesaPaymentDialog = ({
 
                 <TextField
                     fullWidth
-                    label="Amount (KSh)"
+                    label={`Amount (${currencyFieldSuffix()})`}
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="1000"
                     sx={{ mb: 2 }}
-                    helperText="Min: 1 KSh, Max: 150,000 KSh"
+                    helperText={`Min: ${minFmt}, Max: ${maxFmt}`}
+                    inputProps={{
+                        min: mpesaLimits.min,
+                        max: mpesaLimits.max,
+                    }}
                     InputLabelProps={{ style: { color: '#aaa' } }}
                     InputProps={{ style: { color: 'text.primary' } }}
                 />

@@ -28,6 +28,7 @@ import {
   CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useApi } from '../contexts/ApiContext';
+import { formatCurrency } from '../utils/helpers';
 
 const Invoices = () => {
   const theme = useTheme();
@@ -222,7 +223,7 @@ const Invoices = () => {
       width: 120,
       renderCell: (params) => (
         <Typography variant="body2" fontWeight="medium">
-          KSh {params.value}
+          {formatCurrency(params.value)}
         </Typography>
       ) },
     {
@@ -387,7 +388,7 @@ const Invoices = () => {
           <StatCard
             icon={<ScheduleIcon />}
             title="Pending Amount"
-            value={`KSh ${totalPending.toFixed(2)}`}
+            value={formatCurrency(totalPending)}
             color={theme.palette.warning.main}
           />
         </Grid>
@@ -564,7 +565,7 @@ const Invoices = () => {
                         {item.description}
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
-                        KSh {item.amount}
+                        {formatCurrency(item.amount)}
                       </Typography>
                     </Box>
                   ))
@@ -597,7 +598,7 @@ const Invoices = () => {
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text' }}
                 >
-                  KSh {selectedInvoice.totalAmount}
+                  {formatCurrency(selectedInvoice.totalAmount)}
                 </Typography>
               </Box>
             </Box>

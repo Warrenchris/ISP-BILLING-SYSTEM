@@ -4,6 +4,7 @@ import {
   TextField, Button, MenuItem, Grid, Alert
 } from '@mui/material';
 import { useApi } from '../contexts/ApiContext';
+import { APP_DEFAULT_CURRENCY } from '../utils/helpers';
 
 const EMPTY = {
   name: '',
@@ -78,7 +79,7 @@ const PlanForm = ({ open, onClose, onSaved }) => {
 
           <Grid size={{ xs: 6 }}>
             <TextField required fullWidth type="number"
-              name="price" label="Price (KSh)"
+              name="price" label={`Price (${APP_DEFAULT_CURRENCY})`}
               value={form.price} onChange={handleChange} />
           </Grid>
 

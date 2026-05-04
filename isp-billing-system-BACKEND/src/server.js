@@ -23,10 +23,9 @@ try {
   process.exit(1);
 }
 
-let syncDatabase, testConnection;
+let syncDatabase;
 try {
-  ({ syncDatabase }   = require('./models'));
-  ({ testConnection } = require('./config/database'));
+  ({ syncDatabase } = require('./models'));
   console.log('🧪  Step 3 – models & database helpers loaded');
 } catch (err) {
   console.error('❌  Failed to load models or database helpers:', err);
@@ -52,13 +51,35 @@ const gracefulShutdown = async (signal) => {
   }
 };
 
+const waitForDatabase = async (maxRetries = 10, delayMs = 5000) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { sequelize } = require('./config/database');
+      await sequelize.authenticate();
+      console.log('✅   DB connection OK');
+      return;
+    } catch (error) {
+      console.error(
+        `❌ DB connection attempt ${attempt}/${maxRetries} failed:`,
+        error.message
+      );
+      if (attempt === maxRetries) {
+        throw new Error(
+          `Could not connect to database after ${maxRetries} attempts`
+        );
+      }
+      console.log(`⏳ Waiting ${delayMs / 1000}s before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
 const startServer = async () => {
-  console.log('🧪  Step 4 – inside startServer()');
+  console.log('🧪  Step 4 – inside startServer()');
 
   // 4‑a  Test DB connection
   console.log('🔌   Testing DB connection…');
-  await testConnection();
-  console.log('✅   DB connection OK');
+  await waitForDatabase();
 
   // 4‑b  Sync models
   console.log('🧱   Syncing Sequelize models…');

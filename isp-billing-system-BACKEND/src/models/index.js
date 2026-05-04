@@ -55,23 +55,34 @@ Notification.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 
 const syncDatabase = async (force = false) => {
-  try {
-    await sequelize.sync({ force });
+  const MAX_RETRIES = 10;
+  const RETRY_DELAY_MS = 5000;
 
-    // Align MySQL enum values for existing databases where sync({ force: false })
-    // does not update ENUM definitions automatically.
-    if (sequelize.getDialect() === 'mysql') {
-      await sequelize.query(`
-        ALTER TABLE subscriptions
-        MODIFY COLUMN status ENUM('pending', 'active', 'expired', 'suspended', 'cancelled')
-        NOT NULL DEFAULT 'pending';
-      `);
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`🔄 DB sync attempt ${attempt}/${MAX_RETRIES}...`);
+      await sequelize.sync({ force });
+
+      // Align MySQL enum values for existing databases where sync({ force: false })
+      // does not update ENUM definitions automatically.
+      if (sequelize.getDialect() === 'mysql') {
+        await sequelize.query(`
+          ALTER TABLE subscriptions
+          MODIFY COLUMN status ENUM('pending', 'active', 'expired', 'suspended', 'cancelled')
+          NOT NULL DEFAULT 'pending';
+        `);
+      }
+
+      console.log('✅ Database synced successfully');
+      return;
+    } catch (error) {
+      console.error(`❌ DB sync attempt ${attempt} failed:`, error.message);
+      if (attempt === MAX_RETRIES) {
+        throw error;
+      }
+      console.log(`⏳ Retrying in ${RETRY_DELAY_MS / 1000}s...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
     }
-
-    console.log('✅ Database synchronized successfully');
-  } catch (error) {
-    console.error('❌ Database synchronization failed:', error);
-    throw error;
   }
 };
 

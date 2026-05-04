@@ -145,17 +145,34 @@ const Payments = () => {
       const paymentsData = response.data.data || response.data.payments || [];
 
       const processedPayments = paymentsData.map((payment, index) => ({
+        ...payment,
         id: payment.id || `payment-${index}`,
-        transactionId: payment.transactionId || payment.reference || payment.id || `TXN-${Date.now()}-${index}`,
+        transactionId:
+          payment.transactionId ||
+          payment.reference ||
+          payment.checkoutRequestId ||
+          payment.id ||
+          `payment-${index}`,
         amount: payment.amount || 0,
         method: getPaymentMethod(payment),
         status: payment.status || 'pending',
-        createdAt: payment.createdAt || new Date().toISOString(),
+        createdAt:
+          payment.createdAt ||
+          payment.created_at ||
+          payment.updatedAt ||
+          payment.updated_at ||
+          payment.transactionDate ||
+          payment.completedAt ||
+          null,
         customerInfo: getCustomerInfo(payment),
         subscriptionId: payment.subscriptionId || null,
-        description: payment.description || 'Payment for ISP services',
+        description:
+          payment.description ||
+          payment.transactionDesc ||
+          payment.notes ||
+          payment.remark ||
+          '',
         phoneNumber: payment.phoneNumber || payment.phone,
-        ...payment
       }));
 
       setPayments(processedPayments);
