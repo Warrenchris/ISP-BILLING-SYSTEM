@@ -284,7 +284,7 @@ function CreateTicketDialog({ open, onClose, categories, priorities, staff, onSu
 
 /* ─── Row Action Menu ────────────────────────────────────────────────────── */
 
-function RowActionMenu({ ticket, onActionComplete }) {
+function RowActionMenu({ ticket, onActionComplete, onAssignClick }) {
     const [anchor,  setAnchor]  = useState(null);
     const [working, setWorking] = useState(false);
 
@@ -292,6 +292,10 @@ function RowActionMenu({ ticket, onActionComplete }) {
 
     const handleAction = async (action) => {
         setAnchor(null);
+        if (action === 'assign') {
+            if (onAssignClick) onAssignClick(ticket);
+            return;
+        }
         setWorking(true);
         try {
             switch (action) {
@@ -348,8 +352,33 @@ const SupportTickets = () => {
     const [page,           setPage]           = useState(1);
     const [filterOpen,     setFilterOpen]     = useState(false);
     const [createOpen,     setCreateOpen]     = useState(false);
+    const [assignOpen,     setAssignOpen]     = useState(false);
+    const [assignTicket,   setAssignTicket]   = useState(null);
+    const [assignStaffId,  setAssignStaffId]  = useState('');
+    const [assignSaving,   setAssignSaving]   = useState(false);
 
     const LIMIT = 20;
+
+    const openAssignDialog = (ticket) => {
+        setAssignTicket(ticket);
+        setAssignStaffId(ticket.assignedTo || '');
+        setAssignOpen(true);
+    };
+
+    const confirmAssign = async () => {
+        if (!assignTicket) return;
+        setAssignSaving(true);
+        try {
+            await supportService.assign(assignTicket.id, assignStaffId || null);
+            setAssignOpen(false);
+            setAssignTicket(null);
+            refresh();
+        } catch (err) {
+            console.error('Assign failed:', err);
+        } finally {
+            setAssignSaving(false);
+        }
+    };
 
     // ─── Data ─────────────────────────────────────────────────────────────────
     const {
@@ -554,7 +583,11 @@ const SupportTickets = () => {
 
                                     {/* Actions */}
                                     <TableCell align="right">
-                                        <RowActionMenu ticket={ticket} onActionComplete={refresh} />
+                                        <RowActionMenu
+                                            ticket={ticket}
+                                            onActionComplete={refresh}
+                                            onAssignClick={openAssignDialog}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -597,6 +630,43 @@ const SupportTickets = () => {
                 staff={staff}
                 onSuccess={() => { setPage(1); refresh(); }}
             />
+
+            <Dialog open={assignOpen} onClose={() => !assignSaving && setAssignOpen(false)} fullWidth maxWidth="xs">
+                <DialogTitle sx={{ fontWeight: 700 }}>Assign ticket</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {assignTicket?.subject}
+                    </Typography>
+                    <TextField
+                        select
+                        fullWidth
+                        label="Staff member"
+                        value={assignStaffId}
+                        onChange={(e) => setAssignStaffId(e.target.value)}
+                        disabled={assignSaving}
+                    >
+                        <MenuItem value="">
+                            <em>Unassigned</em>
+                        </MenuItem>
+                        {staff.map((s) => (
+                            <MenuItem key={s.id} value={s.id}>
+                                {s.firstName} {s.lastName} ({s.role})
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </DialogContent>
+                <DialogActions sx={{ p: 3, pt: 1 }}>
+                    <Button onClick={() => setAssignOpen(false)} disabled={assignSaving}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={confirmAssign}
+                        disabled={assignSaving}
+                        startIcon={assignSaving ? <CircularProgress size={16} color="inherit" /> : undefined}
+                    >
+                        Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

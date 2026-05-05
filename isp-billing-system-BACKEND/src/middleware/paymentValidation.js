@@ -251,17 +251,9 @@ const checkMpesaConfig = (req, res, next) => {
   const missing = requiredVars.filter(v => !process.env[v]);
   
   if (missing.length > 0) {
-    return res.status(500).json({
-      success: false,
-      message: `Missing M-Pesa config: ${missing.join(', ')}`,
-      required: requiredVars,
-      actual: {
-        consumerKey: !!process.env.MPESA_CONSUMER_KEY,
-        consumerSecret: !!process.env.MPESA_CONSUMER_SECRET,
-        shortcode: process.env.MPESA_BUSINESS_SHORT_CODE || process.env.MPESA_SHORTCODE,
-        passkey: process.env.MPESA_PASS_KEY || process.env.MPESA_PASSKEY,
-        callback: process.env.MPESA_CALLBACK_URL
-      }
+    return res.status(503).json({
+      error: 'Mpesa integration not configured. Please contact admin.',
+      code: 'MPESA_NOT_CONFIGURED'
     });
   }
   next();

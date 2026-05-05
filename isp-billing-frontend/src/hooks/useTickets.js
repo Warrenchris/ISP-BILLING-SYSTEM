@@ -26,7 +26,7 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
     const [metaLoading,  setMetaLoading]  = useState(false);
     
     const { user } = useAuth();
-    const isAdmin = user?.role === 'admin';
+    const isStaff = ['admin', 'support'].includes(user?.role);
 
     // Prevent stale-closure issues when refresh() is called externally
     const abortRef = useRef(null);
@@ -81,7 +81,7 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
                     supportService.getStatuses(),
                     supportService.getLabelsConfig()
                 ];
-                if (isAdmin) {
+                if (isStaff) {
                     promises.push(supportService.getStaff());
                 }
 
@@ -94,7 +94,7 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
                 if (results[2].status === 'fulfilled') setStatuses(results[2].value.data?.data || []);
                 if (results[3].status === 'fulfilled') setLabelsConfig(results[3].value.data?.data || { statuses: {}, priorities: {} });
                 
-                if (isAdmin && results[4]?.status === 'fulfilled') {
+                if (isStaff && results[4]?.status === 'fulfilled') {
                     setStaff(results[4].value.data?.data || []);
                 }
             } catch (_) {
@@ -106,7 +106,7 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
 
         loadMeta();
         return () => { cancelled = true; };
-    }, []);
+    }, [user?.role]);
 
     // ─── Public API ───────────────────────────────────────────────────────────
     return {

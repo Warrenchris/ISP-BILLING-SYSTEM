@@ -85,9 +85,11 @@ const AiDashboard = () => {
     isLoadingChurn,
     isLoadingAnomalies,
     errors,
+    aiUnavailable,
     fetchDashboardSummary,
     fetchChurnRisks,
     fetchAnomalies,
+    resetAiFailureLock,
   } = useAi();
 
   const [health, setHealth] = useState(null);
@@ -172,13 +174,14 @@ const AiDashboard = () => {
   }, []);
 
   const refreshAll = useCallback(async () => {
+    resetAiFailureLock();
     await Promise.all([
       loadHealth(),
       fetchDashboardSummary(),
       fetchChurnRisks(),
       fetchAnomalies(),
     ]);
-  }, [loadHealth, fetchDashboardSummary, fetchChurnRisks, fetchAnomalies]);
+  }, [loadHealth, fetchDashboardSummary, fetchChurnRisks, fetchAnomalies, resetAiFailureLock]);
 
   useEffect(() => {
     refreshAll();
@@ -287,6 +290,12 @@ const AiDashboard = () => {
           )}
         </Box>
       </Box>
+
+      {aiUnavailable && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          AI service temporarily unavailable
+        </Alert>
+      )}
 
       <Paper sx={{ p: 2, mb: 3, background: alpha(theme.palette.background.paper, 0.65) }}>
         {healthLoading && <LinearProgress sx={{ mb: 1.5 }} />}

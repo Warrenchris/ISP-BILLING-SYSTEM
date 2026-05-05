@@ -15,6 +15,10 @@ export const userService = {
     // Subscription related to user
     getUserSubscription: (userId) => api.get(`/admin/users/${userId}/subscription`),
 
+    /** Admin: activate / suspend / cancel any subscription by id */
+    patchSubscription: (subscriptionId, body) =>
+        api.patch(`/admin/subscriptions/${subscriptionId}`, body),
+
     // Staff & Roles (Assuming separate endpoints or filtered users)
     getStaff: () => api.get('/admin/users', { params: { role: 'staff' } }), // Adjust based on backend API
 

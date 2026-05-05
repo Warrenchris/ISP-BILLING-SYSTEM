@@ -4,7 +4,8 @@
 const { Op } = require("sequelize");
 const { User,
   Subscription,
-  DataPlan } = require("../models");
+  DataPlan,
+  Payment } = require("../models");
 const { UserRole, SubscriptionStatus, PaymentStatus } = require('../config/constants');
 const bcrypt = require("bcryptjs");
 
@@ -89,18 +90,39 @@ exports.patchSubscription = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { action } = req.body;          // simple FSM
-    const subscription = await Subscription.findByPk(id, { include: DataPlan });
+    const subscription = await Subscription.findByPk(id, {
+      include: [{ model: DataPlan, as: 'plan' }]
+    });
     if (!subscription) return res.status(404).json({ success: false, message: "Not found" });
 
     switch (action) {
-      case "activate": subscription.status = SubscriptionStatus.ACTIVE; break;
-      case "suspend": subscription.status = SubscriptionStatus.SUSPENDED; break;
-      case "cancel": subscription.status = SubscriptionStatus.CANCELLED; break;
+      case "activate": {
+        await subscription.reload({ include: [{ model: DataPlan, as: 'plan' }] });
+        if (subscription.status === SubscriptionStatus.PENDING && subscription.plan) {
+          await subscription.activateSubscription();
+        } else {
+          subscription.status = SubscriptionStatus.ACTIVE;
+          await subscription.save();
+        }
+        break;
+      }
+      case "suspend":
+        subscription.status = SubscriptionStatus.SUSPENDED;
+        await subscription.save();
+        break;
+      case "cancel":
+        subscription.status = SubscriptionStatus.CANCELLED;
+        await subscription.save();
+        break;
       default:
         return res.status(400).json({ success: false, message: "Bad action" });
     }
-    await subscription.save();
-    res.json({ success: true, data: { subscription } });
+    await subscription.reload({
+      include: [{ model: DataPlan, as: 'plan' }]
+    });
+    const json = subscription.toJSON();
+    json.DataPlan = subscription.plan;
+    res.json({ success: true, data: { subscription: json } });
   } catch (err) { next(err); }
 };
 
@@ -293,7 +315,7 @@ exports.getSystemStats = async (req, res, next) => {
     const payments = await Payment.findAll({
       where: {
         status: PaymentStatus.COMPLETED,
-        created_at: {
+        createdAt: {
           [Op.between]: [startDate, endDate]
         }
       }

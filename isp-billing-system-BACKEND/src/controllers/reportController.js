@@ -189,7 +189,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
       startDate.setDate(1);
       const users = await User.findAll({
         where: { created_at: { [Op.gte]: startDate } },
-        attributes: [[col('created_at'), 'createdAt'], 'status'],
+        attributes: [[col('created_at'), 'createdAt'], 'isActive'],
         raw: true,
       });
       const growthMap = {};
@@ -203,7 +203,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
         const m = new Date(u.createdAt).toLocaleString('default', { month: 'short' });
         if (growthMap[m]) {
           growthMap[m].newUsers++;
-          if (u.status === 'active') growthMap[m].active++;
+          if (u.isActive) growthMap[m].active++;
         }
       });
       return res.json({ success: true, data: Object.values(growthMap) });
@@ -216,7 +216,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
         where: {
           created_at: { [Op.gte]: new Date(now.getTime() - days * MS_DAY) },
         },
-        attributes: [[col('created_at'), 'createdAt'], 'status'],
+        attributes: [[col('created_at'), 'createdAt'], 'isActive'],
         raw: true,
       });
       for (let i = days - 1; i >= 0; i--) {
@@ -229,7 +229,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
         data.push({
           name: dayStart.toLocaleString('default', { month: 'short', day: 'numeric' }),
           newUsers: inDay.length,
-          active: inDay.filter((u) => u.status === 'active').length,
+          active: inDay.filter((u) => u.isActive).length,
         });
       }
       return res.json({ success: true, data });
@@ -242,7 +242,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
         where: {
           created_at: { [Op.gte]: new Date(now.getFullYear() - years, 0, 1) },
         },
-        attributes: [[col('created_at'), 'createdAt'], 'status'],
+        attributes: [[col('created_at'), 'createdAt'], 'isActive'],
         raw: true,
       });
       for (let y = years - 1; y >= 0; y--) {
@@ -251,7 +251,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
         data.push({
           name: String(year),
           newUsers: inYear.length,
-          active: inYear.filter((u) => u.status === 'active').length,
+          active: inYear.filter((u) => u.isActive).length,
         });
       }
       return res.json({ success: true, data });
@@ -261,7 +261,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
     const horizonStart = new Date(now.getTime() - weeks * 7 * MS_DAY);
     const users = await User.findAll({
       where: { created_at: { [Op.gte]: horizonStart } },
-      attributes: [[col('created_at'), 'createdAt'], 'status'],
+      attributes: [[col('created_at'), 'createdAt'], 'isActive'],
       raw: true,
     });
     const data = [];
@@ -275,7 +275,7 @@ exports.getUserGrowthChart = async (req, res, next) => {
       data.push({
         name: weekStart.toLocaleString('default', { month: 'short', day: 'numeric' }),
         newUsers: inWeek.length,
-        active: inWeek.filter((u) => u.status === 'active').length,
+        active: inWeek.filter((u) => u.isActive).length,
       });
     }
 

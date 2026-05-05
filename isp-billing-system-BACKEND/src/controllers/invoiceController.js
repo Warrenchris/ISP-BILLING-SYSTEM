@@ -81,12 +81,102 @@ const generateInvoicePDF = async (req, res) => {
   try {
     const { invoiceId } = req.params;
 
-    // Your logic here to fetch the invoice and generate a PDF
-    return res.status(200).json({
-      success: true,
-      message: `PDF generation not yet implemented`,
-      invoiceId
+    const invoice = await Invoice.findByPk(invoiceId, {
+      include: [
+        { model: User, as: 'User', attributes: ['id', 'firstName', 'lastName', 'email'] },
+        { model: Subscription, as: 'Subscription', include: [{ model: DataPlan, as: 'plan' }] },
+        { model: InvoiceItem, as: 'Items' }
+      ]
     });
+
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+
+    // Access control: customers can only download their own invoices
+    if (req.user?.role === 'customer' && invoice.userId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const companyName = process.env.COMPANY_NAME || 'ISP Billing System';
+    const customerName = invoice.User
+      ? `${invoice.User.firstName || ''} ${invoice.User.lastName || ''}`.trim() || invoice.User.email
+      : 'Customer';
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+
+    const doc = new PDFDocument({ margin: 50 });
+    doc.pipe(res);
+
+    // Header
+    doc.fontSize(18).text(companyName, { align: 'left' });
+    doc.moveDown(0.5);
+    doc.fontSize(12).fillColor('#555').text('Invoice', { align: 'left' });
+    doc.fillColor('#000');
+    doc.moveDown(1);
+
+    // Invoice meta
+    doc.fontSize(11);
+    doc.text(`Invoice #: ${invoice.invoiceNumber}`);
+    doc.text(`Issue date: ${new Date(invoice.issueDate).toLocaleDateString()}`);
+    doc.text(`Due date: ${new Date(invoice.dueDate).toLocaleDateString()}`);
+    doc.text(`Status: ${invoice.status} / ${invoice.paymentStatus}`);
+    doc.moveDown(1);
+
+    // Customer block
+    doc.fontSize(11).text('Billed to:', { underline: true });
+    doc.text(customerName);
+    if (invoice.User?.email) doc.text(invoice.User.email);
+    doc.moveDown(1);
+
+    // Subscription block (if present)
+    if (invoice.Subscription) {
+      const plan = invoice.Subscription.plan;
+      doc.fontSize(11).text('Subscription:', { underline: true });
+      doc.text(`Subscription #: ${invoice.Subscription.subscriptionNumber || invoice.Subscription.id}`);
+      if (plan?.name) doc.text(`Plan: ${plan.name}`);
+      doc.moveDown(1);
+    }
+
+    // Line items table
+    const items = Array.isArray(invoice.Items) ? invoice.Items : [];
+    doc.fontSize(11).text('Line items:', { underline: true });
+    doc.moveDown(0.5);
+
+    const tableTop = doc.y;
+    const col1 = 50;
+    const col2 = 360;
+    const col3 = 460;
+
+    doc.font('Helvetica-Bold');
+    doc.text('Description', col1, tableTop);
+    doc.text('Period', col2, tableTop);
+    doc.text('Amount', col3, tableTop, { align: 'right' });
+    doc.font('Helvetica');
+
+    let y = tableTop + 18;
+    items.forEach((it) => {
+      const desc = it.description || 'Item';
+      const period = it.periodStart && it.periodEnd
+        ? `${new Date(it.periodStart).toLocaleDateString()} - ${new Date(it.periodEnd).toLocaleDateString()}`
+        : '';
+      const amt = it.totalPrice ?? it.amount ?? 0;
+
+      doc.text(String(desc), col1, y, { width: 290 });
+      doc.text(String(period), col2, y, { width: 90 });
+      doc.text(`KES ${Number(amt).toFixed(2)}`, col3, y, { align: 'right' });
+      y += 18;
+    });
+
+    doc.moveDown(2);
+    doc.font('Helvetica-Bold');
+    doc.text(`Total: KES ${Number(invoice.totalAmount || 0).toFixed(2)}`, { align: 'right' });
+    doc.font('Helvetica');
+    doc.moveDown(0.5);
+    doc.text(`Paid: KES ${Number(invoice.paidAmount || 0).toFixed(2)}`, { align: 'right' });
+
+    doc.end();
   } catch (error) {
     console.error('PDF generation error:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
@@ -168,7 +258,7 @@ const getInvoiceById = async (req, res) => {
 
     // Non-admin users can only see their own invoices
     if (req.user.role !== 'admin') {
-      whereClause.userId = req.user.userId;
+      whereClause.userId = req.user.id;
     }
 
     const invoice = await Invoice.findOne({

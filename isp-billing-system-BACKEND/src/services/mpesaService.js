@@ -76,6 +76,12 @@ class MpesaService {
    */
   async getAccessToken() {
     try {
+      if (!this.consumerKey || !this.consumerSecret) {
+        const configError = new Error('Mpesa integration not configured. Please contact admin.');
+        configError.code = 'MPESA_NOT_CONFIGURED';
+        throw configError;
+      }
+
       // Check if we have a valid token
       if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
         return this.accessToken;
@@ -99,6 +105,9 @@ class MpesaService {
       console.log('✅ M-Pesa access token obtained successfully');
       return this.accessToken;
     } catch (error) {
+      if (error.code === 'MPESA_NOT_CONFIGURED') {
+        throw error;
+      }
       console.error('❌ Error getting M-Pesa access token:', error.response?.data || error.message);
       throw new Error('Failed to get M-Pesa access token');
     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Grid,
@@ -18,7 +18,13 @@ import {
   CircularProgress,
   useTheme,
   alpha,
-  Skeleton } from '@mui/material';
+  Skeleton,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Avatar,
+} from '@mui/material';
 import {
   DataUsage as DataUsageIcon,
   Payment as PaymentIcon,
@@ -28,7 +34,10 @@ import {
   AdminPanelSettings as AdminIcon,
   Security as SecurityIcon,
   Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+  CheckCircle as CheckCircleIcon,
+  Person as PersonIcon,
+  ConfirmationNumber as TicketIcon,
+} from '@mui/icons-material';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,12 +52,13 @@ import RecentUsersTable from '../components/dashboard/RecentUsersTable';
 import PriorityTicketsWidget from '../components/dashboard/PriorityTicketsWidget';
 import EmptyState from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
-import { APP_DEFAULT_CURRENCY, formatCurrency } from '../utils/helpers';
+import { APP_DEFAULT_CURRENCY, formatCurrency, formatDate } from '../utils/helpers';
+import CashPaymentDialog from '../components/payments/CashPaymentDialog';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService } = useApi();
+  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService } = useApi();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -75,6 +85,9 @@ const Dashboard = () => {
   const [usageHistorySeries, setUsageHistorySeries] = useState([]);
   const [usageHistoryLoading, setUsageHistoryLoading] = useState(true);
   const [usageHistoryError, setUsageHistoryError] = useState(null);
+  const [userGrowthSeries, setUserGrowthSeries] = useState([]);
+  const [userGrowthLoading, setUserGrowthLoading] = useState(true);
+  const [userGrowthError, setUserGrowthError] = useState(null);
 
   // Admin-specific state
   const [adminStats, setAdminStats] = useState({
@@ -98,6 +111,27 @@ const Dashboard = () => {
     recentUsers: [],
     adminUsers: [],
     priorityTickets: [] });
+  const [adminActivity, setAdminActivity] = useState([]);
+  const [adminActivityLoading, setAdminActivityLoading] = useState(false);
+
+  // Quick actions: cash payment dialog state (reuse existing component)
+  const [cashDialog, setCashDialog] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUserForCash, setSelectedUserForCash] = useState(null);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+  const [userSubscription, setUserSubscription] = useState(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [cashAmount, setCashAmount] = useState('');
+  const [cashReference, setCashReference] = useState('');
+  const [cashDescription, setCashDescription] = useState('');
+  const [cashProcessing, setCashProcessing] = useState(false);
+
+  // Quick actions: invoice generation dialog
+  const [genInvoiceOpen, setGenInvoiceOpen] = useState(false);
+  const [genInvoiceSubId, setGenInvoiceSubId] = useState('');
+  const [genFrom, setGenFrom] = useState('');
+  const [genTo, setGenTo] = useState('');
+  const [genInvoiceLoading, setGenInvoiceLoading] = useState(false);
   const [aiQuickStats, setAiQuickStats] = useState({
     atRiskCustomers: 0,
     totalAnomalies: 0,
@@ -105,6 +139,8 @@ const Dashboard = () => {
     predictedRevenue: 0
   });
   const [showCriticalAiBanner, setShowCriticalAiBanner] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
+  const aiFailureStreakRef = useRef(0);
 
   const isAdmin = user?.role === 'admin';
 
@@ -117,16 +153,6 @@ const Dashboard = () => {
   );
 
 
-
-  // UTILITY FUNCTIONS
-
-  const formatBytes = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   const getUsagePercentage = () => {
     if (!dashboardData.currentSubscription) return 0;
@@ -189,183 +215,185 @@ const Dashboard = () => {
     }
   }, [api]);
 
-  const fetchAdminStats = useCallback(async () => {
+  const fetchUserGrowthHistory = useCallback(async () => {
+    try {
+      setUserGrowthLoading(true);
+      setUserGrowthError(null);
+      const res = await reportService.getUserGrowthChart({ period: 'weekly' });
+      const data = res?.data?.data;
+      setUserGrowthSeries(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching user growth history:', err);
+      setUserGrowthError(err);
+      setUserGrowthSeries([]);
+    } finally {
+      setUserGrowthLoading(false);
+    }
+  }, [reportService]);
+
+  const fetchAdminOverview = useCallback(async () => {
     try {
       setRefreshing(true);
+      const [overviewRes, usersRes] = await Promise.all([
+        api.get('/admin/dashboard/overview'),
+        adminApi.users.getAll(),
+      ]);
 
-      let revenuePeriodLabel = '';
-      try {
-        const statsRes = await api.get('/dashboard/stats');
-        const label = statsRes?.data?.data?.revenuePeriodLabel;
-        if (label != null && String(label).trim() !== '') {
-          revenuePeriodLabel = String(label).trim();
-        }
-      } catch {
-        /* leave subtitle empty when stats endpoint fails */
-      }
+      const overview = overviewRes?.data?.data || {};
+      const users = usersRes?.data?.data?.users || [];
 
-      const usersResponse = await adminApi.users.getAll();
-      const users = usersResponse.data?.data?.users || [];
-
-      // Get ALL completed payments (not just current month)
-      const paymentsResponse = await paymentsApi.getAllPayments({
-        status: 'completed'
-      });
-
-      const payments = paymentsResponse.data?.data?.payments || paymentsResponse.data?.data || [];
-
-      const subscriptionsResponse = await subscriptionsApi.getAll();
-      const subscriptions = subscriptionsResponse.data?.data?.subscriptions || [];
-      
+      // Keep PriorityTicketsWidget from existing support endpoint (top 5)
       let pTickets = [];
       try {
         const ticketsRes = await supportService.getAll({ priority: 'high', status: 'open' });
-        pTickets = (ticketsRes.data?.data || []).slice(0, 5); // get top 5 open high-priority tickets
+        pTickets = (ticketsRes.data?.data || []).slice(0, 5);
       } catch (e) {
         console.error("Failed to load priority tickets", e);
       }
 
-      // Get current month payments for monthly revenue
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth() + 1;
-
-      const monthlyPayments = payments.filter(payment => {
-        const paymentDate = new Date(payment.createdAt);
-        return paymentDate.getFullYear() === currentYear &&
-          paymentDate.getMonth() + 1 === currentMonth;
-      });
-
-      const totalUsers = users.length;
-      const activeUsers = users.filter(u => u.status === 'active').length;
-      const inactiveUsers = users.filter(u => u.status === 'inactive').length;
-      const suspendedUsers = users.filter(u => u.status === 'suspended').length;
-
-      const totalSubscriptions = subscriptions.length;
-      const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
-      const expiredSubscriptions = subscriptions.filter(s => s.status === 'expired').length;
-      const pendingSubscriptions = subscriptions.filter(s => s.status === 'pending').length;
-      const suspendedSubscriptions = subscriptions.filter(s => s.status === 'suspended').length;
-
-      // Calculate total revenue from ALL completed payments (like in Payments page)
-      const totalRevenue = payments.reduce((total, payment) => {
-        const numericAmount = parseFloat(
-          String(payment.amount || '0').replace(/[^\d.]/g, '')
-        );
-        return total + (isNaN(numericAmount) ? 0 : numericAmount);
-      }, 0);
-
-      // Calculate monthly revenue from current month payments only
-      const monthlyRevenue = monthlyPayments.reduce((total, payment) => {
-        const numericAmount = parseFloat(
-          String(payment.amount || '0').replace(/[^\d.]/g, '')
-        );
-        return total + (isNaN(numericAmount) ? 0 : numericAmount);
-      }, 0);
-
-      const pctChange = (current, previous) => {
-        if (previous === 0) return current === 0 ? 0 : 100;
-        return ((current - previous) / previous) * 100;
-      };
-
-      const MS_30 = 30 * 24 * 60 * 60 * 1000;
-      const nowTs = Date.now();
-      const endNow = new Date(nowTs);
-      const startCurrent = new Date(nowTs - MS_30);
-      const startPrev = new Date(nowTs - 2 * MS_30);
-      const endPrev = startCurrent;
-
-      const inRange = (dateStr, start, end) => {
-        if (!dateStr) return false;
-        const t = new Date(dateStr).getTime();
-        return t >= start.getTime() && t < end.getTime();
-      };
-
-      const countUsersCreatedBetween = (start, end) =>
-        users.filter((u) => u.createdAt && inRange(u.createdAt, start, end)).length;
-
-      const totalUsersTrend = pctChange(
-        countUsersCreatedBetween(startCurrent, endNow),
-        countUsersCreatedBetween(startPrev, endPrev)
-      );
-
-      const countActiveUsersCreatedBetween = (start, end) =>
-        users.filter(
-          (u) =>
-            u.status === 'active' &&
-            u.createdAt &&
-            inRange(u.createdAt, start, end)
-        ).length;
-
-      const activeUsersTrend = pctChange(
-        countActiveUsersCreatedBetween(startCurrent, endNow),
-        countActiveUsersCreatedBetween(startPrev, endPrev)
-      );
-
-      const countActiveSubsCreatedBetween = (start, end) =>
-        subscriptions.filter(
-          (s) =>
-            s.status === 'active' &&
-            s.createdAt &&
-            inRange(s.createdAt, start, end)
-        ).length;
-
-      const activeSubscriptionsTrend = pctChange(
-        countActiveSubsCreatedBetween(startCurrent, endNow),
-        countActiveSubsCreatedBetween(startPrev, endPrev)
-      );
-
-      const parsePaymentAmount = (p) => {
-        const n = parseFloat(String(p.amount || '0').replace(/[^\d.]/g, ''));
-        return isNaN(n) ? 0 : n;
-      };
-
-      const sumPaymentsBetween = (start, end) =>
-        payments.reduce((sum, p) => {
-          if (!p.createdAt || !inRange(p.createdAt, start, end)) return sum;
-          return sum + parsePaymentAmount(p);
-        }, 0);
-
-      const revenueLast30 = sumPaymentsBetween(startCurrent, endNow);
-      const revenuePrev30 = sumPaymentsBetween(startPrev, endPrev);
-      const totalRevenueTrend = pctChange(revenueLast30, revenuePrev30);
-
-      setAdminStats({
-        totalUsers,
-        activeUsers,
-        inactiveUsers,
-        suspendedUsers,
-        totalSubscriptions,
-        activeSubscriptions,
-        expiredSubscriptions,
-        pendingSubscriptions,
-        suspendedSubscriptions,
-        totalRevenue,
-        monthlyRevenue,
-        totalUsersTrend,
-        activeUsersTrend,
-        activeSubscriptionsTrend,
-        totalRevenueTrend,
-        revenuePeriodLabel,
-        currency: APP_DEFAULT_CURRENCY,
+      setAdminStats((prev) => ({
+        ...prev,
+        totalUsers: overview.totalUsers || 0,
+        activeUsers: overview.activeUsers || 0,
+        inactiveUsers: Math.max(0, (overview.totalUsers || 0) - (overview.activeUsers || 0)),
+        totalSubscriptions: (overview.activeSubscriptions || 0) + (overview.pendingSubscriptions || 0) + (overview.expiredSubscriptions || 0),
+        activeSubscriptions: overview.activeSubscriptions || 0,
+        pendingSubscriptions: overview.pendingSubscriptions || 0,
+        expiredSubscriptions: overview.expiredSubscriptions || 0,
+        totalRevenue: overview.totalRevenue || 0,
+        monthlyRevenue: overview.revenueThisMonth || 0,
+        revenuePeriodLabel: 'Completed payments · all-time total',
+        currency: overview.currency || APP_DEFAULT_CURRENCY,
         recentUsers: users.slice(0, 5),
         adminUsers: users.filter(u => u.role === 'admin'),
-        priorityTickets: pTickets
-      });
+        priorityTickets: pTickets,
+      }));
     } catch (error) {
-      console.error('Error fetching admin stats:', error);
+      console.error('Error fetching admin overview:', error);
       showAlert('Error loading admin statistics', 'error');
     } finally {
       setRefreshing(false);
     }
-  }, [adminApi, api, paymentsApi, subscriptionsApi]);
+  }, [adminApi, api, supportService]);
+
+  const fetchAdminActivity = useCallback(async () => {
+    try {
+      setAdminActivityLoading(true);
+      const res = await api.get('/admin/dashboard/activity');
+      const data = res?.data?.data || [];
+      setAdminActivity(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching admin activity:', error);
+      setAdminActivity([]);
+    } finally {
+      setAdminActivityLoading(false);
+    }
+  }, [api]);
+
+  const fetchUsersForCash = useCallback(async () => {
+    try {
+      setUserSearchLoading(true);
+      const response = await adminApi.users.getAll();
+      setUsers(response.data?.data?.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setUserSearchLoading(false);
+    }
+  }, [adminApi]);
+
+  const fetchUserSubscriptionForCash = useCallback(async (userId) => {
+    try {
+      setLoadingSubscription(true);
+      const response = await adminApi.users.getUserSubscription(userId);
+      let subscription = null;
+      if (response.data?.data?.subscriptions) {
+        subscription = response.data.data.subscriptions.find(sub => sub.status === 'active' && new Date(sub.endDate) > new Date());
+      }
+
+      if (subscription) {
+        setUserSubscription(subscription);
+        const amt = subscription.DataPlan?.price || subscription.amount || 0;
+        setCashAmount(String(amt));
+        setCashDescription(`Payment for ${subscription.DataPlan?.name || 'ISP services'}`);
+      } else {
+        setUserSubscription(null);
+        setCashAmount('');
+        setCashDescription('Cash payment for ISP services');
+      }
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      setUserSubscription(null);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  }, [adminApi]);
+
+  const handleCashPaymentQuick = async () => {
+    if (!selectedUserForCash || !cashAmount || !cashReference) return;
+    try {
+      setCashProcessing(true);
+      await paymentsApi.createCashPayment({
+        userId: selectedUserForCash.id,
+        amount: parseFloat(cashAmount),
+        reference: cashReference,
+        description: cashDescription,
+        subscriptionId: userSubscription?.id || null,
+      });
+      setCashDialog(false);
+      setSelectedUserForCash(null);
+      setCashAmount('');
+      setCashReference('');
+      setCashDescription('');
+      fetchAdminOverview();
+      fetchAdminActivity();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCashProcessing(false);
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!genInvoiceSubId || !genFrom || !genTo) return;
+    try {
+      setGenInvoiceLoading(true);
+      await api.post(`/invoices/generate/${genInvoiceSubId}`, {
+        billingPeriodStart: genFrom,
+        billingPeriodEnd: genTo,
+        force: true
+      });
+      setGenInvoiceOpen(false);
+      setGenInvoiceSubId('');
+      setGenFrom('');
+      setGenTo('');
+      fetchAdminOverview();
+      fetchAdminActivity();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGenInvoiceLoading(false);
+    }
+  };
 
   const fetchAiQuickStats = useCallback(async () => {
+    if (aiUnavailable) return;
     try {
       const [summaryRes, anomaliesRes] = await Promise.allSettled([
         aiService.getDashboardSummary(),
         aiService.getAnomalies()
       ]);
+
+      const aiFailed = summaryRes.status === 'rejected' || anomaliesRes.status === 'rejected';
+      if (aiFailed) {
+        aiFailureStreakRef.current += 1;
+        if (aiFailureStreakRef.current >= 3) {
+          setAiUnavailable(true);
+        }
+      } else {
+        aiFailureStreakRef.current = 0;
+        setAiUnavailable(false);
+      }
 
       const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.data || {}) : {};
       const anomaliesPayload = anomaliesRes.status === 'fulfilled' ? (anomaliesRes.value.data?.data || {}) : {};
@@ -384,8 +412,12 @@ const Dashboard = () => {
       setShowCriticalAiBanner((summary?.anomalies?.critical ?? critical) > 0);
     } catch (error) {
       console.error('Error fetching AI quick stats:', error);
+      aiFailureStreakRef.current += 1;
+      if (aiFailureStreakRef.current >= 3) {
+        setAiUnavailable(true);
+      }
     }
-  }, []);
+  }, [aiUnavailable]);
 
   // ACTION HANDLERS
 
@@ -412,7 +444,8 @@ const Dashboard = () => {
         default:
           break;
       }
-      fetchAdminStats();
+      fetchAdminOverview();
+      fetchAdminActivity();
     } catch (error) {
       console.error('Error performing user action:', error);
     }
@@ -513,10 +546,20 @@ const Dashboard = () => {
     fetchDashboardData();
     fetchUsageHistory();
     if (isAdmin) {
-      fetchAdminStats();
+      fetchAdminOverview();
+      fetchAdminActivity();
       fetchAiQuickStats();
+      fetchUserGrowthHistory();
     }
-  }, [isAdmin, fetchDashboardData, fetchUsageHistory, fetchAdminStats, fetchAiQuickStats]);
+  }, [
+    isAdmin,
+    fetchDashboardData,
+    fetchUsageHistory,
+    fetchAdminOverview,
+    fetchAdminActivity,
+    fetchAiQuickStats,
+    fetchUserGrowthHistory,
+  ]);
 
   // LOADING STATE
 
@@ -568,9 +611,14 @@ const Dashboard = () => {
               variant="outlined"
               startIcon={<RefreshIcon />}
               onClick={() => {
+                aiFailureStreakRef.current = 0;
+                setAiUnavailable(false);
                 fetchDashboardData();
                 fetchUsageHistory();
-                fetchAdminStats();
+                fetchAdminOverview();
+                fetchAdminActivity();
+                fetchAiQuickStats();
+                fetchUserGrowthHistory();
               }}
               disabled={refreshing}
               sx={{
@@ -583,6 +631,45 @@ const Dashboard = () => {
           </Box>
         </Box>
 
+        {/* Quick Actions (admin only) */}
+        <CustomCard className="mb-6">
+          <CardContent sx={{ p: 2.5 }}>
+            <Box display="flex" flexWrap="wrap" gap={1.5}>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/admin-users')}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                New Subscription
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={async () => {
+                  await fetchUsersForCash();
+                  setCashDialog(true);
+                }}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Record Payment
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/support-tickets')}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Assign Ticket
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setGenInvoiceOpen(true)}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Generate Invoice
+              </Button>
+            </Box>
+          </CardContent>
+        </CustomCard>
+
         {showCriticalAiBanner && (
           <Alert
             severity="warning"
@@ -590,6 +677,12 @@ const Dashboard = () => {
             onClick={() => navigate('/ai-dashboard', { state: { scrollTo: 'anomalies' } })}
           >
             ⚠️ {aiQuickStats.criticalAnomalies} critical billing anomalies detected. View Details →
+          </Alert>
+        )}
+
+        {aiUnavailable && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            AI service temporarily unavailable
           </Alert>
         )}
 
@@ -612,6 +705,56 @@ const Dashboard = () => {
         <TabPanel value={tabValue} index={0}>
           {/* Admin Overview */}
           <AdminStatsOverview stats={adminStats} />
+
+          {/* Recent Activity */}
+          <CustomCard className="mb-8">
+            <CardContent sx={{ p: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Recent Activity
+                </Typography>
+                <Button
+                  variant="text"
+                  onClick={fetchAdminActivity}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                  Refresh
+                </Button>
+              </Box>
+              {adminActivityLoading ? (
+                <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2 }} />
+              ) : (
+                <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
+                  <List dense>
+                    {(adminActivity || []).map((ev) => {
+                      const type = String(ev.type || '').toLowerCase();
+                      const Icon =
+                        type === 'payment' ? PaymentIcon :
+                          type === 'signup' ? PersonIcon :
+                            type === 'ticket' ? TicketIcon :
+                              RefreshIcon;
+                      return (
+                        <ListItem key={ev.id} sx={{ px: 0 }}>
+                          <ListItemAvatar>
+                            <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.12), color: theme.palette.primary.main }}>
+                              <Icon fontSize="small" />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={ev.description}
+                            secondary={`${ev.user?.name || ''}${ev.user?.email ? ` · ${ev.user.email}` : ''} · ${formatDate(ev.timestamp)}`}
+                          />
+                        </ListItem>
+                      );
+                    })}
+                    {(!adminActivity || adminActivity.length === 0) && (
+                      <Typography color="text.secondary">No recent activity.</Typography>
+                    )}
+                  </List>
+                </Box>
+              )}
+            </CardContent>
+          </CustomCard>
 
           <CustomCard className="mb-8">
             <CardContent sx={{ p: 3 }}>
@@ -662,22 +805,25 @@ const Dashboard = () => {
           <PriorityTicketsWidget tickets={adminStats.priorityTickets} />
 
           {/* Charts Section */}
-          {usageHistoryLoading ? (
+          {usageHistoryLoading || userGrowthLoading ? (
             <Skeleton variant="rectangular" height={360} sx={{ borderRadius: 2, mb: 4 }} />
-          ) : usageHistoryError ? (
+          ) : usageHistoryError || userGrowthError ? (
             <ErrorState
-              message="Failed to load usage data"
-              onRetry={fetchUsageHistory}
+              message="Failed to load dashboard chart data"
+              onRetry={() => {
+                fetchUsageHistory();
+                fetchUserGrowthHistory();
+              }}
             />
-          ) : usageHistorySeries.length === 0 ? (
+          ) : userGrowthSeries.length === 0 ? (
             <EmptyState
-              icon={<DataUsageIcon />}
-              title="No usage data"
-              subtitle="Usage will appear here once data usage sessions are recorded."
+              icon={<PeopleIcon />}
+              title="No user growth data"
+              subtitle="User growth trend will appear here once new user registrations are recorded."
             />
           ) : (
             <DashboardCharts
-              usageHistory={usageHistorySeries}
+              userGrowthHistory={userGrowthSeries}
               userStatusData={userStatusData}
             />
           )}
@@ -770,6 +916,72 @@ const Dashboard = () => {
             </Grid>
           </Grid>
         </TabPanel>
+
+        {/* Quick action dialogs (admin only) */}
+        <CashPaymentDialog
+          open={cashDialog}
+          onClose={() => setCashDialog(false)}
+          onPay={handleCashPaymentQuick}
+          processing={cashProcessing}
+          users={users}
+          selectedUser={selectedUserForCash}
+          setSelectedUser={(e, v) => {
+            setSelectedUserForCash(v);
+            if (v) fetchUserSubscriptionForCash(v.id);
+          }}
+          userSearchLoading={userSearchLoading}
+          loadingSubscription={loadingSubscription}
+          userSubscription={userSubscription}
+          cashAmount={cashAmount}
+          setCashAmount={setCashAmount}
+          cashReference={cashReference}
+          setCashReference={setCashReference}
+          cashDescription={cashDescription}
+          setCashDescription={setCashDescription}
+        />
+
+        <Dialog open={genInvoiceOpen} onClose={() => !genInvoiceLoading && setGenInvoiceOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Generate Invoice</DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Subscription ID"
+              value={genInvoiceSubId}
+              onChange={(e) => setGenInvoiceSubId(e.target.value)}
+              sx={{ mb: 2 }}
+              disabled={genInvoiceLoading}
+            />
+            <TextField
+              fullWidth
+              type="date"
+              label="From"
+              value={genFrom}
+              onChange={(e) => setGenFrom(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 2 }}
+              disabled={genInvoiceLoading}
+            />
+            <TextField
+              fullWidth
+              type="date"
+              label="To"
+              value={genTo}
+              onChange={(e) => setGenTo(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              disabled={genInvoiceLoading}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setGenInvoiceOpen(false)} disabled={genInvoiceLoading}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleGenerateInvoice}
+              disabled={genInvoiceLoading || !genInvoiceSubId || !genFrom || !genTo}
+            >
+              {genInvoiceLoading ? <CircularProgress size={18} color="inherit" /> : 'Generate'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   }

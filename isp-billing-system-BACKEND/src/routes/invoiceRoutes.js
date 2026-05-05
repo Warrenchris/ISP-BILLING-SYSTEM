@@ -602,7 +602,7 @@ router.put("/:id/status", authorize(["admin"]), validateInvoiceStatusUpdate, upd
  */
 router.put("/:id/paid", authorize(["admin"]), validateMarkAsPaid, markInvoiceAsPaid);
 
-router.get('/:invoiceId/pdf', authenticate, authorize('admin', 'user'), generateInvoicePDF);
+router.get('/:invoiceId/pdf', authenticate, authorize(['admin', 'support', 'customer']), generateInvoicePDF);
 
 module.exports = router;
 

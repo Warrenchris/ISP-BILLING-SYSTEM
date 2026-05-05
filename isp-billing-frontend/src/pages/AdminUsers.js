@@ -106,7 +106,7 @@ export default function AdminUsers() {
   const handleSubscriptionAction = async (subscriptionId, action) => {
     try {
       setSubscriptionActionLoading(true);
-      await adminApi.users.update(subscriptionId, { action });
+      await adminApi.users.patchSubscription(subscriptionId, { action });
       showAlert(`Subscription ${action}d successfully`, 'success');
       if (selectedUserForSubscriptions) {
         await loadUserSubscriptions(selectedUserForSubscriptions.id);
@@ -301,6 +301,11 @@ export default function AdminUsers() {
         subscriptions={selectedUserSubscriptions}
         loading={subscriptionActionLoading}
         onAction={handleSubscriptionAction}
+        onRefresh={() => {
+          if (selectedUserForSubscriptions?.id) {
+            loadUserSubscriptions(selectedUserForSubscriptions.id);
+          }
+        }}
       />
     </Box>
   );

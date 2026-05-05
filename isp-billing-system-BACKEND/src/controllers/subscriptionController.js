@@ -2,6 +2,23 @@ const { Subscription, DataPlan, User, Payment } = require('../models');
 const { Op } = require('sequelize');
 const { SubscriptionStatus } = require('../config/constants');
 
+function getPlanDurationDays(plan) {
+  if (!plan) return 30;
+  if (Number.isFinite(plan.durationDays)) return plan.durationDays;
+
+  // Common repo inconsistency: validityPeriod is sometimes a number of days, sometimes a string.
+  const vp = plan.validityPeriod;
+  const numeric = Number(vp);
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+
+  const s = String(vp || '').toLowerCase();
+  if (s === 'daily') return 1;
+  if (s === 'weekly') return 7;
+  if (s === 'monthly') return 30;
+  if (s === 'yearly') return 365;
+  return 30;
+}
+
 /**
  * Create new subscription
  */
@@ -443,16 +460,20 @@ const getAllSubscriptions = async (req, res) => {
     const {
       status,
       dataPlanId,
+      planId,
+      userId,
       page = 1,
       limit = 10,
       sortBy = 'createdAt',
       sortOrder = 'DESC'
     } = req.query;
 
-    // Build where clause
+    // Build where clause (Subscription FK column is planId)
     const whereClause = {};
     if (status) whereClause.status = status;
-    if (dataPlanId) whereClause.dataPlanId = dataPlanId;
+    if (userId) whereClause.userId = userId;
+    const filterPlanId = planId || dataPlanId;
+    if (filterPlanId) whereClause.planId = filterPlanId;
 
     // Calculate pagination
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -484,6 +505,7 @@ const getAllSubscriptions = async (req, res) => {
       data: {
         subscriptions: subscriptions.map(subscription => ({
           ...subscription.toJSON(),
+          DataPlan: subscription.plan,
           daysRemaining: subscription.getDaysRemaining(),
           dataUsagePercentage: subscription.getDataUsagePercentage(),
           formattedDataUsed: subscription.getFormattedDataUsed(),
@@ -512,6 +534,135 @@ const getAllSubscriptions = async (req, res) => {
   }
 };
 
+/**
+ * Admin: change a subscription plan
+ * PATCH /admin/subscriptions/:id/plan
+ * Body: { planId: string, resetDates: boolean, resetData: boolean }
+ */
+const changePlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { planId, resetDates = true, resetData = false } = req.body || {};
+
+    if (!planId) {
+      return res.status(400).json({ success: false, message: 'planId is required' });
+    }
+
+    const subscription = await Subscription.findByPk(id, {
+      include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User', attributes: { exclude: ['password'] } }]
+    });
+    if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
+      return res.status(400).json({ success: false, message: 'Cannot change plan for a cancelled subscription' });
+    }
+
+    const newPlan = await DataPlan.findByPk(planId);
+    if (!newPlan) return res.status(404).json({ success: false, message: 'Data plan not found' });
+
+    subscription.planId = newPlan.id;
+
+    if (resetDates) {
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + getPlanDurationDays(newPlan));
+      subscription.startDate = startDate;
+      subscription.endDate = endDate;
+    }
+
+    if (resetData) {
+      subscription.dataUsed = 0;
+      subscription.dataRemaining = newPlan.dataLimit;
+    }
+
+    await subscription.save();
+    await subscription.reload({
+      include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User', attributes: { exclude: ['password'] } }]
+    });
+
+    return res.json({
+      success: true,
+      message: 'Subscription plan updated successfully',
+      data: {
+        subscription: {
+          ...subscription.toJSON(),
+          DataPlan: subscription.plan,
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Change subscription plan error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Admin: extend a subscription end date (and optionally add data)
+ * PATCH /admin/subscriptions/:id/extend
+ * Body: { days: number, addDataMB?: number }
+ */
+const extendSubscription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days, addDataMB } = req.body || {};
+
+    const addDays = Number(days);
+    if (!Number.isFinite(addDays) || addDays < 1) {
+      return res.status(400).json({ success: false, message: 'days must be a positive number' });
+    }
+
+    const subscription = await Subscription.findByPk(id, {
+      include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User', attributes: { exclude: ['password'] } }]
+    });
+    if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+
+    const base = subscription.endDate ? new Date(subscription.endDate) : new Date();
+    const newEnd = new Date(base);
+    newEnd.setDate(newEnd.getDate() + addDays);
+    subscription.endDate = newEnd;
+
+    const dataToAdd = addDataMB === undefined ? null : Number(addDataMB);
+    if (dataToAdd !== null) {
+      if (!Number.isFinite(dataToAdd) || dataToAdd < 0) {
+        return res.status(400).json({ success: false, message: 'addDataMB must be a non-negative number' });
+      }
+      // Subscription model tracks "dataRemaining" and "dataUsed" (no dataLimit column).
+      subscription.dataRemaining = (Number(subscription.dataRemaining) || 0) + dataToAdd;
+    }
+
+    if (subscription.status === SubscriptionStatus.EXPIRED) {
+      subscription.status = SubscriptionStatus.ACTIVE;
+    }
+
+    await subscription.save();
+    await subscription.reload({
+      include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User', attributes: { exclude: ['password'] } }]
+    });
+
+    return res.json({
+      success: true,
+      message: 'Subscription extended successfully',
+      data: {
+        subscription: {
+          ...subscription.toJSON(),
+          DataPlan: subscription.plan,
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Extend subscription error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   createSubscription,
   getUserSubscriptions,
@@ -519,6 +670,8 @@ module.exports = {
   updateSubscription,
   cancelSubscription,
   updateDataUsage,
-  getAllSubscriptions
+  getAllSubscriptions,
+  changePlan,
+  extendSubscription
 };
 

@@ -9,7 +9,9 @@ const {
   updateSubscription,
   cancelSubscription,
   updateDataUsage,
-  getAllSubscriptions
+  getAllSubscriptions,
+  changePlan,
+  extendSubscription
 } = require("../controllers/subscriptionController");
 
 // Import middleware
@@ -465,6 +467,24 @@ router.put("/:id/usage",
   validateUUIDParam("id"),
   validateDataUsageUpdate, 
   updateDataUsage
+);
+
+// Admin: change plan for a subscription
+router.patch(
+  '/admin/subscriptions/:id/plan',
+  authenticate,
+  authorize(['admin']),
+  validateUUIDParam('id'),
+  changePlan
+);
+
+// Admin: extend a subscription end date
+router.patch(
+  '/admin/subscriptions/:id/extend',
+  authenticate,
+  authorize(['admin']),
+  validateUUIDParam('id'),
+  extendSubscription
 );
 
 // Add this before module.exports

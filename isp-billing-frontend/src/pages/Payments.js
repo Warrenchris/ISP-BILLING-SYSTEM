@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
-import { Box, Alert, Typography, Button } from '@mui/material';
+import { Box, Alert, Typography, Button, Tabs, Tab, CircularProgress } from '@mui/material';
 import {
   Settings as SettingsIcon,
   Phone as PhoneIcon,
@@ -10,6 +10,7 @@ import { useApi } from '../contexts/ApiContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTheme, alpha } from '@mui/material/styles';
+import { formatCurrency, formatDate } from '../utils/helpers';
 
 // Import newly created components
 import PaymentStatsRow from '../components/payments/PaymentStatsRow';
@@ -18,6 +19,7 @@ import PaymentDetailsDialog from '../components/payments/PaymentDetailsDialog';
 import MpesaPaymentDialog from '../components/payments/MpesaPaymentDialog';
 import CashPaymentDialog from '../components/payments/CashPaymentDialog';
 import AdminPaymentSettingsDialog from '../components/payments/AdminPaymentSettingsDialog';
+import LinkPaymentDialog from '../components/payments/LinkPaymentDialog';
 
 // Helper to normalized payment method
 const getPaymentMethod = (payment) => {
@@ -71,6 +73,12 @@ const getCustomerInfo = (payment) => {
 const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adminTab, setAdminTab] = useState('all'); // 'all' | 'unlinked'
+
+  // Unlinked queue
+  const [unlinked, setUnlinked] = useState([]);
+  const [unlinkedLoading, setUnlinkedLoading] = useState(false);
+  const [linkDlg, setLinkDlg] = useState({ open: false, payment: null });
 
   // Stats state
   const [stats, setStats] = useState({
@@ -184,6 +192,28 @@ const Payments = () => {
     }
   };
 
+  const fetchUnlinked = async () => {
+    if (!isAdmin) return;
+    try {
+      setUnlinkedLoading(true);
+      const res = await paymentsApi.getUnlinkedPayments({ page: 1, limit: 50 });
+      const list = res?.data?.data || [];
+      const mapped = (Array.isArray(list) ? list : []).map((p, i) => ({
+        ...p,
+        id: p.id || `unlinked-${i}`,
+        createdAt: p.createdAt || p.created_at || p.transactionDate || p.completedAt || null,
+        customerInfo: getCustomerInfo(p),
+      }));
+      setUnlinked(mapped);
+    } catch (e) {
+      console.error(e);
+      notifyError('Failed to load unlinked cash payments');
+      setUnlinked([]);
+    } finally {
+      setUnlinkedLoading(false);
+    }
+  };
+
   // const showAlert = ... // Removed
 
   const handleConfirmPayment = async (paymentId) => {
@@ -191,19 +221,11 @@ const Payments = () => {
       setProcessing(true);
       const payment = payments.find(p => p.id === paymentId);
       await paymentsApi.confirmPayment(paymentId);
-
-      if (payment?.subscriptionId) {
-        // Try to activate subscription if confirmed
-        try {
-          await paymentsApi.activateSubscription(payment.subscriptionId);
-          notifySuccess("Payment confirmed and subscription activated!");
-        } catch (subError) {
-          console.warn("Auto-activation failed or not applicable", subError);
-          notifySuccess("Payment confirmed successfully!");
-        }
-      } else {
-        notifySuccess("Payment confirmed successfully!");
-      }
+      notifySuccess(
+        payment?.subscriptionId
+          ? "Payment confirmed (subscription activated when linked)"
+          : "Payment confirmed successfully!"
+      );
 
       fetchPayments();
       if (selectedUser) fetchUserSubscription(selectedUser.id);
@@ -393,16 +415,121 @@ const Payments = () => {
 
       <PaymentStatsRow stats={stats} />
 
-      <PaymentHistoryTable
-        payments={payments}
-        loading={loading}
-        isAdmin={isAdmin}
-        onViewDetails={(p) => setPaymentDetailsModal({ open: true, payment: p })}
-        onConfirm={handleConfirmPayment}
-        onReject={handleRejectPayment}
-        processing={processing}
-        onRefresh={fetchPayments}
-      />
+      {isAdmin ? (
+        <>
+          <Box sx={{ mb: 2 }}>
+            <Tabs
+              value={adminTab}
+              onChange={(_, v) => {
+                setAdminTab(v);
+                if (v === 'unlinked') fetchUnlinked();
+              }}
+            >
+              <Tab value="all" label="All Payments" />
+              <Tab value="unlinked" label="Unlinked Cash" />
+            </Tabs>
+          </Box>
+
+          {adminTab === 'all' && (
+            <PaymentHistoryTable
+              payments={payments}
+              loading={loading}
+              isAdmin={isAdmin}
+              onViewDetails={(p) => setPaymentDetailsModal({ open: true, payment: p })}
+              onConfirm={handleConfirmPayment}
+              onReject={handleRejectPayment}
+              processing={processing}
+              onRefresh={fetchPayments}
+            />
+          )}
+
+          {adminTab === 'unlinked' && (
+            <Box
+              sx={{
+                background: 'rgba(15, 15, 15, 0.75)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 2,
+                p: 3
+              }}
+            >
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6" fontWeight={700}>Unlinked Cash Payments</Typography>
+                <Button variant="outlined" onClick={fetchUnlinked} disabled={unlinkedLoading}>
+                  Refresh
+                </Button>
+              </Box>
+
+              <Box sx={{ overflowX: 'auto' }}>
+                <Box component="table" sx={{ width: '100%', minWidth: 900, borderCollapse: 'collapse' }}>
+                  <Box component="thead">
+                    <Box component="tr" sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+                      <Box component="th" sx={{ textAlign: 'left', py: 1.5, pr: 2, color: 'text.secondary' }}>Customer</Box>
+                      <Box component="th" sx={{ textAlign: 'left', py: 1.5, pr: 2, color: 'text.secondary' }}>Amount</Box>
+                      <Box component="th" sx={{ textAlign: 'left', py: 1.5, pr: 2, color: 'text.secondary' }}>Date</Box>
+                      <Box component="th" sx={{ textAlign: 'right', py: 1.5, pr: 1, color: 'text.secondary' }}>Actions</Box>
+                    </Box>
+                  </Box>
+                  <Box component="tbody">
+                    {unlinkedLoading ? (
+                      <Box component="tr">
+                        <Box component="td" colSpan={4} sx={{ py: 4, textAlign: 'center' }}>
+                          <CircularProgress size={24} />
+                        </Box>
+                      </Box>
+                    ) : unlinked.length === 0 ? (
+                      <Box component="tr">
+                        <Box component="td" colSpan={4} sx={{ py: 5, textAlign: 'center', color: 'text.secondary' }}>
+                          No unlinked cash payments found.
+                        </Box>
+                      </Box>
+                    ) : (
+                      unlinked.map((p) => (
+                        <Box component="tr" key={p.id} sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+                          <Box component="td" sx={{ py: 1.5, pr: 2 }}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {p.customerInfo?.name || 'Unknown'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {p.customerInfo?.email || ''}
+                            </Typography>
+                          </Box>
+                          <Box component="td" sx={{ py: 1.5, pr: 2 }}>
+                            {formatCurrency(p.amount || 0)}
+                          </Box>
+                          <Box component="td" sx={{ py: 1.5, pr: 2 }}>
+                            {p.createdAt ? formatDate(p.createdAt) : '—'}
+                          </Box>
+                          <Box component="td" sx={{ py: 1.5, pr: 1, textAlign: 'right' }}>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => setLinkDlg({ open: true, payment: p })}
+                            >
+                              Link to Subscription
+                            </Button>
+                          </Box>
+                        </Box>
+                      ))
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </>
+      ) : (
+        <PaymentHistoryTable
+          payments={payments}
+          loading={loading}
+          isAdmin={isAdmin}
+          onViewDetails={(p) => setPaymentDetailsModal({ open: true, payment: p })}
+          onConfirm={handleConfirmPayment}
+          onReject={handleRejectPayment}
+          processing={processing}
+          onRefresh={fetchPayments}
+        />
+      )}
 
       <PaymentDetailsDialog
         open={paymentDetailsModal.open}
@@ -454,6 +581,18 @@ const Payments = () => {
             onSave={saveAdminSettings}
           />
         </>
+      )}
+
+      {isAdmin && (
+        <LinkPaymentDialog
+          open={linkDlg.open}
+          payment={linkDlg.payment}
+          onClose={() => setLinkDlg({ open: false, payment: null })}
+          onSuccess={() => {
+            fetchUnlinked();
+            fetchPayments();
+          }}
+        />
       )}
     </Box>
   );

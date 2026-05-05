@@ -73,7 +73,7 @@ export default function Subscriptions() {
   const [cashNotes, setCashNotes] = useState("");
   const [recordingCash, setRecordingCash] = useState(false);
   const [cashSub, setCashSub] = useState(null);
-  const canRecordCash = ["admin", "staff"].includes((user?.role || "").toLowerCase());
+  const canRecordCash = ["admin", "support"].includes((user?.role || "").toLowerCase());
 
   const pop = (msg, sev = "info") => {
     setAlert({ msg, sev });
@@ -85,8 +85,15 @@ export default function Subscriptions() {
       setLoading(true);
       const r = await subscriptionsApi.getCurrent();
       const currentSub = r.data?.data?.subscription || null;
-      const allSubs = await subscriptionsApi.getAll();
-      const subscriptions = allSubs.data?.data?.subscriptions || [];
+      const role = (user?.role || "").toLowerCase();
+      const isStaffViewer = ["admin", "support"].includes(role);
+      const allSubs = isStaffViewer
+        ? await subscriptionsApi.getAllAdmin({ limit: 500 })
+        : await subscriptionsApi.getAll();
+      const subscriptions = (allSubs.data?.data?.subscriptions || []).map((sub) => ({
+        ...sub,
+        DataPlan: sub.DataPlan || sub.plan,
+      }));
 
       const markedSubs = subscriptions.map(sub => ({
         ...sub,
@@ -102,7 +109,7 @@ export default function Subscriptions() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user?.role]);
 
   const activeSubs = subs.filter((s) => s?.status === "active");
   const currentSub = subs.find((s) => s?.isCurrent) || null;

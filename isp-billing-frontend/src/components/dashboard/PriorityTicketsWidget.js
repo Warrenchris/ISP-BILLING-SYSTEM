@@ -46,15 +46,16 @@ const PriorityTicketsWidget = ({ tickets = [] }) => {
             >
               <ListItemText
                 primary={
-                  <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
+                  <Typography variant="subtitle2" fontWeight={600} mb={0.5} component="div">
                     {ticket.subject}
                   </Typography>
                 }
+                secondaryTypographyProps={{ component: 'div' }}
                 secondary={
                   <Box display="flex" gap={1} alignItems="center" mt={0.5}>
                     <Chip size="small" label={ticket.priority} sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: theme.palette.error.main, fontWeight: 700, textTransform: 'capitalize', height: 20 }} />
                     <Chip size="small" label={ticket.status} sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'text.secondary', textTransform: 'capitalize', height: 20 }} />
-                    <Typography variant="caption" color="text.secondary" ml={1}>
+                    <Typography variant="caption" color="text.secondary" ml={1} component="span">
                       {new Date(ticket.createdAt).toLocaleDateString()}
                     </Typography>
                   </Box>

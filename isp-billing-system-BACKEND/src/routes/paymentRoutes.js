@@ -13,7 +13,18 @@ const {
   normalizePhoneNumber,
   checkMpesaConfig
 } = require('../middleware/paymentValidation');
-const { createCashPayment, confirmPayment, getAllPayments, initiateSubscriptionPayment, queryPaymentStatus, recordCashPayment } = require('../controllers/paymentController');
+const {
+  createCashPayment,
+  confirmPayment,
+  rejectPayment,
+  patchPayment,
+  getAllPayments,
+  getUnlinkedPayments,
+  getMpesaLimits,
+  initiateSubscriptionPayment,
+  queryPaymentStatus,
+  recordCashPayment
+} = require('../controllers/paymentController');
 
 const mpesaService = new MpesaService();
 
@@ -62,6 +73,12 @@ router.post(
       });
     } catch (error) {
       console.error('M-Pesa initiation error:', error);
+      if (error.code === 'MPESA_NOT_CONFIGURED') {
+        return res.status(503).json({
+          error: 'Mpesa integration not configured. Please contact admin.',
+          code: 'MPESA_NOT_CONFIGURED'
+        });
+      }
       res.status(500).json({
         success: false,
         message: error.message || 'Failed to initiate M-Pesa payment'
@@ -162,15 +179,28 @@ router.get('/mpesa/test-auth', async (req, res) => {
   }
 });
 
+// GET /api/payments/mpesa/limits - Return configured M-Pesa limits
+// Keep this before parameterized routes to avoid matching conflicts.
+router.get('/mpesa/limits', getMpesaLimits);
+
+// Admin/support: unlinked cash payments queue (must be before /:paymentId routes)
+router.get('/unlinked', authenticate, authorize(['admin', 'support']), getUnlinkedPayments);
+
 
 
 // Admin: Create cash payment
 router.post('/cash', authenticate, authorize(['admin']), createCashPayment);
 
-// Admin/Staff: Record manual cash payment against subscription
-router.post('/record-cash', authenticate, authorize(['admin', 'staff']), recordCashPayment);
+// Admin / support: record manual cash payment against subscription
+router.post('/record-cash', authenticate, authorize(['admin', 'support']), recordCashPayment);
 
 // Admin: Confirm pending payment
 router.put('/:paymentId/confirm', authenticate, authorize(['admin']), confirmPayment);
+
+// Admin: Reject pending payment
+router.put('/:paymentId/reject', authenticate, authorize(['admin']), rejectPayment);
+
+// Admin: Link payment to subscription (or clear link with subscriptionId: null)
+router.patch('/:paymentId', authenticate, authorize(['admin']), patchPayment);
 
 module.exports = router;

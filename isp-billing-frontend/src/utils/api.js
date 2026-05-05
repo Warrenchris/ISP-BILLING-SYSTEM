@@ -63,6 +63,7 @@ export const dataPlansApi = {
 // Subscriptions API
 export const subscriptionsApi = {
   getAll: (params = {}) => api.get('/subscriptions', { params }),
+  getAllAdmin: (params = {}) => api.get('/subscriptions/all', { params }),
   getById: (id) => api.get(`/subscriptions/${id}`),
   getCurrent: () => api.get('/subscriptions/current'),
   create: (subscriptionData) => api.post('/subscriptions', subscriptionData),

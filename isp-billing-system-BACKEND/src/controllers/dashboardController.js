@@ -1,5 +1,7 @@
 const { Op } = require('sequelize');
-const { DataUsage } = require('../models');
+const { sequelize } = require('../config/database');
+const { DataUsage, User, Payment, Subscription, SupportTicket, Invoice } = require('../models');
+const { PaymentStatus, SubscriptionStatus } = require('../config/constants');
 
 /**
  * GET /api/dashboard/stats
@@ -70,6 +72,178 @@ exports.getUsageHistory = async (req, res, next) => {
     }
 
     res.json({ success: true, data: out });
+  } catch (err) {
+    next(err);
+  }
+};
+
+function monthRange(date = new Date()) {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  return { start, end };
+}
+
+/**
+ * GET /api/admin/dashboard/overview
+ * Admin-only overview stats in a single call.
+ */
+exports.getAdminOverview = async (req, res, next) => {
+  try {
+    const { start, end } = monthRange(new Date());
+    const currency = process.env.DEFAULT_CURRENCY || 'KES';
+
+    const [
+      totalUsers,
+      activeUsers,
+      newUsersThisMonth,
+      totalRevenueRaw,
+      revenueThisMonthRaw,
+      activeSubscriptions,
+      pendingSubscriptions,
+      expiredSubscriptions,
+      openTickets,
+      highPriorityTickets,
+      pendingInvoices,
+      overdueInvoices,
+    ] = await Promise.all([
+      User.count(),
+      User.count({ where: { isActive: true } }),
+      User.count({ where: { created_at: { [Op.between]: [start, end] } } }),
+      Payment.sum('amount', { where: { status: PaymentStatus.COMPLETED } }),
+      Payment.sum('amount', { where: { status: PaymentStatus.COMPLETED, created_at: { [Op.between]: [start, end] } } }),
+      Subscription.count({ where: { status: SubscriptionStatus.ACTIVE } }),
+      Subscription.count({ where: { status: SubscriptionStatus.PENDING } }),
+      Subscription.count({ where: { status: SubscriptionStatus.EXPIRED } }),
+      SupportTicket.count({ where: { status: { [Op.in]: ['open', 'in_progress'] } } }),
+      SupportTicket.count({ where: { status: { [Op.in]: ['open', 'in_progress'] }, priority: { [Op.in]: ['high', 'critical'] } } }),
+      // Invoice model doesn't have "pending" status; treat draft/sent as pending.
+      Invoice.count({ where: { status: { [Op.in]: ['draft', 'sent'] } } }),
+      Invoice.count({ where: { status: 'overdue' } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        activeUsers,
+        newUsersThisMonth,
+        totalRevenue: parseFloat(totalRevenueRaw || 0),
+        revenueThisMonth: parseFloat(revenueThisMonthRaw || 0),
+        activeSubscriptions,
+        pendingSubscriptions,
+        expiredSubscriptions,
+        openTickets,
+        highPriorityTickets,
+        pendingInvoices,
+        overdueInvoices,
+        currency,
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/admin/dashboard/activity
+ * Recent activity feed across payments, signups, tickets, subscriptions.
+ */
+exports.getAdminActivity = async (req, res, next) => {
+  try {
+    const limitPerType = 5;
+
+    const [payments, users, tickets, subs] = await Promise.all([
+      Payment.findAll({
+        limit: limitPerType,
+        order: [['created_at', 'DESC']],
+        include: [{ model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] }]
+      }),
+      User.findAll({
+        limit: limitPerType,
+        order: [['created_at', 'DESC']],
+        attributes: ['id', 'firstName', 'lastName', 'email', 'created_at']
+      }),
+      SupportTicket.findAll({
+        limit: limitPerType,
+        order: [['created_at', 'DESC']],
+        include: [{ model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] }]
+      }),
+      Subscription.findAll({
+        limit: limitPerType,
+        order: [['created_at', 'DESC']],
+        include: [
+          { model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] }
+        ]
+      }),
+    ]);
+
+    const events = [];
+
+    payments.forEach((p) => {
+      const user = p.User ? {
+        name: `${p.User.firstName || ''} ${p.User.lastName || ''}`.trim() || p.User.email,
+        email: p.User.email
+      } : { name: 'Unknown', email: '' };
+      events.push({
+        id: `payment-${p.id}`,
+        type: 'payment',
+        description: `Payment ${p.status} (${p.paymentMethod})`,
+        user,
+        amount: parseFloat(p.amount || 0),
+        status: p.status,
+        timestamp: (p.created_at || p.createdAt || p.initiatedAt || new Date()).toISOString?.() || new Date(p.created_at || p.createdAt || Date.now()).toISOString()
+      });
+    });
+
+    users.forEach((u) => {
+      events.push({
+        id: `signup-${u.id}`,
+        type: 'signup',
+        description: 'New user signup',
+        user: {
+          name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+          email: u.email
+        },
+        timestamp: new Date(u.created_at || u.createdAt || Date.now()).toISOString()
+      });
+    });
+
+    tickets.forEach((t) => {
+      const user = t.User ? {
+        name: `${t.User.firstName || ''} ${t.User.lastName || ''}`.trim() || t.User.email,
+        email: t.User.email
+      } : { name: 'Unknown', email: '' };
+      events.push({
+        id: `ticket-${t.id}`,
+        type: 'ticket',
+        description: `Ticket ${t.status}: ${t.subject}`,
+        user,
+        status: t.status,
+        timestamp: new Date(t.created_at || t.createdAt || Date.now()).toISOString()
+      });
+    });
+
+    subs.forEach((s) => {
+      const user = s.User ? {
+        name: `${s.User.firstName || ''} ${s.User.lastName || ''}`.trim() || s.User.email,
+        email: s.User.email
+      } : { name: 'Unknown', email: '' };
+      events.push({
+        id: `subscription-${s.id}`,
+        type: 'subscription',
+        description: `Subscription ${s.status}`,
+        user,
+        status: s.status,
+        timestamp: new Date(s.created_at || s.createdAt || Date.now()).toISOString()
+      });
+    });
+
+    events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    res.json({
+      success: true,
+      data: events.slice(0, 15),
+    });
   } catch (err) {
     next(err);
   }

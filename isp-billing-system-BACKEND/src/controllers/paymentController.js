@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Payment, Subscription, DataPlan, User } = require('../models');
 const { PaymentStatus } = require('../config/constants');
 const paymentService = require('../services/paymentService');
@@ -374,6 +375,136 @@ const confirmPayment = async (req, res) => {
   }
 };
 
+/**
+ * Reject a pending payment (Admin only)
+ */
+const rejectPayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { reason } = req.body || {};
+    const payment = await Payment.findByPk(paymentId);
+    if (!payment) return res.status(404).json({ success: false, message: 'Not found' });
+
+    if (![PaymentStatus.PENDING, PaymentStatus.PROCESSING].includes(payment.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only pending or processing payments can be rejected'
+      });
+    }
+
+    await payment.update({
+      status: PaymentStatus.CANCELLED,
+      errorMessage: reason || 'Rejected by administrator'
+    });
+
+    res.json({ success: true, message: 'Payment rejected' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+/**
+ * Link or unlink a payment to a subscription (Admin only)
+ */
+const patchPayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { subscriptionId } = req.body;
+
+    if (!Object.prototype.hasOwnProperty.call(req.body, 'subscriptionId')) {
+      return res.status(400).json({
+        success: false,
+        message: 'subscriptionId is required (send null to unlink)'
+      });
+    }
+
+    const payment = await Payment.findByPk(paymentId);
+    if (!payment) return res.status(404).json({ success: false, message: 'Not found' });
+
+    if (subscriptionId === null || subscriptionId === '') {
+      payment.subscriptionId = null;
+    } else {
+      const sub = await Subscription.findByPk(subscriptionId);
+      if (!sub) {
+        return res.status(404).json({ success: false, message: 'Subscription not found' });
+      }
+      if (sub.userId !== payment.userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Subscription must belong to the same customer as this payment'
+        });
+      }
+      payment.subscriptionId = subscriptionId;
+    }
+
+    await payment.save();
+
+    // If we just linked a COMPLETED payment to a subscription, auto-activate it.
+    // (This matches required behavior: linking cash payments should activate/extend.)
+    if (subscriptionId && payment.status === PaymentStatus.COMPLETED) {
+      const subscription = await Subscription.findByPk(subscriptionId);
+      if (subscription && subscription.status !== 'active') {
+        // Subscription model defines activateSubscription()
+        if (typeof subscription.activateSubscription === 'function') {
+          await subscription.activateSubscription();
+        } else {
+          await subscription.update({ status: 'active' });
+        }
+      }
+    }
+
+    const updated = await Payment.findByPk(paymentId, {
+      include: [
+        { model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] },
+        { model: Subscription, as: 'subscription', attributes: ['id', 'subscriptionNumber', 'status'], required: false }
+      ]
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+/**
+ * Admin/support: list unlinked cash payments (pending or completed)
+ * GET /api/payments/unlinked?page=1&limit=20
+ */
+const getUnlinkedPayments = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    const where = {
+      paymentMethod: 'cash',
+      subscriptionId: { [Op.is]: null },
+      status: { [Op.in]: [PaymentStatus.PENDING, PaymentStatus.COMPLETED] }
+    };
+
+    const { count, rows } = await Payment.findAndCountAll({
+      where,
+      include: [
+        { model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] }
+      ],
+      limit: parseInt(limit, 10),
+      offset,
+      order: [['created_at', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        total: count,
+        page: parseInt(page, 10),
+        pages: Math.ceil(count / parseInt(limit, 10))
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
 
 /**
  * Get all payments (Admin only)
@@ -381,20 +512,39 @@ const confirmPayment = async (req, res) => {
 const getAllPayments = async (req, res) => {
   // Read only
   try {
-    // ... Logic for listing all payments ...
-    const { page = 1, limit = 10, status, userId, paymentMethod } = req.query;
-    // ... implementation ...
-    // (Simulated full implementation for the file write)
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      userId,
+      paymentMethod,
+      subscriptionId
+    } = req.query;
+
     const offset = (page - 1) * limit;
     const where = {};
     if (status) where.status = status;
+    if (userId) where.userId = userId;
+    if (paymentMethod) where.paymentMethod = paymentMethod;
+    if (subscriptionId === '__none__' || subscriptionId === 'null') {
+      where.subscriptionId = { [Op.is]: null };
+    } else if (subscriptionId) {
+      where.subscriptionId = subscriptionId;
+    }
 
     const { count, rows } = await Payment.findAndCountAll({
       where,
-      include: [{ model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] }],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      // Use DB column name to avoid ER_BAD_FIELD_ERROR with underscored timestamps
+      include: [
+        { model: User, as: 'User', attributes: ['firstName', 'lastName', 'email'] },
+        {
+          model: Subscription,
+          as: 'subscription',
+          attributes: ['id', 'subscriptionNumber', 'status'],
+          required: false
+        }
+      ],
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
       order: [['created_at', 'DESC']]
     });
 
@@ -437,6 +587,17 @@ const initiateMpesaPayment = async (req, res) => {
   }
 };
 
+/**
+ * Get configured M-Pesa transaction limits
+ */
+const getMpesaLimits = (req, res) => {
+  res.json({
+    minAmount: parseInt(process.env.MPESA_MIN_AMOUNT || '1'),
+    maxAmount: parseInt(process.env.MPESA_MAX_AMOUNT || '150000'),
+    currency: process.env.DEFAULT_CURRENCY || 'KES'
+  });
+};
+
 module.exports = {
   initiateSubscriptionPayment,
   handleMpesaCallback,
@@ -447,7 +608,11 @@ module.exports = {
   createCashPayment,
   recordCashPayment,
   confirmPayment,
+  rejectPayment,
+  patchPayment,
+  getUnlinkedPayments,
   getAllPayments,
-  initiateMpesaPayment
+  initiateMpesaPayment,
+  getMpesaLimits
 };
 

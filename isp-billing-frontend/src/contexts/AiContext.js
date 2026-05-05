@@ -15,6 +15,8 @@ export const AiProvider = ({ children }) => {
   const [dashboardSummary, setDashboardSummary] = useState(null);
   const [churnRisks, setChurnRisks] = useState([]);
   const [anomalies, setAnomalies] = useState([]);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
+  const [aiFailureCount, setAiFailureCount] = useState(0);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [isLoadingChurn, setIsLoadingChurn] = useState(false);
   const [isLoadingAnomalies, setIsLoadingAnomalies] = useState(false);
@@ -28,24 +30,55 @@ export const AiProvider = ({ children }) => {
     });
   }, []);
 
+  const registerAiSuccess = useCallback(() => {
+    setAiFailureCount(0);
+    setAiUnavailable(false);
+  }, []);
+
+  const registerAiFailure = useCallback(() => {
+    setAiFailureCount((prev) => {
+      const next = prev + 1;
+      if (next >= 3) {
+        setAiUnavailable(true);
+      }
+      return next;
+    });
+  }, []);
+
+  const resetAiFailureLock = useCallback(() => {
+    setAiFailureCount(0);
+    setAiUnavailable(false);
+    clearError('dashboard');
+    clearError('anomalies');
+  }, [clearError]);
+
   const fetchDashboardSummary = useCallback(async () => {
+    if (aiUnavailable) {
+      setErrors((prev) => ({
+        ...prev,
+        dashboard: 'AI service temporarily unavailable',
+      }));
+      return null;
+    }
     setIsLoadingDashboard(true);
     clearError('dashboard');
     try {
       const response = await aiService.getDashboardSummary();
       const payload = response.data?.data || response.data || null;
       setDashboardSummary(payload);
+      registerAiSuccess();
       return payload;
     } catch (error) {
+      registerAiFailure();
       setErrors((prev) => ({
         ...prev,
-        dashboard: error.response?.data?.message || error.message || 'Failed to load AI dashboard summary',
+        dashboard: 'AI service temporarily unavailable',
       }));
       return null;
     } finally {
       setIsLoadingDashboard(false);
     }
-  }, [clearError]);
+  }, [aiUnavailable, clearError, registerAiFailure, registerAiSuccess]);
 
   const fetchChurnRisks = useCallback(async () => {
     setIsLoadingChurn(true);
@@ -68,6 +101,13 @@ export const AiProvider = ({ children }) => {
   }, [clearError]);
 
   const fetchAnomalies = useCallback(async () => {
+    if (aiUnavailable) {
+      setErrors((prev) => ({
+        ...prev,
+        anomalies: 'AI service temporarily unavailable',
+      }));
+      return [];
+    }
     setIsLoadingAnomalies(true);
     clearError('anomalies');
     try {
@@ -75,17 +115,19 @@ export const AiProvider = ({ children }) => {
       const payload = response.data?.data || {};
       const list = payload.anomalies || [];
       setAnomalies(Array.isArray(list) ? list : []);
+      registerAiSuccess();
       return Array.isArray(list) ? list : [];
     } catch (error) {
+      registerAiFailure();
       setErrors((prev) => ({
         ...prev,
-        anomalies: error.response?.data?.message || error.message || 'Failed to load anomalies',
+        anomalies: 'AI service temporarily unavailable',
       }));
       return [];
     } finally {
       setIsLoadingAnomalies(false);
     }
-  }, [clearError]);
+  }, [aiUnavailable, clearError, registerAiFailure, registerAiSuccess]);
 
   return (
     <AiContext.Provider
@@ -97,9 +139,12 @@ export const AiProvider = ({ children }) => {
         isLoadingChurn,
         isLoadingAnomalies,
         errors,
+        aiUnavailable,
+        aiFailureCount,
         fetchDashboardSummary,
         fetchChurnRisks,
         fetchAnomalies,
+        resetAiFailureLock,
         clearError,
       }}
     >

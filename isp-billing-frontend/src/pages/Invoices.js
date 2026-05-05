@@ -15,6 +15,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  MenuItem,
   useTheme,
   alpha,
   Avatar } from '@mui/material';
@@ -38,13 +40,33 @@ const Invoices = () => {
   const [invoiceDialog, setInvoiceDialog] = useState(false);
   const [downloading, setDownloading] = useState({});
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [markingPaid, setMarkingPaid] = useState(false);
 
   const { invoicesApi, authApi } = useApi();
+
+  // Admin-only filters
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
+  const showAlert = (message, severity = 'info') => {
+    setAlert({ show: true, message, severity });
+    setTimeout(() => setAlert({ show: false, message: '', severity: 'info' }), 5000);
+  };
   const fetchInvoices = useCallback(async (isAdminUser = false) => {
     try {
       setLoading(true);
+      const params = isAdminUser ? {
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchFilter?.trim() ? searchFilter.trim() : undefined,
+        startDate: fromDate || undefined,
+        endDate: toDate || undefined,
+      } : undefined;
+
       const response = isAdminUser
-        ? await invoicesApi.getAll()
+        ? await invoicesApi.getAll(params)
         : await invoicesApi.getMy();
 
       const invoicesList = response?.data?.data?.invoices;
@@ -56,21 +78,48 @@ const Invoices = () => {
     } finally {
       setLoading(false);
     }
-  }, [invoicesApi]);
+  }, [invoicesApi, statusFilter, searchFilter, fromDate, toDate]);
 
   useEffect(() => {
     const checkRole = async () => {
-      const res = await authApi.getProfile();
-      const isAdminUser = res?.data?.data?.role?.toLowerCase?.() === 'admin';
-      // setIsAdmin(isAdmin);
-      await fetchInvoices(isAdminUser);
+      try {
+        const res = await authApi.getProfile();
+        const admin = res?.data?.data?.role?.toLowerCase?.() === 'admin';
+        setIsAdminUser(admin);
+        await fetchInvoices(admin);
+      } catch (error) {
+        console.error('Profile error:', error);
+        setIsAdminUser(false);
+        await fetchInvoices(false);
+      }
     };
     checkRole();
   }, [authApi, fetchInvoices]);
 
-  const showAlert = (message, severity = 'info') => {
-    setAlert({ show: true, message, severity });
-    setTimeout(() => setAlert({ show: false, message: '', severity: 'info' }), 5000);
+  // Re-fetch on filter change (admin only)
+  useEffect(() => {
+    if (!isAdminUser) return;
+    fetchInvoices(true);
+  }, [isAdminUser, statusFilter, searchFilter, fromDate, toDate, fetchInvoices]);
+
+  const handleMarkInvoicePaid = async () => {
+    if (!selectedInvoice) return;
+    try {
+      setMarkingPaid(true);
+      await invoicesApi.markAsPaid(selectedInvoice.id, {
+        paidAmount: Number(selectedInvoice.totalAmount),
+        paymentMethod: 'cash',
+        notes: 'Marked paid by admin'
+      });
+      showAlert('Invoice marked as paid', 'success');
+      setInvoiceDialog(false);
+      await fetchInvoices(isAdminUser);
+    } catch (error) {
+      console.error(error);
+      showAlert(error.response?.data?.message || 'Failed to mark invoice paid', 'error');
+    } finally {
+      setMarkingPaid(false);
+    }
   };
 
   const handleDownloadPdf = async (invoice) => {
@@ -341,7 +390,7 @@ const Invoices = () => {
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
-          onClick={fetchInvoices}
+          onClick={() => fetchInvoices(isAdminUser)}
           sx={{
             
             textTransform: 'none',
@@ -372,6 +421,76 @@ const Invoices = () => {
         >
           {alert.message}
         </Alert>
+      )}
+
+      {/* Admin filters */}
+      {isAdminUser && (
+        <Card sx={{ mb: 3, background: 'rgba(15, 15, 15, 0.85)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <CardContent sx={{ p: 2.5 }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="draft">Draft</MenuItem>
+                  <MenuItem value="sent">Sent</MenuItem>
+                  <MenuItem value="paid">Paid</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Customer search (email or name)"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="e.g. alice@example.com"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="From"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="To"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Box display="flex" justifyContent="flex-end" gap={1}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setStatusFilter('all');
+                      setSearchFilter('');
+                      setFromDate('');
+                      setToDate('');
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
       )}
 
       {/* Invoice Summary */}
@@ -558,14 +677,14 @@ const Invoices = () => {
                   p: 3,
                   mb: 3 }}
               >
-                {selectedInvoice.InvoiceItems && selectedInvoice.InvoiceItems.length > 0 ? (
-                  selectedInvoice.InvoiceItems.map((item, index) => (
+                {(selectedInvoice.Items || selectedInvoice.InvoiceItems || []).length > 0 ? (
+                  (selectedInvoice.Items || selectedInvoice.InvoiceItems).map((item, index) => (
                     <Box key={index} display="flex" justifyContent="space-between" py={1}>
                       <Typography variant="body2">
-                        {item.description}
+                        {item.description || item.name || 'Line item'}
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.amount ?? item.totalPrice ?? item.unitPrice ?? 0)}
                       </Typography>
                     </Box>
                   ))
@@ -614,6 +733,18 @@ const Invoices = () => {
           >
             Close
           </Button>
+          {selectedInvoice && isAdminUser && selectedInvoice.status !== 'paid' && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<CheckCircleIcon />}
+              onClick={handleMarkInvoicePaid}
+              disabled={markingPaid}
+              sx={{ textTransform: 'none', fontWeight: 500 }}
+            >
+              {markingPaid ? 'Saving…' : 'Mark paid'}
+            </Button>
+          )}
           {selectedInvoice && (
             <Button
               variant="contained"

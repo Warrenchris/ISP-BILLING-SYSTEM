@@ -181,6 +181,14 @@ exports.createTicket = async (req, res, next) => {
 /* PUT /api/support/tickets/:id */
 exports.updateTicket = async (req, res, next) => {
     try {
+        const staffRoles = ['admin', 'support'];
+        if (!staffRoles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only staff can update ticket status, priority, or assignment'
+            });
+        }
+
         const { status, priority, assignedTo } = req.body;
         const ticket = await SupportTicket.findByPk(req.params.id);
 

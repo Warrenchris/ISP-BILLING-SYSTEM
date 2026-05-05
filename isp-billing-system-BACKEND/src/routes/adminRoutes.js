@@ -7,6 +7,7 @@
 const express = require('express');
 const router  = express.Router();
 const admin = require('../controllers/adminController');
+const dashboardController = require('../controllers/dashboardController');
 
 // ─── Middleware ───────────────────────────────────────────────
 const { authenticate, restrictTo } = require('../middleware/auth');
@@ -34,6 +35,10 @@ router.get("/users/:userId/subscription", adminController.getUserSubscription);
 // ─── System‑wide stats (optional) ─────────────────────────────
 router.get('/stats', adminController.getSystemStats); // GET /api/admin/stats
 router.patch("/subscriptions/:id", admin.patchSubscription);
+
+// ─── Admin dashboard aggregate endpoints ───────────────────────
+router.get('/dashboard/overview', dashboardController.getAdminOverview);
+router.get('/dashboard/activity', dashboardController.getAdminActivity);
 
 
 module.exports = router;

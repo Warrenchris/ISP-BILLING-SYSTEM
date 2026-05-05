@@ -28,7 +28,7 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:5001';
  * @param {object|null} body  Request body (for POST/PUT). Null for GET.
  * @returns {Promise<{ status: number, data: object }>}
  */
-function callAiService(method, path, body = null) {
+function callAiService(method, path, body = null, timeoutMs = 30_000) {
   return new Promise((resolve, reject) => {
     const baseUrl = new URL(AI_SERVICE_URL);
     const isHttps = baseUrl.protocol === 'https:';
@@ -69,9 +69,8 @@ function callAiService(method, path, body = null) {
       reject(err);
     });
 
-    // Set 30-second timeout
-    req.setTimeout(30_000, () => {
-      req.destroy(new Error('AI service request timed out after 30s'));
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error(`AI service request timed out after ${timeoutMs}ms`));
     });
 
     if (bodyStr) req.write(bodyStr);
@@ -83,15 +82,22 @@ function callAiService(method, path, body = null) {
  * Wraps callAiService to handle 503 / network errors uniformly.
  * Returns an Express-style handler result.
  */
-async function proxy(res, method, path, body = null) {
+async function proxy(res, method, path, body = null, timeoutMs = 30_000) {
   try {
-    const { status, data } = await callAiService(method, path, body);
+    const { status, data } = await callAiService(method, path, body, timeoutMs);
     return res.status(status).json(data);
   } catch (err) {
     const isConnRefused =
       err.code === 'ECONNREFUSED' ||
       err.code === 'ENOTFOUND' ||
       err.message.includes('timed out');
+
+    if (isConnRefused && timeoutMs === 6_000) {
+      return res.status(503).json({
+        error: 'AI service temporarily unavailable',
+        fallback: true,
+      });
+    }
 
     if (isConnRefused) {
       return res.status(503).json({
@@ -125,7 +131,7 @@ const getChurnRisks = async (req, res) => {
    GET /api/ai/anomalies
    ────────────────────────────────────────────────────────────── */
 const getAnomalies = async (req, res) => {
-  await proxy(res, 'GET', '/api/ai/anomalies');
+  await proxy(res, 'GET', '/api/ai/anomalies', null, 6_000);
 };
 
 /* ──────────────────────────────────────────────────────────────
@@ -164,7 +170,7 @@ const getChatSessions = async (req, res) => {
    GET /api/ai/dashboard-summary
    ────────────────────────────────────────────────────────────── */
 const getDashboardSummary = async (req, res) => {
-  await proxy(res, 'GET', '/api/ai/dashboard-summary');
+  await proxy(res, 'GET', '/api/ai/dashboard-summary', null, 6_000);
 };
 
 /* ──────────────────────────────────────────────────────────────
