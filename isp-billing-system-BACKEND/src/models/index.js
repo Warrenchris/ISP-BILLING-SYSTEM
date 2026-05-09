@@ -8,6 +8,7 @@ const Invoice = require('./Invoice');
 const InvoiceItem = require('./InvoiceItem');
 const DataUsage = require('./DataUsage');
 const SupportTicket = require('./SupportTicket');
+const TicketReply = require('./TicketReply');
 const Notification = require('./Notification');
 const AuditLog = require('./AuditLog');
 const Setting = require('./Setting');
@@ -49,6 +50,10 @@ DataUsage.belongsTo(Subscription, { foreignKey: 'subscriptionId', as: 'Subscript
 
 SupportTicket.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 SupportTicket.belongsTo(User, { foreignKey: 'assignedTo', as: 'Staff' });
+SupportTicket.hasMany(TicketReply, { foreignKey: 'ticketId', as: 'replies' });
+
+TicketReply.belongsTo(SupportTicket, { foreignKey: 'ticketId' });
+TicketReply.belongsTo(User, { foreignKey: 'userId', as: 'author' });
 
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 
@@ -96,6 +101,7 @@ module.exports = {
   InvoiceItem,
   DataUsage,
   SupportTicket,
+  TicketReply,
   Notification,
   AuditLog,
   Setting,

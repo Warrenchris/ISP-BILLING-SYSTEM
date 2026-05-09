@@ -478,9 +478,15 @@ const getAllSubscriptions = async (req, res) => {
     // Calculate pagination
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // Valid sort fields
-    const validSortFields = ['createdAt', 'startDate', 'endDate', 'status', 'dataUsed'];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    // Map client sort keys to actual DB columns used by this model/table
+    const sortFieldMap = {
+      createdAt: 'created_at',
+      startDate: 'start_date',
+      endDate: 'end_date',
+      status: 'status',
+      dataUsed: 'data_used'
+    };
+    const sortField = sortFieldMap[sortBy] || sortFieldMap.createdAt;
     const sortDirection = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     const { count, rows: subscriptions } = await Subscription.findAndCountAll({

@@ -18,6 +18,8 @@ router.get('/staff', authorize(['admin', 'support']), controller.getStaff);
 // ─── Ticket CRUD ──────────────────────────────────────────────────────────────
 router.get('/',    controller.getAllTickets);
 router.post('/',   controller.createTicket);
+router.get('/:id/replies', controller.getReplies);
+router.post('/:id/replies', controller.addReply);
 router.get('/:id', controller.getTicketById);
 router.put('/:id', controller.updateTicket);
 

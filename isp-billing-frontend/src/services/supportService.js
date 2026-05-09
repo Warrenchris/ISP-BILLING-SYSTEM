@@ -24,8 +24,9 @@ export const supportService = {
 
     delete: (id) => api.delete(`${BASE}/${id}`),
 
-    // ─── Messages within a ticket ─────────────────────────────────────────────
-    addMessage: (id, message) => api.post(`${BASE}/${id}/messages`, { message }),
+    // ─── Replies within a ticket ─────────────────────────────────────────────
+    getReplies: (id) => api.get(`${BASE}/${id}/replies`),
+    addReply: (id, data) => api.post(`${BASE}/${id}/replies`, data),
 
     // ─── Metadata / config (for dropdowns & badge colours) ────────────────────
     getCategories:  () => api.get(`${BASE}/categories`),

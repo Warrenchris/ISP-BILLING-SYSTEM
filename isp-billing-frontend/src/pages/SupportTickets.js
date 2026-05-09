@@ -5,7 +5,8 @@ import {
     TableHead, TableRow, Chip, IconButton, Button, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, MenuItem, Avatar, Grid,
     Skeleton, Alert, Pagination, Collapse, Drawer, Divider,
-    Menu, ListItemIcon, ListItemText, Tooltip, CircularProgress } from '@mui/material';
+    Menu, ListItemIcon, ListItemText, Tooltip, CircularProgress,
+    Checkbox, FormControlLabel } from '@mui/material';
 import {
     Add as AddIcon,
     FilterList as FilterListIcon,
@@ -27,6 +28,7 @@ import { useTheme, alpha } from '@mui/material/styles';
 
 import useTickets from '../hooks/useTickets';
 import { supportService } from '../services/supportService';
+import { useAuth } from '../contexts/AuthContext';
 import { formatDate, debounce } from '../utils/helpers';
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
@@ -344,6 +346,8 @@ function RowActionMenu({ ticket, onActionComplete, onAssignClick }) {
 
 const SupportTickets = () => {
     const theme = useTheme();
+    const { user } = useAuth();
+    const isStaffUser = ['admin', 'support'].includes(user?.role);
 
     // ─── Local UI state ───────────────────────────────────────────────────────
     const [searchInput,    setSearchInput]    = useState('');
@@ -356,6 +360,13 @@ const SupportTickets = () => {
     const [assignTicket,   setAssignTicket]   = useState(null);
     const [assignStaffId,  setAssignStaffId]  = useState('');
     const [assignSaving,   setAssignSaving]   = useState(false);
+    const [detailOpen,     setDetailOpen]     = useState(false);
+    const [detailTicket,   setDetailTicket]   = useState(null);
+    const [replies,        setReplies]        = useState([]);
+    const [repliesLoading, setRepliesLoading] = useState(false);
+    const [replyMessage,   setReplyMessage]   = useState('');
+    const [replyInternal,  setReplyInternal]  = useState(false);
+    const [replySubmitting,setReplySubmitting]= useState(false);
 
     const LIMIT = 20;
 
@@ -377,6 +388,45 @@ const SupportTickets = () => {
             console.error('Assign failed:', err);
         } finally {
             setAssignSaving(false);
+        }
+    };
+
+    const openDetailDialog = async (ticket) => {
+        setDetailTicket(ticket);
+        setDetailOpen(true);
+        setReplies([]);
+        setReplyMessage('');
+        setReplyInternal(false);
+        try {
+            setRepliesLoading(true);
+            const res = await supportService.getReplies(ticket.id);
+            setReplies(res.data?.data || []);
+        } catch (err) {
+            console.error('Failed to load replies:', err);
+        } finally {
+            setRepliesLoading(false);
+        }
+    };
+
+    const submitReply = async () => {
+        if (!detailTicket?.id) return;
+        const msg = replyMessage.trim();
+        if (!msg) return;
+        try {
+            setReplySubmitting(true);
+            await supportService.addReply(detailTicket.id, {
+                message: msg,
+                isInternal: isStaffUser ? replyInternal : false
+            });
+            setReplyMessage('');
+            setReplyInternal(false);
+            const res = await supportService.getReplies(detailTicket.id);
+            setReplies(res.data?.data || []);
+            refresh();
+        } catch (err) {
+            console.error('Reply failed:', err);
+        } finally {
+            setReplySubmitting(false);
         }
     };
 
@@ -533,7 +583,12 @@ const SupportTickets = () => {
                             </TableRow>
                         ) : (
                             tickets.map(ticket => (
-                                <TableRow key={ticket.id} hover>
+                                <TableRow
+                                    key={ticket.id}
+                                    hover
+                                    sx={{ cursor: 'pointer' }}
+                                    onClick={() => openDetailDialog(ticket)}
+                                >
                                     {/* Ticket ID */}
                                     <TableCell sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
                                         {ticket.id?.slice(0, 8).toUpperCase() || '—'}
@@ -582,7 +637,7 @@ const SupportTickets = () => {
                                     </TableCell>
 
                                     {/* Actions */}
-                                    <TableCell align="right">
+                                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                                         <RowActionMenu
                                             ticket={ticket}
                                             onActionComplete={refresh}
@@ -664,6 +719,97 @@ const SupportTickets = () => {
                         startIcon={assignSaving ? <CircularProgress size={16} color="inherit" /> : undefined}
                     >
                         Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} fullWidth maxWidth="md">
+                <DialogTitle sx={{ fontWeight: 700 }}>Ticket Details</DialogTitle>
+                <DialogContent>
+                    {detailTicket && (
+                        <Box>
+                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                                <Grid size={{ xs: 12, md: 8 }}>
+                                    <Typography variant="subtitle2" color="text.secondary">Subject</Typography>
+                                    <Typography variant="h6" sx={{ mb: 1 }}>{detailTicket.subject}</Typography>
+                                    <Typography variant="subtitle2" color="text.secondary">Description</Typography>
+                                    <Typography variant="body2">{detailTicket.description}</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                                    <AppBadge type="status" value={detailTicket.status} />
+                                    <Box mt={1}>
+                                        <Typography variant="subtitle2" color="text.secondary">Priority</Typography>
+                                        <AppBadge type="priority" value={detailTicket.priority} />
+                                    </Box>
+                                    <Box mt={1}>
+                                        <Typography variant="subtitle2" color="text.secondary">Assigned to</Typography>
+                                        <Typography variant="body2">
+                                            {detailTicket?.Staff ? `${detailTicket.Staff.firstName} ${detailTicket.Staff.lastName}` : 'Unassigned'}
+                                        </Typography>
+                                    </Box>
+                                    <Box mt={1}>
+                                        <Typography variant="subtitle2" color="text.secondary">Created</Typography>
+                                        <Typography variant="body2">{formatDate(detailTicket.createdAt)}</Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <Typography variant="h6" sx={{ mb: 1 }}>Reply Thread</Typography>
+                            <Box sx={{ maxHeight: 280, overflowY: 'auto', mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
+                                {repliesLoading ? (
+                                    <Box display="flex" justifyContent="center" py={2}>
+                                        <CircularProgress size={22} />
+                                    </Box>
+                                ) : replies.length === 0 ? (
+                                    <Typography color="text.secondary">No replies yet.</Typography>
+                                ) : (
+                                    replies.map((r) => (
+                                        <Box key={r.id} sx={{ mb: 1.5, p: 1.25, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {(r.author?.firstName || '')} {(r.author?.lastName || '')} ({r.author?.role || 'user'}) · {formatDate(r.createdAt || r.created_at)}
+                                                {r.isInternal ? ' · Internal' : ''}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ mt: 0.5 }}>{r.message}</Typography>
+                                        </Box>
+                                    ))
+                                )}
+                            </Box>
+
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={3}
+                                label="Write a reply"
+                                value={replyMessage}
+                                onChange={(e) => setReplyMessage(e.target.value)}
+                            />
+                            {isStaffUser && (
+                                <FormControlLabel
+                                    sx={{ mt: 1 }}
+                                    control={
+                                        <Checkbox
+                                            checked={replyInternal}
+                                            onChange={(e) => setReplyInternal(e.target.checked)}
+                                        />
+                                    }
+                                    label="Internal note"
+                                />
+                            )}
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 3, pt: 1 }}>
+                    <Button onClick={() => setDetailOpen(false)} disabled={replySubmitting}>Close</Button>
+                    <Button
+                        variant="contained"
+                        onClick={submitReply}
+                        disabled={replySubmitting || !replyMessage.trim()}
+                        startIcon={replySubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                    >
+                        {replySubmitting ? 'Sending…' : 'Send Reply'}
                     </Button>
                 </DialogActions>
             </Dialog>

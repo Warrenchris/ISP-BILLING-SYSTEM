@@ -1,4 +1,4 @@
-const { SupportTicket, User } = require('../models');
+const { SupportTicket, User, TicketReply } = require('../models');
 const { Op } = require('sequelize');
 
 /* ─── Static config ────────────────────────────────────────────────────────── */
@@ -304,6 +304,79 @@ exports.getStaff = async (req, res, next) => {
             order: [['firstName', 'ASC']],
         });
         res.json({ success: true, data: staff });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/* GET /api/support/tickets/:id/replies */
+exports.getReplies = async (req, res, next) => {
+    try {
+        const ticket = await SupportTicket.findByPk(req.params.id);
+        if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
+
+        if (req.user.role === 'customer' && ticket.userId !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const where = { ticketId: req.params.id };
+        const isStaff = ['admin', 'support'].includes(req.user.role);
+        if (!isStaff) where.isInternal = false;
+
+        const replies = await TicketReply.findAll({
+            where,
+            include: [{
+                model: User,
+                as: 'author',
+                attributes: ['id', 'firstName', 'lastName', 'role']
+            }],
+            order: [['created_at', 'ASC']]
+        });
+
+        res.json({ success: true, data: replies });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/* POST /api/support/tickets/:id/replies */
+exports.addReply = async (req, res, next) => {
+    try {
+        const ticket = await SupportTicket.findByPk(req.params.id);
+        if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
+
+        if (req.user.role === 'customer' && ticket.userId !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const message = String(req.body?.message || '').trim();
+        if (!message) {
+            return res.status(400).json({ success: false, message: 'message is required' });
+        }
+
+        const isStaff = ['admin', 'support'].includes(req.user.role);
+        const isInternal = isStaff ? Boolean(req.body?.isInternal) : false;
+
+        const reply = await TicketReply.create({
+            ticketId: ticket.id,
+            userId: req.user.id,
+            message,
+            isInternal
+        });
+
+        // Touch ticket updatedAt
+        ticket.changed('updatedAt', true);
+        await ticket.save();
+
+        const created = await TicketReply.findByPk(reply.id, {
+            include: [{
+                model: User,
+                as: 'author',
+                attributes: ['id', 'firstName', 'lastName', 'role']
+            }]
+        });
+
+        res.status(201).json({ success: true, data: created });
     } catch (error) {
         next(error);
     }
