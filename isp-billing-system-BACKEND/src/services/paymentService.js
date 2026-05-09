@@ -25,7 +25,7 @@ class PaymentService {
                 where: { id: subscriptionId, userId },
                 include: [
                     { model: DataPlan, as: 'plan' },
-                    { model: User, as: 'user' }
+                    { model: User, as: 'User' }
                 ],
                 transaction
             });
