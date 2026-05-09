@@ -5,6 +5,7 @@ const { Payment } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const {
   validateSubscriptionPayment,
+  validateMpesaStkInitiate,
   validatePaymentRetry,
   validatePaymentQuery,
   validateDirectPayment,
@@ -47,10 +48,10 @@ router.post(
   authenticate,
   checkMpesaConfig,
   normalizePhoneNumber,
-  validateSubscriptionPayment,
+  validateMpesaStkInitiate,
   async (req, res) => {
     try {
-      const { phoneNumber, amount, accountReference, transactionDesc } = req.body;
+      const { phoneNumber, amount, accountReference, transactionDesc, description } = req.body;
 
       // Add validation
       if (!phoneNumber || !amount) {
@@ -64,7 +65,7 @@ router.post(
         phoneNumber,
         amount,
         accountReference: accountReference || `ISP-${Date.now()}`,
-        transactionDesc: transactionDesc || "ISP Service Payment"
+        transactionDesc: transactionDesc || description || 'ISP Service Payment'
       });
 
       res.json({

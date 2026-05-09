@@ -771,6 +771,7 @@ const DataPlans = () => {
           onClose={() => !subscribing && setConfirmDialog(false)}
           maxWidth="sm"
           fullWidth
+          disableRestoreFocus
           TransitionComponent={Zoom}
           PaperProps={{
             sx: {
@@ -787,8 +788,12 @@ const DataPlans = () => {
             }
           }}
         >
-          <DialogTitle sx={{ pb: 'var(--spacing-2, 8px)', px: 'var(--spacing-6, 24px)', pt: 'var(--spacing-6, 24px)' }}>
+          <DialogTitle
+            component="div"
+            sx={{ pb: 'var(--spacing-2, 8px)', px: 'var(--spacing-6, 24px)', pt: 'var(--spacing-6, 24px)' }}
+          >
             <Typography
+              component="div"
               variant="h5"
               sx={{
                 fontSize: 'var(--font-size-lg, 1.125rem)',
@@ -1044,6 +1049,7 @@ const DataPlans = () => {
           onClose={() => !deleting && setDeleteDialog(false)}
           maxWidth="sm"
           fullWidth
+          disableRestoreFocus
           TransitionComponent={Slide}
           TransitionProps={{ direction: 'up' }}
           PaperProps={{
@@ -1054,8 +1060,8 @@ const DataPlans = () => {
             }
           }}
         >
-          <DialogTitle>
-            <Typography variant="h6" fontWeight="bold">
+          <DialogTitle component="div">
+            <Typography component="div" variant="h6" fontWeight="bold">
               🗑️ Delete Data Plan
             </Typography>
           </DialogTitle>

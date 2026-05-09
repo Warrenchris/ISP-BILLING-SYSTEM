@@ -15,11 +15,44 @@ const validateSubscriptionPayment = [
     .withMessage('Phone number is required')
     .matches(/^(?:254|\+254|0)?(7[0-9]{8})$/)
     .withMessage('Phone number must be a valid Kenyan number (e.g., 0712345678, +254712345678, or 254712345678)'),
+  // Amount is derived server-side from the plan; optional on the wire for subscription flow
   body('amount')
-    .notEmpty().withMessage('Amount is required')
+    .optional()
     .isFloat({ min: 1 })
     .withMessage('Amount must be at least KES 1'),
-    
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array(),
+        received: req.body,
+      });
+    }
+    next();
+  }
+];
+
+/**
+ * Validation for direct STK push (admin / Payments page) — no subscriptionId
+ */
+const validateMpesaStkInitiate = [
+  body('phoneNumber')
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .matches(/^(?:254|\+254|0)?(7[0-9]{8})$/)
+    .withMessage('Phone number must be a valid Kenyan number (e.g., 0712345678, +254712345678, or 254712345678)'),
+  body('amount')
+    .notEmpty()
+    .withMessage('Amount is required')
+    .isFloat({ min: 1 })
+    .withMessage('Amount must be at least KES 1'),
+  body('accountReference').optional().isString().isLength({ max: 100 }),
+  body('transactionDesc').optional().isString().isLength({ max: 255 }),
+  body('description').optional().isString().isLength({ max: 255 }),
+
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -260,6 +293,7 @@ const checkMpesaConfig = (req, res, next) => {
 };
 module.exports = {
   validateSubscriptionPayment,
+  validateMpesaStkInitiate,
   validatePaymentRetry,
   validatePaymentQuery,
   validatePaymentHistory,

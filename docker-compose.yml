@@ -18,6 +18,15 @@ services:
       - JWT_SECRET=isp_billing_secure_secret_key_2025
       - JWT_EXPIRES_IN=7d
       - AI_SERVICE_URL=http://ai-service:5001
+      # M-Pesa (Daraja): from project-root .env — same pattern as GROQ_API_KEY on ai-service
+      - MPESA_CONSUMER_KEY=${MPESA_CONSUMER_KEY:-}
+      - MPESA_CONSUMER_SECRET=${MPESA_CONSUMER_SECRET:-}
+      - MPESA_SHORTCODE=${MPESA_SHORTCODE:-}
+      - MPESA_BUSINESS_SHORT_CODE=${MPESA_BUSINESS_SHORT_CODE:-}
+      - MPESA_PASSKEY=${MPESA_PASSKEY:-}
+      - MPESA_PASS_KEY=${MPESA_PASS_KEY:-}
+      - MPESA_CALLBACK_URL=${MPESA_CALLBACK_URL:-}
+      - MPESA_ENV=${MPESA_ENV:-sandbox}
     depends_on:
       db:
         condition: service_healthy
