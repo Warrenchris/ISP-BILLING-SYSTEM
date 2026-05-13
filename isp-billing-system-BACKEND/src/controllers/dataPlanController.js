@@ -297,7 +297,7 @@ const deleteDataPlan = async (req, res) => {
     const { Subscription } = require('../models');
     const activeSubscriptions = await Subscription.count({
       where: {
-        dataPlanId: id,
+        planId: id,
         status: SubscriptionStatus.ACTIVE
       }
     });

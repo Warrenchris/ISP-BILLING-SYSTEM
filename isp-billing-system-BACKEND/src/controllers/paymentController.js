@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
-const { Payment, Subscription, DataPlan, User } = require('../models');
-const { PaymentStatus } = require('../config/constants');
+const { Payment, Subscription, DataPlan, User, Invoice, InvoiceItem } = require('../models');
+const { PaymentStatus, InvoiceStatus } = require('../config/constants');
 const paymentService = require('../services/paymentService');
 const MpesaService = require('../services/mpesaService'); // Kept for helper methods if needed, though most moved to service
 const mpesaService = new MpesaService(); // Kept for util usage like formatPhoneNumber if needed locally
@@ -364,10 +364,42 @@ const confirmPayment = async (req, res) => {
     if (!payment) return res.status(404).json({ success: false, message: 'Not found' });
 
     await payment.markAsCompleted({ processedBy, transactionDate: new Date() });
-    // activate sub...
+    // activate sub and generate invoice
     if (payment.subscriptionId) {
-      const sub = await Subscription.findByPk(payment.subscriptionId);
-      if (sub) await sub.activateSubscription();
+      const sub = await Subscription.findByPk(payment.subscriptionId, {
+        include: [{ model: DataPlan, as: 'plan' }]
+      });
+      if (sub) {
+        await sub.activateSubscription();
+        
+        // Generate invoice
+        const now = new Date();
+        const invoice = await Invoice.create({
+            invoiceNumber: `INV-${Date.now()}`,
+            userId: payment.userId,
+            subscriptionId: sub.id,
+            amount: payment.amount,
+            totalAmount: payment.amount,
+            reference: payment.reference,
+            description: payment.description || `Manual confirmation for ${sub.plan ? sub.plan.name : 'Subscription'}`,
+            status: InvoiceStatus.PAID,
+            issuedAt: now,
+            paidAt: now,
+            dueDate: sub.endDate || now,
+            billingPeriodStart: now,
+            billingPeriodEnd: sub.endDate || now,
+            paymentId: payment.id
+        });
+
+        if (sub.plan) {
+            await InvoiceItem.create({
+                invoiceId: invoice.id,
+                name: sub.plan.name,
+                amount: sub.plan.price,
+                quantity: 1
+            });
+        }
+      }
     }
     res.json({ success: true, message: 'Confirmed' });
   } catch (e) {
@@ -442,13 +474,43 @@ const patchPayment = async (req, res) => {
     // If we just linked a COMPLETED payment to a subscription, auto-activate it.
     // (This matches required behavior: linking cash payments should activate/extend.)
     if (subscriptionId && payment.status === PaymentStatus.COMPLETED) {
-      const subscription = await Subscription.findByPk(subscriptionId);
+      const subscription = await Subscription.findByPk(subscriptionId, {
+        include: [{ model: DataPlan, as: 'plan' }]
+      });
       if (subscription && subscription.status !== 'active') {
         // Subscription model defines activateSubscription()
         if (typeof subscription.activateSubscription === 'function') {
           await subscription.activateSubscription();
         } else {
           await subscription.update({ status: 'active' });
+        }
+        
+        // Generate invoice
+        const now = new Date();
+        const invoice = await Invoice.create({
+            invoiceNumber: `INV-${Date.now()}`,
+            userId: payment.userId,
+            subscriptionId: subscription.id,
+            amount: payment.amount,
+            totalAmount: payment.amount,
+            reference: payment.reference,
+            description: payment.description || `Linked payment for ${subscription.plan ? subscription.plan.name : 'Subscription'}`,
+            status: InvoiceStatus.PAID,
+            issuedAt: now,
+            paidAt: now,
+            dueDate: subscription.endDate || now,
+            billingPeriodStart: now,
+            billingPeriodEnd: subscription.endDate || now,
+            paymentId: payment.id
+        });
+
+        if (subscription.plan) {
+            await InvoiceItem.create({
+                invoiceId: invoice.id,
+                name: subscription.plan.name,
+                amount: subscription.plan.price,
+                quantity: 1
+            });
         }
       }
     }

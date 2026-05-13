@@ -355,7 +355,10 @@ class PaymentService {
 
 
                 if (lockedPayment.subscriptionId) {
-                    const subscription = await Subscription.findByPk(lockedPayment.subscriptionId, { transaction });
+                    const subscription = await Subscription.findByPk(lockedPayment.subscriptionId, {
+                        include: [{ model: DataPlan, as: 'plan' }],
+                        transaction 
+                    });
                     if (subscription) {
                         // Re-implement activateSubscription logic here to ensure transaction usage or pass transaction
                         // Assuming activateSubscription updates status and dates
@@ -363,13 +366,40 @@ class PaymentService {
                         const nextMonth = new Date(now);
                         nextMonth.setMonth(now.getMonth() + 1);
 
+                        // Create invoice for successful M-Pesa payment
+                        const invoice = await Invoice.create({
+                            invoiceNumber: `INV-${Date.now()}`,
+                            userId: lockedPayment.userId,
+                            subscriptionId: subscription.id,
+                            amount: lockedPayment.amount,
+                            totalAmount: lockedPayment.amount,
+                            reference: lockedPayment.reference,
+                            description: lockedPayment.description || `Payment for ${subscription.plan ? subscription.plan.name : 'Subscription'}`,
+                            status: InvoiceStatus.PAID,
+                            issuedAt: now,
+                            paidAt: now,
+                            dueDate: nextMonth,
+                            billingPeriodStart: now,
+                            billingPeriodEnd: nextMonth,
+                            paymentId: lockedPayment.id
+                        }, { transaction });
+
+                        if (subscription.plan) {
+                            await InvoiceItem.create({
+                                invoiceId: invoice.id,
+                                name: subscription.plan.name,
+                                amount: subscription.plan.price,
+                                quantity: 1
+                            }, { transaction });
+                        }
+
                         await subscription.update({
                             status: SubscriptionStatus.ACTIVE,
                             lastBillingDate: now,
                             nextBillingDate: nextMonth
                         }, { transaction });
 
-                        console.log('✅ Subscription activated:', subscription.subscriptionNumber);
+                        console.log('✅ Subscription activated and invoice generated:', subscription.subscriptionNumber);
                     }
                 }
             } else {

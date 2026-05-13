@@ -3,6 +3,7 @@ import api from '../utils/api';
 export const paymentService = {
     // Admin
     getAllPayments: (params) => api.get('/payments', { params }),
+    getPaymentHistory: (params) => api.get('/payments', { params }),
     /** Admin/support: unlinked cash queue */
     getUnlinkedPayments: (params) => api.get('/payments/unlinked', { params }),
     createCashPayment: (data) => api.post('/payments/cash', data),

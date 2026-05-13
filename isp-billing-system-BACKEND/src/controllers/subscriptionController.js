@@ -349,8 +349,13 @@ const cancelSubscription = async (req, res) => {
     const userId = req.userId;
     const { reason } = req.body;
 
+    const whereClause = { id };
+    if (req.user && req.user.role !== 'admin') {
+      whereClause.userId = userId;
+    }
+
     const subscription = await Subscription.findOne({
-      where: { id, userId },
+      where: whereClause,
       include: [{ model: DataPlan, as: 'plan' }]
     });
 
