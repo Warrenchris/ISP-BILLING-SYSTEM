@@ -1,4 +1,5 @@
 const { body, param, validationResult } = require('express-validator');
+const { Payment } = require('../models');
 
 /**
  * Validation middleware for initiating subscription payment
@@ -203,32 +204,56 @@ const validateDirectPayment = [
 /**
  * Middleware to validate M-Pesa callback structure
  */
-const validateMpesaCallback = (req, res, next) => {
+const validateMpesaCallback = async (req, res, next) => {
   try {
     const { Body } = req.body;
     
     if (!Body || !Body.stkCallback) {
-      return res.status(400).json({
+      console.warn('Invalid callback structure received:', req.body);
+      return res.status(200).json({
         ResultCode: 1,
         ResultDesc: 'Invalid callback structure'
       });
     }
     
     const { stkCallback } = Body;
+    const { CheckoutRequestID, MerchantRequestID } = stkCallback;
     
-    if (!stkCallback.CheckoutRequestID || !stkCallback.MerchantRequestID) {
-      return res.status(400).json({
+    if (!CheckoutRequestID || !MerchantRequestID) {
+      console.warn('Missing required callback fields:', stkCallback);
+      return res.status(200).json({
         ResultCode: 1,
         ResultDesc: 'Missing required callback fields'
+      });
+    }
+    
+    // Check if CheckoutRequestID exists and is PENDING
+    const payment = await Payment.findOne({
+      where: { checkoutRequestId: CheckoutRequestID }
+    });
+
+    if (!payment) {
+      console.warn(`Callback rejected: Unknown CheckoutRequestID: ${CheckoutRequestID}`);
+      return res.status(200).json({
+        ResultCode: 1,
+        ResultDesc: 'Unknown transaction'
+      });
+    }
+
+    if (payment.status !== 'pending' && payment.status !== 'processing') {
+      console.warn(`Callback rejected: Payment already processed for CheckoutRequestID: ${CheckoutRequestID}. Current status: ${payment.status}`);
+      return res.status(200).json({
+        ResultCode: 1,
+        ResultDesc: 'Transaction already processed'
       });
     }
     
     next();
   } catch (error) {
     console.error('Error validating M-Pesa callback:', error);
-    return res.status(400).json({
+    return res.status(200).json({
       ResultCode: 1,
-      ResultDesc: 'Invalid callback format'
+      ResultDesc: 'Internal validation error'
     });
   }
 };
@@ -283,9 +308,10 @@ const checkMpesaConfig = (req, res, next) => {
 
   const missing = requiredVars.filter(v => !process.env[v]);
   
-  if (missing.length > 0) {
+  const hasShortcode = process.env.MPESA_BUSINESS_SHORT_CODE || process.env.MPESA_SHORTCODE;
+  if (missing.length > 0 || !hasShortcode) {
     return res.status(503).json({
-      error: 'Mpesa integration not configured. Please contact admin.',
+      error: 'M-Pesa integration not configured. Please contact admin.',
       code: 'MPESA_NOT_CONFIGURED'
     });
   }

@@ -419,7 +419,7 @@ export default function Subscriptions() {
           </Typography>
           <Grid container spacing={3}>
             {activeSubs.filter(s => !s?.isCurrent).map((s) => (
-              <Grid size={{ xs: 12, md: 6 }} lg={4} key={s.id}>
+              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={s.id}>
                 <Card>
                   <CardContent>
                     <Box display="flex" justifyContent="space-between" mb={1}>

@@ -24,7 +24,8 @@ const {
   getMpesaLimits,
   initiateSubscriptionPayment,
   queryPaymentStatus,
-  recordCashPayment
+  recordCashPayment,
+  handleMpesaCallback
 } = require('../controllers/paymentController');
 
 const mpesaService = new MpesaService();
@@ -102,16 +103,7 @@ router.post(
 router.get('/status/:paymentId', authenticate, queryPaymentStatus);
 
 // POST /api/payments/mpesa/callback - M-Pesa callback handler
-router.post('/mpesa/callback', async (req, res) => {
-  try {
-    const result = mpesaService.processCallback(req.body);
-    await Payment.handleMpesaCallback(result);
-    res.json({ ResultCode: 0, ResultDesc: 'Success' });
-  } catch (error) {
-    console.error('Callback error:', error);
-    res.json({ ResultCode: 1, ResultDesc: 'Error processing callback' });
-  }
-});
+router.post('/mpesa/callback', validateMpesaCallback, handleMpesaCallback);
 
 // GET /api/payments/history - Payment history for current user
 router.get('/history', authenticate, async (req, res) => {

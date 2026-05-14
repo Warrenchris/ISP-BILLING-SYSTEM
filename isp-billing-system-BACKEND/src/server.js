@@ -12,6 +12,14 @@
 console.log('🧪  Step 0 – entering server.js');
 
 require('dotenv').config();               // ← loads .env
+
+// Check M-Pesa shortcode
+const mpesaShortcode = process.env.MPESA_BUSINESS_SHORT_CODE || process.env.MPESA_SHORTCODE;
+if (!mpesaShortcode) {
+  console.error('❌  CRITICAL ERROR: M-Pesa shortcode is missing from environment variables.');
+  console.error('    Please set MPESA_BUSINESS_SHORT_CODE in your .env file.');
+  process.exit(1);
+}
 console.log('🧪  Step 1 – dotenv loaded');
 
 let app;

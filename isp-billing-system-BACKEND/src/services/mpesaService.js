@@ -19,6 +19,7 @@ class MpesaService {
     
     this.accessToken = null;
     this.tokenExpiry = null;
+    this._tokenPromise = null;
   }
 
   /**
@@ -75,21 +76,32 @@ class MpesaService {
    * @returns {Promise<string>} Access token
    */
   async getAccessToken() {
+    // Reuse in-flight request if one is already running
+    if (this._tokenPromise) return this._tokenPromise;
+
+    // Return cached token if still valid (with 60s buffer)
+    if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
+      return this.accessToken;
+    }
+
+    this._tokenPromise = this._fetchNewToken()
+      .then(token => { this._tokenPromise = null; return token; })
+      .catch(err  => { this._tokenPromise = null; throw err; });
+
+    return this._tokenPromise;
+  }
+
+  async _fetchNewToken() {
+    if (!this.consumerKey || !this.consumerSecret) {
+      const configError = new Error('Mpesa integration not configured. Please contact admin.');
+      configError.code = 'MPESA_NOT_CONFIGURED';
+      throw configError;
+    }
+
+    const url = `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`;
+    const auth = Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString('base64');
+
     try {
-      if (!this.consumerKey || !this.consumerSecret) {
-        const configError = new Error('Mpesa integration not configured. Please contact admin.');
-        configError.code = 'MPESA_NOT_CONFIGURED';
-        throw configError;
-      }
-
-      // Check if we have a valid token
-      if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
-        return this.accessToken;
-      }
-
-      const url = `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`;
-      const auth = Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString('base64');
-
       const response = await axios.get(url, {
         headers: {
           'Authorization': `Basic ${auth}`,
@@ -105,9 +117,6 @@ class MpesaService {
       console.log('✅ M-Pesa access token obtained successfully');
       return this.accessToken;
     } catch (error) {
-      if (error.code === 'MPESA_NOT_CONFIGURED') {
-        throw error;
-      }
       console.error('❌ Error getting M-Pesa access token:', error.response?.data || error.message);
       throw new Error('Failed to get M-Pesa access token');
     }

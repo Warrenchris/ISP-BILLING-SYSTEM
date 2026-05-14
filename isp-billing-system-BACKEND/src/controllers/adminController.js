@@ -265,7 +265,7 @@ exports.getUserSubscription = async (req, res, next) => {
         as: "plan",
         attributes: ["id", "name", "dataLimit", "price", "validityPeriod"]
       }],
-      order: [['createdAt', 'DESC']] // Newest first
+      order: [['created_at', 'DESC']] // Newest first — use DB column name (underscored: true)
     });
 
     // Format the response to match what the frontend expects
