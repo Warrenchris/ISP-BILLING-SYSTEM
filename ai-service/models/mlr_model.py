@@ -30,18 +30,12 @@ logger = logging.getLogger(__name__)
 # ── Model name for persistence ───────────────────────────────────────────────
 _MODEL_KEY = "mlr"
 
-# ── Default heuristic coefficients (KES ISP domain knowledge) ───────────────
-#   [β0,   β1,   β2,  β3,    β4  ]
-#   [base, /sub, /MB, /delay, /plan_score]
-_DEFAULT_COEF = np.array([50_000.0, 800.0, 0.5, -200.0, 3_000.0])
-_DEFAULT_RSE = 15_000.0
-
 # ── Module state ─────────────────────────────────────────────────────────────
-_coef: np.ndarray = _DEFAULT_COEF.copy()
+_coef: Optional[np.ndarray] = None
 _r_squared: float = 0.0
-_residual_std_err: float = _DEFAULT_RSE
+_residual_std_err: float = 15_000.0
 _training_samples: int = 0
-_last_trained: str = "default (not trained)"
+_last_trained: str = "never"
 
 
 # ── Feature helpers ──────────────────────────────────────────────────────────
@@ -80,7 +74,7 @@ def _boot() -> None:
     if saved and "coef" in saved:
         _coef = np.array(saved["coef"])
         _r_squared = saved.get("r_squared", 0.0)
-        _residual_std_err = saved.get("residual_std_err", _DEFAULT_RSE)
+        _residual_std_err = saved.get("residual_std_err", 15_000.0)
         _training_samples = saved.get("training_samples", 0)
         _last_trained = saved.get("last_trained", "loaded from disk")
         logger.info(f"[mlr] Loaded persisted coefficients (n={_training_samples}).")
@@ -103,12 +97,12 @@ def train(samples: list[dict]) -> dict:
     """
     global _coef, _r_squared, _residual_std_err, _training_samples, _last_trained
 
-    MIN_SAMPLES = 6
+    MIN_SAMPLES = 3
     if len(samples) < MIN_SAMPLES:
         return {
-            "status": "skipped",
-            "reason": f"Insufficient training data ({len(samples)} samples, need {MIN_SAMPLES})",
-            "using": "default_heuristic_coefficients"
+            "status": "insufficient_data_for_prediction",
+            "message": f"Insufficient training data ({len(samples)} samples, need ≥ {MIN_SAMPLES})",
+            "missing_fields": ["revenue_history_months"]
         }
 
     X_rows = []
@@ -182,6 +176,13 @@ def predict(
     dict with keys:
         predicted_revenue, confidence_interval, influencing_factors, model_stats
     """
+    if _coef is None or _training_samples < 3:
+        return {
+            "status": "insufficient_data_for_prediction",
+            "message": "Model not trained or insufficient data (<3 months).",
+            "missing_fields": ["mlr_training_data"]
+        }
+
     ps = _plan_score(plan_distribution or {})
     row = np.array(_build_design_row(active_subscribers, avg_data_usage_mb, payment_delays, ps))
 

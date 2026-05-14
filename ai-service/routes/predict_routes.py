@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 
 from models import mlr_model, churn_model
-from services.data_fetcher import fetch_training_data, save_insight
+from services.data_fetcher import fetch_training_data, save_insight, check_data_sufficiency
 
 logger = logging.getLogger(__name__)
 predict_bp = Blueprint("predict", __name__)
@@ -35,6 +35,14 @@ def predict_revenue():
             float(payment_delays),
             plan_distribution,
         )
+
+        if result.get("status") == "insufficient_data_for_prediction":
+            return jsonify({
+                "success": False,
+                "status": "insufficient_data",
+                "message": result.get("message", "Insufficient data for ML prediction."),
+                "missing_fields": result.get("missing_fields", [])
+            }), 400
 
         # Determine forecast period
         now = datetime.now(timezone.utc)
@@ -86,37 +94,41 @@ def predict_revenue():
 def retrain():
     results = {}
 
-    # ── MLR ──
     try:
         data = fetch_training_data(months=12)
         revenue_data = data.get("revenue_data", [])
-        if len(revenue_data) >= 4:
+        churn_data = data.get("churn_data", [])
+
+        sufficiency = check_data_sufficiency({
+            "revenue_months": len(revenue_data),
+            "churn_customers": len(churn_data)
+        })
+
+        # ── MLR ──
+        if sufficiency["revenue_months"]["ready"]:
             mlr_result = mlr_model.train(revenue_data)
             results["mlr"] = {"success": True, **mlr_result}
         else:
             results["mlr"] = {
                 "success": False,
-                "message": f"Insufficient data ({len(revenue_data)} months, need ≥ 4)",
+                "message": f"Insufficient data: {sufficiency['revenue_months']['current']}/{sufficiency['revenue_months']['required']} months",
             }
-    except Exception as e:
-        logger.exception("[retrain] MLR error")
-        results["mlr"] = {"success": False, "message": str(e)}
 
-    # ── Churn ──
-    try:
-        data = fetch_training_data(months=12)
-        churn_data = data.get("churn_data", [])
-        if len(churn_data) >= 5:
+        # ── Churn ──
+        if sufficiency["churn_customers"]["ready"]:
             churn_result = churn_model.train(churn_data)
             results["churn"] = {"success": True, **churn_result}
         else:
             results["churn"] = {
                 "success": False,
-                "message": f"Insufficient data ({len(churn_data)} customers, need ≥ 5)",
+                "message": f"Insufficient data: {sufficiency['churn_customers']['current']}/{sufficiency['churn_customers']['required']} customers",
             }
+
+        results["data_sufficiency"] = sufficiency
+
     except Exception as e:
-        logger.exception("[retrain] Churn error")
-        results["churn"] = {"success": False, "message": str(e)}
+        logger.exception("[retrain] Error")
+        return jsonify({"success": False, "message": str(e)}), 500
 
     return jsonify({
         "success": True,

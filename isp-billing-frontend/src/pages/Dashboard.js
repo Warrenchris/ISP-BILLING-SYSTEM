@@ -133,10 +133,10 @@ const Dashboard = () => {
   const [genTo, setGenTo] = useState('');
   const [genInvoiceLoading, setGenInvoiceLoading] = useState(false);
   const [aiQuickStats, setAiQuickStats] = useState({
-    atRiskCustomers: 0,
-    totalAnomalies: 0,
-    criticalAnomalies: 0,
-    predictedRevenue: 0
+    atRiskCustomers: 'no_data',
+    totalAnomalies: 'no_data',
+    criticalAnomalies: 'no_data',
+    predictedRevenue: 'no_data'
   });
   const [showCriticalAiBanner, setShowCriticalAiBanner] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState(false);
@@ -379,35 +379,20 @@ const Dashboard = () => {
   const fetchAiQuickStats = useCallback(async () => {
     if (aiUnavailable) return;
     try {
-      const [summaryRes, anomaliesRes] = await Promise.allSettled([
-        aiService.getDashboardSummary(),
-        aiService.getAnomalies()
-      ]);
+      const summaryRes = await aiService.getDashboardSummary();
+      
+      aiFailureStreakRef.current = 0;
+      setAiUnavailable(false);
 
-      const aiFailed = summaryRes.status === 'rejected' || anomaliesRes.status === 'rejected';
-      if (aiFailed) {
-        aiFailureStreakRef.current += 1;
-        if (aiFailureStreakRef.current >= 3) {
-          setAiUnavailable(true);
-        }
-      } else {
-        aiFailureStreakRef.current = 0;
-        setAiUnavailable(false);
-      }
-
-      const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.data || {}) : {};
-      const anomaliesPayload = anomaliesRes.status === 'fulfilled' ? (anomaliesRes.value.data?.data || {}) : {};
-      const anomalyList = Array.isArray(anomaliesPayload.anomalies) ? anomaliesPayload.anomalies : [];
-      const critical = anomalyList.filter((item) => {
-        const severity = String(item.severity || item.level || '').toLowerCase();
-        return severity === 'critical' || severity === 'high';
-      }).length;
+      const summary = summaryRes.data?.data || summaryRes.data || {};
+      const anomalyList = summary.anomalies?.list || [];
+      const critical = summary.anomalies?.critical || 0;
 
       setAiQuickStats({
-        atRiskCustomers: summary?.churn?.totalAtRisk || 0,
-        totalAnomalies: summary?.anomalies?.total || anomalyList.length || 0,
-        criticalAnomalies: summary?.anomalies?.critical ?? critical,
-        predictedRevenue: summary?.revenue?.predicted || 0
+        atRiskCustomers: summary?.churn?.totalAtRisk ?? 'no_data',
+        totalAnomalies: summary?.anomalies?.total ?? (anomalyList.length || 'no_data'),
+        criticalAnomalies: summary?.anomalies?.critical ?? (critical || 'no_data'),
+        predictedRevenue: summary?.revenue?.predicted ?? 'no_data'
       });
       setShowCriticalAiBanner((summary?.anomalies?.critical ?? critical) > 0);
     } catch (error) {
@@ -773,20 +758,20 @@ const Dashboard = () => {
               <Grid container spacing={2} mt={0.5}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Churn Risk</Typography>
-                  <Typography variant="h5" sx={{ color: aiQuickStats.atRiskCustomers > 0 ? theme.palette.error.main : 'text.primary', fontWeight: 700 }}>
-                    {aiQuickStats.atRiskCustomers} customers at churn risk
+                  <Typography variant="h5" sx={{ color: aiQuickStats.atRiskCustomers > 0 && aiQuickStats.atRiskCustomers !== 'no_data' ? theme.palette.error.main : 'text.primary', fontWeight: 700 }}>
+                    {aiQuickStats.atRiskCustomers === 'no_data' ? 'No data' : `${aiQuickStats.atRiskCustomers} customers at churn risk`}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Anomalies</Typography>
-                  <Typography variant="h5" sx={{ color: aiQuickStats.totalAnomalies > 0 ? theme.palette.warning.main : 'text.primary', fontWeight: 700 }}>
-                    {aiQuickStats.totalAnomalies} active anomalies
+                  <Typography variant="h5" sx={{ color: aiQuickStats.totalAnomalies > 0 && aiQuickStats.totalAnomalies !== 'no_data' ? theme.palette.warning.main : 'text.primary', fontWeight: 700 }}>
+                    {aiQuickStats.totalAnomalies === 'no_data' ? 'No data' : `${aiQuickStats.totalAnomalies} active anomalies`}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Predicted Revenue</Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {formatCurrency(aiQuickStats.predictedRevenue || 0)}
+                    {aiQuickStats.predictedRevenue === 'no_data' ? 'No data' : formatCurrency(aiQuickStats.predictedRevenue)}
                   </Typography>
                 </Grid>
               </Grid>

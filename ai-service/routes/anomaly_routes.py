@@ -11,6 +11,7 @@ from services.data_fetcher import (
     fetch_payments_for_anomaly,
     fetch_usage_profiles,
     save_insight,
+    check_data_sufficiency,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,14 +25,33 @@ def get_anomalies():
         payments = fetch_payments_for_anomaly(hours=720)  # last 30 days
         usage_profiles = fetch_usage_profiles()
 
-        report = run_all_detectors(
-            revenue_history=revenue_history,
-            payments=payments,
-            usage_profiles=usage_profiles,
-        )
+        # Check sufficiency
+        sufficiency = check_data_sufficiency({
+            "revenue_months": len(revenue_history),
+            "usage_profiles": len(usage_profiles),
+            "payments": len(payments)
+        })
+
+        if sufficiency["usage_profiles"]["ready"] and sufficiency["revenue_months"]["ready"]:
+            report = run_all_detectors(
+                revenue_history=revenue_history,
+                payments=payments,
+                usage_profiles=usage_profiles,
+            )
+            status = "ready"
+        else:
+            report = {
+                "anomalies": [],
+                "total_anomalies": 0,
+                "critical_count": 0,
+                "warning_count": 0,
+                "by_category": {},
+                "detected_at": None
+            }
+            status = "insufficient_data"
 
         # Persist each anomaly to ai_insights
-        for anomaly in report["anomalies"]:
+        for anomaly in report.get("anomalies", []):
             save_insight(
                 source_type="anomaly_detector",
                 reference_id=anomaly.get("user_id") or None,
@@ -53,6 +73,8 @@ def get_anomalies():
                 "byCategory": report["by_category"],
                 "anomalies": report["anomalies"],
                 "detectedAt": report["detected_at"],
+                "status": status,
+                "data_sufficiency": sufficiency
             },
         })
 

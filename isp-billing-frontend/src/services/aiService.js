@@ -7,12 +7,6 @@ const aiService = {
   predictRevenue: (payload) =>
     api.post('/ai/predict-revenue', payload),
 
-  getChurnRisks: () =>
-    api.get('/ai/churn-risks'),
-
-  getAnomalies: () =>
-    api.get('/ai/anomalies', { timeout: 8000 }),
-
   chat: (customerId, message, sessionId) =>
     api.post('/ai/chat', { customerId, message, sessionId }),
 

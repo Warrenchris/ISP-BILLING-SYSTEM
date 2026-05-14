@@ -35,16 +35,12 @@ _MODEL_KEY = "churn"
 HIGH_RISK = 0.70
 MEDIUM_RISK = 0.40
 
-# Default weights (heuristic – higher delay + tickets → higher churn)
-# [bias, delay, tickets, usage_trend, subscription_age_days]
-_DEFAULT_W = np.array([0.0, 0.8, 0.5, -0.6, -0.003])
-
-_weights: np.ndarray = _DEFAULT_W.copy()
+_weights: Optional[np.ndarray] = None
 _norm_mean: Optional[np.ndarray] = None   # (4,) feature means
 _norm_std: Optional[np.ndarray] = None    # (4,) feature stds
 _model_trained: bool = False
 _training_samples: int = 0
-_last_trained: str = "default (not trained)"
+_last_trained: str = "never"
 
 
 # ── Persistence ──────────────────────────────────────────────────────────────
@@ -181,6 +177,12 @@ def _build_reasons(features: dict, score: float) -> list[str]:
 
 def score_customer(features: dict) -> dict:
     """Score a single customer. Returns score, risk_level, top_reason."""
+    if _weights is None or not _model_trained or _training_samples < 5:
+        return {
+            "status": "insufficient_data_for_prediction",
+            "message": "Model not trained or insufficient data (<5 samples)."
+        }
+
     feat_raw = np.array([_extract_features(features)])   # (1, 4)
 
     if _norm_mean is not None and _norm_std is not None:
@@ -205,9 +207,14 @@ def score_customer(features: dict) -> dict:
 
 def score_all(customers: list[dict]) -> list[dict]:
     """Score a list of customer dicts and return sorted by descending score."""
+    if _weights is None or not _model_trained or _training_samples < 5:
+        return []
+
     results = []
     for c in customers:
         result = score_customer(c)
+        if result.get("status") == "insufficient_data_for_prediction":
+            continue
         results.append({
             "customer_id": str(c.get("id", "")),
             "customer_name": f"{c.get('first_name', '')} {c.get('last_name', '')}".strip(),

@@ -74,6 +74,57 @@ def _execute(sql: str, params: tuple = ()) -> int:
         conn.close()
 
 
+# ── Simple Request-Level Cache ─────────────────────────────────────────────
+_cache: dict = {}  # key → {value, expires_at}
+
+def cached_fetch(cache_key: str, fetch_fn, ttl_seconds: int = 300, **kwargs):
+    """
+    Call fetch_fn(**kwargs) at most once per ttl_seconds window.
+    Avoids redundant DB round-trips when the same endpoint is called
+    multiple times per dashboard load.
+    """
+    import time
+    now = time.monotonic()
+    entry = _cache.get(cache_key)
+    if entry and entry["expires_at"] > now:
+        return entry["value"]
+
+    value = fetch_fn(**kwargs)
+    _cache[cache_key] = {"value": value, "expires_at": now + ttl_seconds}
+    return value
+
+
+# ── Data Sufficiency Validation ─────────────────────────────────────────────
+
+DATA_THRESHOLDS = {
+    "revenue_months": {"min": 3, "label": "revenue history (months)"},
+    "usage_profiles": {"min": 2, "label": "usage profiles"},
+    "churn_customers": {"min": 5, "label": "customer records"},
+    "payments": {"min": 3, "label": "payment records"},
+}
+
+def check_data_sufficiency(data_sizes: dict) -> dict:
+    """
+    Validate if we have enough data to run AI models reliably.
+    Returns a dict with readiness flags and metrics.
+    """
+    status = {}
+    for key, count in data_sizes.items():
+        threshold = DATA_THRESHOLDS.get(key, {"min": 1, "label": key})
+        current = int(count)
+        req = threshold["min"]
+        status[key] = {
+            "ready": current >= req,
+            "current": current,
+            "count": current,  # alias
+            "required": req,
+            "min": req,        # alias
+            "label": threshold["label"],
+            "gap": max(0, req - current)
+        }
+    return status
+
+
 # ── Customer Context (for LLM grounding) ───────────────────────────────────
 
 def fetch_customer_context(customer_id: str) -> Optional[dict]:
@@ -249,7 +300,7 @@ def fetch_training_data(months: int = 12) -> dict:
         # Monthly revenue aggregates
         revenue_rows = _query(
             """SELECT 
-                 DATE_FORMAT(completed_at, '%%Y-%%m') AS period,
+                 DATE_FORMAT(completed_at, '%Y-%m') AS period,
                  COUNT(DISTINCT user_id) AS active_subscribers,
                  SUM(amount) AS revenue
                FROM payments
@@ -263,7 +314,7 @@ def fetch_training_data(months: int = 12) -> dict:
         # Monthly avg data usage
         usage_rows = _query(
             """SELECT 
-                 DATE_FORMAT(created_at, '%%Y-%%m') AS period,
+                 DATE_FORMAT(created_at, '%Y-%m') AS period,
                  AVG(total_bytes) / 1048576 AS avg_usage_mb
                FROM data_usage
                WHERE created_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
@@ -275,7 +326,7 @@ def fetch_training_data(months: int = 12) -> dict:
         # Monthly payment delays
         delay_rows = _query(
             """SELECT 
-                 DATE_FORMAT(due_date, '%%Y-%%m') AS period,
+                 DATE_FORMAT(due_date, '%Y-%m') AS period,
                  COUNT(*) AS delay_count
                FROM invoices
                WHERE (status = 'overdue' OR paid_at > due_date)
@@ -288,7 +339,7 @@ def fetch_training_data(months: int = 12) -> dict:
         # Plan distribution per month
         plan_rows = _query(
             """SELECT 
-                 DATE_FORMAT(s.created_at, '%%Y-%%m') AS period,
+                 DATE_FORMAT(s.created_at, '%Y-%m') AS period,
                  LOWER(dp.name) AS plan_name,
                  COUNT(*) AS plan_count
                FROM subscriptions s
@@ -440,7 +491,7 @@ def fetch_customers_for_churn_scoring():
                 SELECT SUM(total_bytes) / 1048576 AS monthly_usage_mb
                 FROM data_usage
                 WHERE user_id = %s
-                GROUP BY DATE_FORMAT(created_at, '%%Y-%%m')
+                GROUP BY DATE_FORMAT(created_at, '%Y-%m')
                 ORDER BY MAX(created_at) DESC
                 LIMIT 3
             """, (customer['customer_id'],))
@@ -468,7 +519,7 @@ def fetch_revenue_vs_predicted(months: int = 6) -> list[dict]:
     try:
         actual_rows = _query(
             """SELECT 
-                 DATE_FORMAT(completed_at, '%%Y-%%m') AS period,
+                 DATE_FORMAT(completed_at, '%Y-%m') AS period,
                  SUM(amount) AS actual_revenue
                FROM payments
                WHERE status = 'completed'
@@ -509,18 +560,19 @@ def fetch_revenue_vs_predicted(months: int = 6) -> list[dict]:
 # ── Usage profiles for spike detection ─────────────────────────────────────
 
 def fetch_usage_profiles() -> list[dict]:
-    """Build per-customer monthly usage history."""
+    """Build per-customer monthly usage history. Uses start_time as the primary time column."""
     try:
         rows = _query(
             """SELECT
                  u.id AS user_id,
                  CONCAT(u.first_name, ' ', u.last_name) AS user_name,
-                 DATE_FORMAT(du.created_at, '%%Y-%%m') AS period,
+                 DATE_FORMAT(du.start_time, '%Y-%m') AS period,
                  SUM(du.total_bytes) / 1048576 AS usage_mb
                FROM data_usage du
                JOIN users u ON du.user_id = u.id
-               WHERE du.created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-               GROUP BY u.id, user_name, period
+               WHERE du.start_time >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                 AND du.total_bytes > 0
+               GROUP BY u.id, u.first_name, u.last_name, period
                ORDER BY u.id, period ASC"""
         )
 

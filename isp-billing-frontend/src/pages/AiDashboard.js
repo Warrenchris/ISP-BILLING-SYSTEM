@@ -65,12 +65,12 @@ const normalizeFeatureValue = (item) => {
 
 /** Empty baseline — populate from dashboard summary (`forecastInputs`) when the AI API provides it */
 const INITIAL_FORECAST_PAYLOAD = Object.freeze({
-  activeSubscribers: 0,
-  avgDataUsageMB: 0,
-  paymentDelays: 0,
-  basic: 0,
-  standard: 0,
-  premium: 0,
+  activeSubscribers: '',
+  avgDataUsageMB: '',
+  paymentDelays: '',
+  basic: '',
+  standard: '',
+  premium: '',
 });
 
 const AiDashboard = () => {
@@ -87,8 +87,6 @@ const AiDashboard = () => {
     errors,
     aiUnavailable,
     fetchDashboardSummary,
-    fetchChurnRisks,
-    fetchAnomalies,
     resetAiFailureLock,
   } = useAi();
 
@@ -109,32 +107,40 @@ const AiDashboard = () => {
     const fi = dashboardSummary?.forecastInputs;
     if (forecastHydratedRef.current || !fi || typeof fi !== 'object') return;
     forecastHydratedRef.current = true;
-    setForecastPayload((prev) => ({
-      activeSubscribers:
-        fi.activeSubscribers != null ? Number(fi.activeSubscribers) : prev.activeSubscribers,
-      avgDataUsageMB:
-        fi.avgDataUsageMB != null ? Number(fi.avgDataUsageMB) : prev.avgDataUsageMB,
-      paymentDelays:
-        fi.paymentDelays != null ? Number(fi.paymentDelays) : prev.paymentDelays,
-      basic:
-        fi.basic != null
-          ? Number(fi.basic)
-          : fi.planDistribution?.basic != null
-          ? Number(fi.planDistribution.basic)
-          : prev.basic,
-      standard:
-        fi.standard != null
-          ? Number(fi.standard)
-          : fi.planDistribution?.standard != null
-          ? Number(fi.planDistribution.standard)
-          : prev.standard,
-      premium:
-        fi.premium != null
-          ? Number(fi.premium)
-          : fi.planDistribution?.premium != null
-          ? Number(fi.planDistribution.premium)
-          : prev.premium,
-    }));
+    setForecastPayload((prev) => {
+      const activeSubs = fi.activeSubscribers != null ? Number(fi.activeSubscribers) : null;
+      
+      // Calculate total plans to convert raw counts from DB into percentages for the UI
+      const pd = fi.planDistribution || {};
+      const totalPlans = (pd.basic || 0) + (pd.standard || 0) + (pd.premium || 0);
+      const getPct = (count) => totalPlans > 0 ? Math.round((count / totalPlans) * 100) : null;
+
+      return {
+        activeSubscribers: activeSubs != null ? activeSubs : prev.activeSubscribers,
+        avgDataUsageMB:
+          fi.averageUsage != null ? Number(fi.averageUsage) : fi.avgDataUsageMB != null ? Number(fi.avgDataUsageMB) : prev.avgDataUsageMB,
+        paymentDelays:
+          fi.averagePaymentDelay != null ? Number(fi.averagePaymentDelay) : fi.paymentDelays != null ? Number(fi.paymentDelays) : prev.paymentDelays,
+        basic:
+          fi.basic != null
+            ? Number(fi.basic)
+            : pd.basic != null
+            ? getPct(pd.basic)
+            : prev.basic,
+        standard:
+          fi.standard != null
+            ? Number(fi.standard)
+            : pd.standard != null
+            ? getPct(pd.standard)
+            : prev.standard,
+        premium:
+          fi.premium != null
+            ? Number(fi.premium)
+            : pd.premium != null
+            ? getPct(pd.premium)
+            : prev.premium,
+      };
+    });
   }, [dashboardSummary]);
 
   const revenueRef = useRef(null);
@@ -177,11 +183,9 @@ const AiDashboard = () => {
     resetAiFailureLock();
     await Promise.all([
       loadHealth(),
-      fetchDashboardSummary(),
-      fetchChurnRisks(),
-      fetchAnomalies(),
+      fetchDashboardSummary(), // now returns churn + anomalies bundled
     ]);
-  }, [loadHealth, fetchDashboardSummary, fetchChurnRisks, fetchAnomalies, resetAiFailureLock]);
+  }, [loadHealth, fetchDashboardSummary, resetAiFailureLock]);
 
   useEffect(() => {
     refreshAll();
@@ -212,6 +216,7 @@ const AiDashboard = () => {
     event.preventDefault();
     setForecastLoading(true);
     setForecastError('');
+    setForecastResult(null);
     try {
       const response = await aiService.predictRevenue({
         activeSubscribers: Number(forecastPayload.activeSubscribers || 0),
@@ -223,9 +228,26 @@ const AiDashboard = () => {
           premium: Number(forecastPayload.premium || 0),
         },
       });
-      setForecastResult(response.data?.data || null);
+      // Backend may return 400 with status: 'insufficient_data' even on success:false
+      const payload = response.data;
+      if (payload?.status === 'insufficient_data' || !payload?.success) {
+        setForecastError(
+          payload?.message ||
+          `Insufficient training data: ${(payload?.missing_fields || []).join(', ')}. Please retrain the model or add more historical data.`
+        );
+      } else {
+        setForecastResult(payload?.data || null);
+      }
     } catch (error) {
-      setForecastError(error.response?.data?.message || error.message || 'Failed to generate AI revenue forecast');
+      const errPayload = error.response?.data;
+      if (errPayload?.status === 'insufficient_data') {
+        setForecastError(
+          errPayload?.message ||
+          'The ML model needs at least 3 months of revenue history to generate forecasts. Please retrain the model first.'
+        );
+      } else {
+        setForecastError(errPayload?.message || error.message || 'Failed to generate AI revenue forecast');
+      }
       setForecastResult(null);
     } finally {
       setForecastLoading(false);
@@ -296,6 +318,30 @@ const AiDashboard = () => {
           AI service temporarily unavailable
         </Alert>
       )}
+
+      {dashboardSummary?.models_ready === false && (
+        <Alert severity="info" icon={<WarningAmberIcon />} sx={{ mb: 3, bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            ⚠ Some AI models are awaiting more data to reach full accuracy.
+            {dashboardSummary?.dataQuality?.completenessScore != null && (
+              <> &nbsp;Data completeness: <strong>{dashboardSummary.dataQuality.completenessScore}%</strong></>
+            )}
+          </Typography>
+          <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
+            {Object.entries(dashboardSummary?.data_sufficiency || {}).map(([key, s]) => (
+              <Box key={key} display="flex" alignItems="center" gap={0.5}>
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  color={s.ready ? 'success' : 'warning'}
+                  label={`${s.label}: ${s.count ?? 0}/${s.min}`}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Alert>
+      )}
+
 
       <Paper sx={{ p: 2, mb: 3, background: alpha(theme.palette.background.paper, 0.65) }}>
         {healthLoading && <LinearProgress sx={{ mb: 1.5 }} />}
@@ -397,11 +443,18 @@ const AiDashboard = () => {
           )}
           {forecastResult && (
             <Box mt={2.5}>
+              {forecastResult.modelStats?.trainingSpamples < 6 && (
+                <Alert severity="warning" sx={{ mb: 1.5 }}>
+                  Low confidence — model trained on only {forecastResult.modelStats?.training_samples ?? forecastResult.modelStats?.trainingSpamples ?? '?'} months of data.
+                </Alert>
+              )}
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {formatCurrency(forecastResult.predictedRevenue || 0)}
+                {forecastResult.predictedRevenue != null ? formatCurrency(forecastResult.predictedRevenue) : 'No data'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                {formatCurrency(forecastResult.confidenceInterval?.low ?? 0)} — {formatCurrency(forecastResult.confidenceInterval?.high ?? 0)} (95% CI)
+                {forecastResult.confidenceInterval?.low != null
+                  ? `${formatCurrency(forecastResult.confidenceInterval.low)} — ${formatCurrency(forecastResult.confidenceInterval.high)} (95% CI)`
+                  : 'Confidence interval unavailable'}
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5 }}>
                 Period: {forecastResult.forecastPeriod || 'N/A'}
@@ -578,24 +631,24 @@ const AiDashboard = () => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
-                    Predicted revenue: <strong>{formatCurrency(dashboardSummary?.revenue?.predicted ?? 0)}</strong>
+                    Predicted revenue: <strong>{dashboardSummary?.revenue?.predicted != null ? formatCurrency(dashboardSummary.revenue.predicted) : 'No data'}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Actual revenue: <strong>{formatCurrency(dashboardSummary?.revenue?.actual ?? 0)}</strong>
+                    Actual revenue: <strong>{dashboardSummary?.revenue?.actual != null ? formatCurrency(dashboardSummary.revenue.actual) : 'No data'}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Variance: <strong>{dashboardSummary?.revenue?.variancePct ?? 0}%</strong>
+                    Variance: <strong>{dashboardSummary?.revenue?.variancePct != null ? `${dashboardSummary.revenue.variancePct}%` : 'No data'}</strong>
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
-                    Total at-risk customers: <strong>{dashboardSummary?.churn?.totalAtRisk ?? highRiskCount}</strong>
+                    Total at-risk customers: <strong>{dashboardSummary?.churn?.totalAtRisk ?? (isLoadingChurn ? '...' : highRiskCount || 'No data')}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Total anomalies: <strong>{dashboardSummary?.anomalies?.total ?? anomalies.length}</strong>
+                    Total anomalies: <strong>{dashboardSummary?.anomalies?.total ?? (isLoadingAnomalies ? '...' : anomalies.length || 'No data')}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Critical anomalies: <strong>{dashboardSummary?.anomalies?.critical ?? criticalCount}</strong>
+                    Critical anomalies: <strong>{dashboardSummary?.anomalies?.critical ?? (isLoadingAnomalies ? '...' : criticalCount || 'No data')}</strong>
                   </Typography>
                 </Grid>
               </Grid>

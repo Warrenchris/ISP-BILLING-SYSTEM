@@ -6,7 +6,11 @@ import logging
 from flask import Blueprint, jsonify
 
 from models import churn_model
-from services.data_fetcher import fetch_customers_for_churn_scoring, save_insight
+from services.data_fetcher import (
+    fetch_customers_for_churn_scoring,
+    save_insight,
+    check_data_sufficiency
+)
 
 logger = logging.getLogger(__name__)
 churn_bp = Blueprint("churn", __name__)
@@ -30,8 +34,24 @@ def get_churn_risks():
             for c in raw_customers
         ]
 
+        # Check sufficiency
+        sufficiency = check_data_sufficiency({
+            "churn_customers": len(customers)
+        })
+
+        if not sufficiency["churn_customers"]["ready"]:
+            return jsonify({
+                "success": True, 
+                "data": {
+                    "atRiskCustomers": [], 
+                    "total": 0,
+                    "status": "insufficient_data",
+                    "data_sufficiency": sufficiency
+                }
+            })
+
         if not customers:
-            return jsonify({"success": True, "data": {"atRiskCustomers": [], "total": 0}})
+            return jsonify({"success": True, "data": {"atRiskCustomers": [], "total": 0, "status": "ready"}})
 
         scored = churn_model.score_all(customers)
         high_risk = [c for c in scored if c["risk_level"] == "HIGH"]
@@ -76,6 +96,8 @@ def get_churn_risks():
                     if c["risk_level"] != "LOW"
                 ],
                 "modelState": churn_model.get_state(),
+                "status": "ready",
+                "data_sufficiency": sufficiency
             },
         })
 

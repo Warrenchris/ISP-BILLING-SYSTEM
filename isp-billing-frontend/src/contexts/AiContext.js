@@ -49,7 +49,6 @@ export const AiProvider = ({ children }) => {
     setAiFailureCount(0);
     setAiUnavailable(false);
     clearError('dashboard');
-    clearError('anomalies');
   }, [clearError]);
 
   const fetchDashboardSummary = useCallback(async () => {
@@ -65,7 +64,21 @@ export const AiProvider = ({ children }) => {
     try {
       const response = await aiService.getDashboardSummary();
       const payload = response.data?.data || response.data || null;
-      setDashboardSummary(payload);
+      
+      if (payload) {
+        setDashboardSummary(payload);
+        
+        // Bundled Churn
+        if (payload.churn?.top5AtRisk) {
+          setChurnRisks(payload.churn.top5AtRisk);
+        }
+        
+        // Bundled Anomalies
+        if (payload.anomalies?.list) {
+          setAnomalies(payload.anomalies.list);
+        }
+      }
+      
       registerAiSuccess();
       return payload;
     } catch (error) {
@@ -80,55 +93,6 @@ export const AiProvider = ({ children }) => {
     }
   }, [aiUnavailable, clearError, registerAiFailure, registerAiSuccess]);
 
-  const fetchChurnRisks = useCallback(async () => {
-    setIsLoadingChurn(true);
-    clearError('churn');
-    try {
-      const response = await aiService.getChurnRisks();
-      const payload = response.data?.data || {};
-      const list = payload.atRiskCustomers || [];
-      setChurnRisks(Array.isArray(list) ? list : []);
-      return Array.isArray(list) ? list : [];
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        churn: error.response?.data?.message || error.message || 'Failed to load churn risks',
-      }));
-      return [];
-    } finally {
-      setIsLoadingChurn(false);
-    }
-  }, [clearError]);
-
-  const fetchAnomalies = useCallback(async () => {
-    if (aiUnavailable) {
-      setErrors((prev) => ({
-        ...prev,
-        anomalies: 'AI service temporarily unavailable',
-      }));
-      return [];
-    }
-    setIsLoadingAnomalies(true);
-    clearError('anomalies');
-    try {
-      const response = await aiService.getAnomalies();
-      const payload = response.data?.data || {};
-      const list = payload.anomalies || [];
-      setAnomalies(Array.isArray(list) ? list : []);
-      registerAiSuccess();
-      return Array.isArray(list) ? list : [];
-    } catch (error) {
-      registerAiFailure();
-      setErrors((prev) => ({
-        ...prev,
-        anomalies: 'AI service temporarily unavailable',
-      }));
-      return [];
-    } finally {
-      setIsLoadingAnomalies(false);
-    }
-  }, [aiUnavailable, clearError, registerAiFailure, registerAiSuccess]);
-
   return (
     <AiContext.Provider
       value={{
@@ -136,14 +100,12 @@ export const AiProvider = ({ children }) => {
         churnRisks,
         anomalies,
         isLoadingDashboard,
-        isLoadingChurn,
-        isLoadingAnomalies,
+        isLoadingChurn: false,
+        isLoadingAnomalies: false,
         errors,
         aiUnavailable,
         aiFailureCount,
         fetchDashboardSummary,
-        fetchChurnRisks,
-        fetchAnomalies,
         resetAiFailureLock,
         clearError,
       }}
