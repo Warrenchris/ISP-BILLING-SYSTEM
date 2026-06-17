@@ -174,6 +174,12 @@ for i, u in enumerate(users):
             paid_at = completed_at
             paid_amount = plan_price
 
+        # Skip future-dated payments (cap at NOW, matching data_usage guard)
+        if completed_at is not None and completed_at > NOW:
+            continue
+        if period_start > NOW:
+            continue
+
         receipt = f"QHX{str(pay_idx).zfill(7)}{random.randint(10,99)}" if status == "completed" else None
         checkout_id = f"ws_{uuid.uuid4().hex[:24]}"
 

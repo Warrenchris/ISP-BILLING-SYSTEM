@@ -306,6 +306,7 @@ def fetch_training_data(months: int = 12) -> dict:
                FROM payments
                WHERE status = 'completed'
                  AND completed_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
+                 AND completed_at <= NOW()
                GROUP BY period
                ORDER BY period ASC""",
             (months,)
@@ -331,6 +332,7 @@ def fetch_training_data(months: int = 12) -> dict:
                FROM invoices
                WHERE (status = 'overdue' OR paid_at > due_date)
                  AND created_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
+                 AND due_date <= NOW()
                GROUP BY period
                ORDER BY period ASC""",
             (months,)
@@ -345,6 +347,7 @@ def fetch_training_data(months: int = 12) -> dict:
                FROM subscriptions s
                JOIN data_plans dp ON s.plan_id = dp.id
                WHERE s.created_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
+                 AND s.created_at <= NOW()
                GROUP BY period, dp.name
                ORDER BY period ASC""",
             (months,)
@@ -524,6 +527,7 @@ def fetch_revenue_vs_predicted(months: int = 6) -> list[dict]:
                FROM payments
                WHERE status = 'completed'
                  AND completed_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
+                 AND completed_at <= NOW()
                GROUP BY period
                ORDER BY period ASC""",
             (months,)

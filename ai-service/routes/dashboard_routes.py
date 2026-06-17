@@ -99,9 +99,13 @@ def get_dashboard_summary():
         variance = actual_val - pred_val
         variance_pct = round(variance / pred_val * 100, 2) if pred_val else 0
 
-        # Build forecast inputs from latest data
+        # Build forecast inputs from latest data (current or most recent month)
         revenue_data = churn_training.get("revenue_data", [])
-        latest_rev = revenue_data[-1] if revenue_data else {}
+        now_period = datetime.now().strftime("%Y-%m")
+        latest_rev = next(
+            (r for r in reversed(revenue_data) if r["period"] <= now_period),
+            revenue_data[-1] if revenue_data else {}
+        )
 
         dashboard_data = {
             "period": period_str,

@@ -139,6 +139,7 @@ async function fetchMonthlyRevenueData(months = 12) {
     FROM payments
     WHERE status = 'completed'
       AND completed_at >= DATE_SUB(NOW(), INTERVAL :months MONTH)
+      AND completed_at <= NOW()
     GROUP BY period
     ORDER BY period ASC
   `, {
@@ -168,6 +169,7 @@ async function fetchMonthlyRevenueData(months = 12) {
     FROM invoices i
     WHERE i.status = 'overdue' OR (i.paid_at > i.due_date)
       AND i.created_at >= DATE_SUB(NOW(), INTERVAL :months MONTH)
+      AND i.due_date <= NOW()
     GROUP BY period
     ORDER BY period ASC
   `, {
@@ -184,6 +186,7 @@ async function fetchMonthlyRevenueData(months = 12) {
     FROM subscriptions s
     JOIN data_plans dp ON s.plan_id = dp.id
     WHERE s.created_at >= DATE_SUB(NOW(), INTERVAL :months MONTH)
+      AND s.created_at <= NOW()
     GROUP BY period, dp.name
     ORDER BY period ASC
   `, {
@@ -316,6 +319,7 @@ async function fetchRevenueVsPredicted(months = 6) {
     FROM payments
     WHERE status = 'completed'
       AND completed_at >= DATE_SUB(NOW(), INTERVAL :months MONTH)
+      AND completed_at <= NOW()
     GROUP BY period
     ORDER BY period ASC
   `, {
