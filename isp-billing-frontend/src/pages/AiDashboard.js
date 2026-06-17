@@ -521,10 +521,11 @@ const AiDashboard = () => {
                   ) : (
                     churnRisks.map((row) => {
                       const colors = getRiskColor(row.riskLevel, theme);
-                      const riskScore = Number(row.score || 0) * 100;
+                      const riskScore = Number(row.churnScore || row.score || 0) * 100;
+                      const topReason = Array.isArray(row.reasons) ? row.reasons[0] : (row.topReason || 'N/A');
                       return (
                         <TableRow key={row.customerId || row.email}>
-                          <TableCell>{row.customerName || 'N/A'}</TableCell>
+                          <TableCell>{row.name || row.customerName || 'N/A'}</TableCell>
                           <TableCell>{row.email || 'N/A'}</TableCell>
                           <TableCell>{riskScore.toFixed(0)}%</TableCell>
                           <TableCell>
@@ -534,7 +535,7 @@ const AiDashboard = () => {
                               sx={{ bgcolor: colors.bg, color: colors.color, fontWeight: 700 }}
                             />
                           </TableCell>
-                          <TableCell>{row.topReason || 'N/A'}</TableCell>
+                          <TableCell>{topReason}</TableCell>
                           <TableCell>
                             <Button
                               component={Link}
