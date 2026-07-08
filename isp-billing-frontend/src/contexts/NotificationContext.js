@@ -23,10 +23,7 @@ export const NotificationProvider = ({ children }) => {
     const [open, setOpen] = useState(false);
     const [messageInfo, setMessageInfo] = useState(undefined);
     const [snackPack, setSnackPack] = useState([]);
-    const [hovering, setHovering] = useState(false);
 
-    // Ref to store the current timer ID so we can pause/resume
-    const timerRef = useRef(null);
     // Track remaining time if paused (default autoHideDuration is usually 6000ms)
     const remainingTimeRef = useRef(6000);
     const startTimeRef = useRef(Date.now());

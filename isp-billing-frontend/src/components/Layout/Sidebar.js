@@ -25,7 +25,7 @@ import {
     ChevronRight } from '@mui/icons-material';
 import {
     Box, Drawer, IconButton, Tooltip, Typography, Divider,
-    useMediaQuery, useTheme, Avatar } from '@mui/material';
+    Avatar } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 
 /* ─── Brand tokens ─────────────────────────────────────────────────────────── */
@@ -529,8 +529,6 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
 
 /* ─── Sidebar wrapper ───────────────────────────────────────────────────────── */
 const Sidebar = ({ mobileOpen, setMobileOpen }) => {
-    const theme     = useTheme();
-    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
     const [collapsed, setCollapsed] = useState(false);
 
     const drawerWidth = collapsed ? 72 : 272;

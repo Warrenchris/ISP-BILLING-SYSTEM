@@ -9,7 +9,7 @@ import {
     AccountCircleOutlined as ProfileIcon } from '@mui/icons-material';
 import {
     IconButton, Avatar, Badge, Menu, MenuItem,
-    Divider, Typography, Box, Tooltip, useTheme } from '@mui/material';
+    Divider, Typography, Box, Tooltip } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../contexts/ApiContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -42,7 +42,6 @@ function usePageMeta() {
 const Header = ({ onMenuClick }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const theme = useTheme();
     const { title, sub } = usePageMeta();
 
     const [anchorEl, setAnchorEl]     = useState(null);

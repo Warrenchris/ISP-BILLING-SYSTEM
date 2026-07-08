@@ -5,7 +5,6 @@ import {
   TextField,
   Button,
   Typography,
-  Alert,
   CircularProgress,
   Link,
   InputAdornment,
@@ -28,8 +27,6 @@ import {
   Lock as LockIcon,
   Visibility,
   VisibilityOff,
-  Brightness4,
-  Brightness7,
   Person,
   Phone,
   Router,
@@ -90,7 +87,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
   const [accessRequestLoading, setAccessRequestLoading] = useState(false);
   const [accessRequestSuccess, setAccessRequestSuccess] = useState(false);
   const { login } = useAuth();
-  const { notifyError, notifySuccess } = useNotification();
+  const { notifyError } = useNotification();
   const navigate = useNavigate();
   const theme = useTheme();
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);

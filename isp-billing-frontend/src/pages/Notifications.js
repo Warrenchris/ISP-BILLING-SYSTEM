@@ -42,7 +42,7 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
         };
 
         fetchNotifications();
-    }, [notificationService]);
+    }, [isAdmin, notificationService]);
 
     const getIcon = (type) => {
         const t = (type || '').toLowerCase();

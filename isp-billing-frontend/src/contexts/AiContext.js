@@ -18,8 +18,6 @@ export const AiProvider = ({ children }) => {
   const [aiUnavailable, setAiUnavailable] = useState(false);
   const [aiFailureCount, setAiFailureCount] = useState(0);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
-  const [isLoadingChurn, setIsLoadingChurn] = useState(false);
-  const [isLoadingAnomalies, setIsLoadingAnomalies] = useState(false);
   const [errors, setErrors] = useState({});
 
   const clearError = useCallback((key) => {

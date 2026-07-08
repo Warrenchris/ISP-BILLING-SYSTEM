@@ -60,7 +60,7 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
             setLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search, page, limit, JSON.stringify(filters)]);
+    }, [search, page, limit, JSON.stringify(filters), isStaff]);
 
     // Re-fetch whenever search / page / filters change
     useEffect(() => {

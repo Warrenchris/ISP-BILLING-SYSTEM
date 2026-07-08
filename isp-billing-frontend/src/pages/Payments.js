@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
-import { Box, Alert, Typography, Button, Tabs, Tab, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Tabs, Tab, CircularProgress } from '@mui/material';
 import {
   Settings as SettingsIcon,
   Phone as PhoneIcon,
