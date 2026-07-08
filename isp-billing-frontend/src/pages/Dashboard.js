@@ -570,11 +570,8 @@ const Dashboard = () => {
             <Typography
               variant="h3"
               sx={{
-                fontWeight: 700,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                fontWeight: 800,
+                color: 'text.primary',
                 mb: 1 }}
             >
               Admin Dashboard
@@ -839,60 +836,60 @@ const Dashboard = () => {
                     <Box
                       sx={{
                         p: 3,
-                        
-                        background: 'rgba(102, 126, 234, 0.1)',
-                        border: '1px solid rgba(102, 126, 234, 0.2)' }}
+                        borderRadius: '12px',
+                        background: 'rgba(59, 130, 246, 0.05)',
+                        border: '1px solid rgba(59, 130, 246, 0.15)' }}
                     >
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom color="text.primary">
                         System Administration
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Full access to user management, billing, and system configuration.
                       </Typography>
                       <Box display="flex" gap={1}>
-                        <Chip label="User Management" size="small" />
-                        <Chip label="Billing Control" size="small" />
-                        <Chip label="System Config" size="small" />
+                        <Chip label="User Management" size="small" sx={{ borderRadius: '6px' }} />
+                        <Chip label="Billing Control" size="small" sx={{ borderRadius: '6px' }} />
+                        <Chip label="System Config" size="small" sx={{ borderRadius: '6px' }} />
                       </Box>
                     </Box>
 
                     <Box
                       sx={{
                         p: 3,
-                        
-                        background: 'rgba(0, 212, 170, 0.1)',
-                        border: '1px solid rgba(0, 212, 170, 0.2)' }}
+                        borderRadius: '12px',
+                        background: 'rgba(45, 106, 79, 0.05)',
+                        border: '1px solid rgba(45, 106, 79, 0.15)' }}
                     >
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom color="text.primary">
                         Financial Management
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Access to payment processing, invoicing, and financial reports.
                       </Typography>
                       <Box display="flex" gap={1}>
-                        <Chip label="Payment Processing" size="small" />
-                        <Chip label="Invoice Management" size="small" />
-                        <Chip label="Financial Reports" size="small" />
+                        <Chip label="Payment Processing" size="small" sx={{ borderRadius: '6px' }} />
+                        <Chip label="Invoice Management" size="small" sx={{ borderRadius: '6px' }} />
+                        <Chip label="Financial Reports" size="small" sx={{ borderRadius: '6px' }} />
                       </Box>
                     </Box>
 
                     <Box
                       sx={{
                         p: 3,
-                        
-                        background: 'rgba(255, 184, 0, 0.1)',
-                        border: '1px solid rgba(255, 184, 0, 0.2)' }}
+                        borderRadius: '12px',
+                        background: 'rgba(221, 161, 94, 0.05)',
+                        border: '1px solid rgba(221, 161, 94, 0.15)' }}
                     >
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom color="text.primary">
                         Data & Analytics
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         View comprehensive analytics and generate detailed reports.
                       </Typography>
                       <Box display="flex" gap={1}>
-                        <Chip label="Usage Analytics" size="small" />
-                        <Chip label="Performance Metrics" size="small" />
-                        <Chip label="Custom Reports" size="small" />
+                        <Chip label="Usage Analytics" size="small" sx={{ borderRadius: '6px' }} />
+                        <Chip label="Performance Metrics" size="small" sx={{ borderRadius: '6px' }} />
+                        <Chip label="Custom Reports" size="small" sx={{ borderRadius: '6px' }} />
                       </Box>
                     </Box>
                   </Box>
@@ -978,11 +975,8 @@ const Dashboard = () => {
         <Typography
           variant="h3"
           sx={{
-            fontWeight: 700,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            fontWeight: 800,
+            color: 'text.primary',
             mb: 1 }}
         >
           Welcome back, {user?.firstName}!
@@ -1069,9 +1063,9 @@ const Dashboard = () => {
                     sx={{
                       height: 12,
                       
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      backgroundColor: 'rgba(43, 43, 43, 0.06)',
                       '& .MuiLinearProgress-bar': {
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)` } }}
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)` } }}
                   />
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                     {getUsagePercentage().toFixed(1)}% used
@@ -1167,15 +1161,16 @@ const Dashboard = () => {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={usageHistorySeries}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(43, 43, 43, 0.08)" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tickFormatter={(v) =>
                     v ? new Date(`${v}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
                   }
-                  stroke="#b8c5d6"
+                  stroke={theme.palette.text.secondary}
+                  tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
                 />
-                <YAxis stroke="#b8c5d6" />
+                <YAxis stroke={theme.palette.text.secondary} tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} />
                 <Bar
                   dataKey="usageMB"
                   fill="url(#colorGradient)"
@@ -1183,8 +1178,8 @@ const Dashboard = () => {
                 />
                 <defs>
                   <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#B28F00" stopOpacity={0.8} />
+                    <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.9} />
+                    <stop offset="95%" stopColor={theme.palette.primary.dark} stopOpacity={0.9} />
                   </linearGradient>
                 </defs>
               </BarChart>

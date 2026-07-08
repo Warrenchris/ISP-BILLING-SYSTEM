@@ -18,8 +18,6 @@ import {
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import CustomCard from '../common/CustomCard';
 
-
-
 const getPaymentMethodIcon = (method) => {
     switch (method?.toLowerCase()) {
         case 'mpesa':
@@ -60,7 +58,7 @@ const PaymentHistoryTable = ({
         <CustomCard>
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                    <h2 className="text-xl font-bold text-text-primary">
                         Payment History
                     </h2>
                     <Button
@@ -69,11 +67,11 @@ const PaymentHistoryTable = ({
                         startIcon={<RefreshIcon />}
                         onClick={onRefresh}
                         sx={{
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            borderColor: theme.palette.custom.borderDefault,
+                            color: theme.palette.text.secondary,
                             '&:hover': {
-                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                background: 'rgba(255, 255, 255, 0.05)' } }}
+                                borderColor: theme.palette.primary.main,
+                                background: 'rgba(221, 161, 94, 0.04)' } }}
                     >
                         Refresh
                     </Button>
@@ -82,17 +80,17 @@ const PaymentHistoryTable = ({
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-white/10">
-                                <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Transaction ID</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Method</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
-                                {isAdmin && <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Customer</th>}
-                                <th className="py-4 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                            <tr className="border-b border-black/5">
+                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Transaction ID</th>
+                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Amount</th>
+                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Method</th>
+                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Date</th>
+                                {isAdmin && <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Customer</th>}
+                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-black/5">
                             {loading ? (
                                 <tr>
                                     <td colSpan={isAdmin ? 7 : 6} className="py-8 text-center">
@@ -105,25 +103,25 @@ const PaymentHistoryTable = ({
                                     const isPending = payment.status === 'pending';
 
                                     return (
-                                        <tr key={payment.id} className="hover:bg-white/5 transition-colors">
+                                        <tr key={payment.id} className="hover:bg-black/5 transition-colors">
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => onViewDetails(payment)}
-                                                        className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                                                        className="p-1.5 rounded-lg bg-primary/10 text-primary border-0 cursor-pointer hover:bg-primary/20 transition-colors"
                                                     >
                                                         <VisibilityIcon sx={{ fontSize: 16 }} />
                                                     </button>
-                                                    <span className="font-medium text-blue-300 font-mono text-sm">
+                                                    <span className="font-medium text-text-primary font-mono text-sm">
                                                         {payment.transactionId}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-4 font-medium text-white">
+                                            <td className="py-4 px-4 font-medium text-text-primary">
                                                 {formatCurrency(payment.amount)}
                                             </td>
                                             <td className="py-4 px-4">
-                                                <div className="flex items-center gap-2 text-gray-300">
+                                                <div className="flex items-center gap-2 text-text-secondary">
                                                     {getPaymentMethodIcon(payment.method)}
                                                     <span className="capitalize text-sm">{payment.method || 'Cash'}</span>
                                                 </div>
@@ -132,24 +130,24 @@ const PaymentHistoryTable = ({
                                                 <span
                                                     className="px-2.5 py-1 rounded-full text-xs font-medium border"
                                                     style={{
-                                                        backgroundColor: `${statusColor}20`, // 20% opacity hex
+                                                        backgroundColor: `${statusColor}15`, // 15% opacity hex
                                                         color: statusColor,
-                                                        borderColor: `${statusColor}40`, // 40% opacity hex
+                                                        borderColor: `${statusColor}30`, // 30% opacity hex
                                                     }}
                                                 >
                                                     {payment.status}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-4 text-sm text-gray-400">
+                                            <td className="py-4 px-4 text-sm text-text-secondary">
                                                 {formatDate(payment.createdAt)}
                                             </td>
                                             {isAdmin && (
                                                 <td className="py-4 px-4">
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm text-white font-medium">
+                                                        <span className="text-sm text-text-primary font-medium">
                                                             {payment.customerInfo?.name || 'Unknown'}
                                                         </span>
-                                                        <span className="text-xs text-gray-500">
+                                                        <span className="text-xs text-text-muted">
                                                             {payment.customerInfo?.email}
                                                         </span>
                                                     </div>
@@ -166,9 +164,9 @@ const PaymentHistoryTable = ({
                                                                     disabled={processing}
                                                                     sx={{
                                                                         color: theme.palette.success.main,
-                                                                        bgcolor: 'rgba(0, 212, 170, 0.1)',
-                                                                        border: '1px solid rgba(0, 212, 170, 0.2)',
-                                                                        '&:hover': { bgcolor: 'rgba(0, 212, 170, 0.2)' },
+                                                                        bgcolor: 'rgba(45, 106, 79, 0.08)',
+                                                                        border: '1px solid rgba(45, 106, 79, 0.15)',
+                                                                        '&:hover': { bgcolor: 'rgba(45, 106, 79, 0.16)' },
                                                                         width: 32,
                                                                         height: 32 }}
                                                                 >
@@ -184,9 +182,9 @@ const PaymentHistoryTable = ({
                                                                     disabled={processing}
                                                                     sx={{
                                                                         color: theme.palette.error.main,
-                                                                        bgcolor: 'rgba(255, 107, 107, 0.1)',
-                                                                        border: '1px solid rgba(255, 107, 107, 0.2)',
-                                                                        '&:hover': { bgcolor: 'rgba(255, 107, 107, 0.2)' },
+                                                                        bgcolor: 'rgba(239, 68, 68, 0.08)',
+                                                                        border: '1px solid rgba(239, 68, 68, 0.15)',
+                                                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.16)' },
                                                                         width: 32,
                                                                         height: 32 }}
                                                                 >
@@ -196,7 +194,7 @@ const PaymentHistoryTable = ({
                                                         </Tooltip>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-gray-600 italic">No actions</span>
+                                                    <span className="text-xs text-text-muted italic">No actions</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -204,7 +202,7 @@ const PaymentHistoryTable = ({
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} className="py-12 text-center text-gray-500">
+                                    <td colSpan={isAdmin ? 7 : 6} className="py-12 text-center text-text-secondary">
                                         <div className="flex flex-col items-center justify-center">
                                             <PaymentIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
                                             <p>No payment records found</p>

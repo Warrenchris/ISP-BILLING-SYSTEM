@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useApi } from '../../contexts/ApiContext';
 
-// TODO(API migration): Static fallbacks — remove once GET /api/config/roles & /api/config/user-statuses are deployed everywhere.
+// Static fallbacks
 const FALLBACK_USER_ROLE_OPTIONS = ['customer', 'admin', 'support'];
 const FALLBACK_USER_STATUS_OPTIONS = ['active', 'inactive', 'suspended'];
 
@@ -23,7 +23,6 @@ const matchCanonical = (allowed, preferred, fallback) => {
     return fbHit !== undefined ? fbHit : allowed[0];
 };
 
-// We'll keep using MUI Dialog for modal behavior consistency, but styling content with Tailwind
 const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
     const isEdit = !!user.id;
     const { api } = useApi();
@@ -62,19 +61,10 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-                style: {
-                    backgroundColor: 'background.paper',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    
-                    color: 'text.primary'
-                }
-            }}
         >
-            <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="h6" fontWeight="bold">
-                    {isEdit ? 'Edit User' : 'Create New User'}
+            <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'custom.borderDefault', pb: 2 }}>
+                <Typography variant="h6" fontWeight={700} color="text.primary">
+                    {isEdit ? 'Edit User Profile' : 'Register New User'}
                 </Typography>
             </DialogTitle>
             <DialogContent sx={{ pt: 3 }}>
@@ -86,14 +76,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             onChange={(e) => setUser({ ...user, firstName: e.target.value })}
                             fullWidth
                             variant="outlined"
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    color: 'text.primary',
-                                    '& fieldset': { borderColor: 'divider' },
-                                    '&:hover fieldset': { borderColor: 'text.primary' }
-                                },
-                                '& .MuiInputLabel-root': { color: 'text.secondary' }
-                            }}
                         />
                         <TextField
                             label="Last Name"
@@ -101,10 +83,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             onChange={(e) => setUser({ ...user, lastName: e.target.value })}
                             fullWidth
                             variant="outlined"
-                            sx={{
-                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                                '& .MuiInputLabel-root': { color: 'gray' }
-                            }}
                         />
                     </div>
 
@@ -114,10 +92,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                         onChange={(e) => setUser({ ...user, email: e.target.value })}
                         fullWidth
                         variant="outlined"
-                        sx={{
-                            '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                            '& .MuiInputLabel-root': { color: 'gray' }
-                        }}
                     />
 
                     <div className="grid grid-cols-2 gap-4">
@@ -127,10 +101,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             onChange={(e) => setUser({ ...user, phoneNumber: e.target.value })}
                             fullWidth
                             variant="outlined"
-                            sx={{
-                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                                '& .MuiInputLabel-root': { color: 'gray' }
-                            }}
                         />
                         <TextField
                             label="Router IP"
@@ -138,10 +108,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                             onChange={(e) => setUser({ ...user, routerIp: e.target.value })}
                             fullWidth
                             variant="outlined"
-                            sx={{
-                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                                '& .MuiInputLabel-root': { color: 'gray' }
-                            }}
                         />
                     </div>
 
@@ -154,10 +120,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                                 onChange={(e) => setUser({ ...user, password: e.target.value })}
                                 fullWidth
                                 variant="outlined"
-                                sx={{
-                                    '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                                    '& .MuiInputLabel-root': { color: 'gray' }
-                                }}
                             />
                             <TextField
                                 label="Confirm Password"
@@ -166,10 +128,6 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                                 onChange={(e) => setUser({ ...user, confirm: e.target.value })}
                                 fullWidth
                                 variant="outlined"
-                                sx={{
-                                    '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                                    '& .MuiInputLabel-root': { color: 'gray' }
-                                }}
                             />
                         </div>
                     )}
@@ -178,20 +136,10 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                         <TextField
                             select
                             label="Role"
-                            value={
-                                matchCanonical(roleOptions, user.role, 'customer')}
+                            value={matchCanonical(roleOptions, user.role, 'customer')}
                             onChange={(e) => setUser({ ...user, role: e.target.value })}
                             fullWidth
                             variant="outlined"
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    color: 'text.primary',
-                                    '& fieldset': { borderColor: 'divider' },
-                                    '&:hover fieldset': { borderColor: 'text.primary' }
-                                },
-                                '& .MuiInputLabel-root': { color: 'text.secondary' },
-                                '& .MuiSelect-icon': { color: 'text.primary' }
-                            }}
                         >
                             {roleOptions.map((role) => (
                                 <MenuItem key={role} value={role}>
@@ -203,16 +151,10 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                         <TextField
                             select
                             label="Status"
-                            value={
-                                matchCanonical(statusOptions, user.status, 'active')}
+                            value={matchCanonical(statusOptions, user.status, 'active')}
                             onChange={(e) => setUser({ ...user, status: e.target.value })}
                             fullWidth
                             variant="outlined"
-                            sx={{
-                                '& .MuiOutlinedInput-root': { color: 'text.primary', '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }, '&:hover fieldset': { bordercolor: 'text.primary' } },
-                                '& .MuiInputLabel-root': { color: 'gray' },
-                                '& .MuiSelect-icon': { color: 'text.primary' }
-                            }}
                         >
                             {statusOptions.map((status) => (
                                 <MenuItem key={status} value={status}>
@@ -223,22 +165,17 @@ const UserDialog = ({ open, onClose, user, setUser, onSave }) => {
                     </div>
                 </div>
             </DialogContent>
-            <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <Button onClick={onClose} sx={{ color: 'gray', '&:hover': { color: 'text.primary' } }}>
+            <DialogActions sx={{ p: 3, borderTop: '1px solid', borderColor: 'custom.borderDefault' }}>
+                <Button onClick={onClose} variant="outlined">
                     Cancel
                 </Button>
                 <Button
                     variant="contained"
                     onClick={onSave}
-                    sx={{
-                        bgcolor: 'success.main',
-                        '&:hover': { bgcolor: 'success.dark' },
-                        color: 'primary.contrastText',
-                        fontWeight: 'bold'
-                    }}
+                    color="secondary"
                     disabled={!user.firstName || !user.lastName || !user.email}
                 >
-                    {isEdit ? 'Update User' : 'Create User'}
+                    {isEdit ? 'Update Details' : 'Register User'}
                 </Button>
             </DialogActions>
         </Dialog>

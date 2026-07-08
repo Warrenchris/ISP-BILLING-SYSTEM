@@ -69,30 +69,7 @@ const gradientShift = keyframes`
 
 // Modern theme toggle component
 const ToggleThemeButton = ({ darkMode, toggleDarkMode }) => {
-  return (
-    <IconButton
-      onClick={toggleDarkMode}
-      sx={{
-        position: 'absolute',
-        top: 24,
-        right: 24,
-        zIndex: 10,
-        bgcolor: 'background.paper',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        color: 'text.primary',
-        width: 48,
-        height: 48,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          background: 'rgba(255, 255, 255, 0.1)',
-          transform: 'translateY(-2px)',
-          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)' } }}
-    >
-      {darkMode ? <Brightness7 /> : <Brightness4 />}
-    </IconButton>
-  );
+  return null;
 };
 
 const Login = ({ darkMode, toggleDarkMode }) => {
@@ -318,12 +295,9 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 variant="h3"
                 sx={{
                   fontSize: '2.5rem',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   mb: 2,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
+                  color: 'secondary.main',
                   letterSpacing: '-0.025em' }}
               >
                 ISP Billing Pro
@@ -432,10 +406,10 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     height: 72,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     margin: '0 auto 24px',
-                    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+                    boxShadow: '0 8px 25px rgba(221, 161, 94, 0.3)',
                     animation: `${pulseAnimation} 4s ease-in-out infinite` }}
                 >
-                  <LockIcon sx={{ fontSize: '32px', color: 'text.primary' }} />
+                  <LockIcon sx={{ fontSize: '32px', color: '#FFFFFF' }} />
                 </Avatar>
 
                 <Typography

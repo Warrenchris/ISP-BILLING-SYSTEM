@@ -95,7 +95,7 @@ function AppRoutes({ darkmode, toggleDarkMode }) {
 }
 
 function App() {
-  const [darkmode, setDarkmode] = React.useState(true); // Default to dark mode for modern look
+  const [darkmode, setDarkmode] = React.useState(false); // Default to light mode for the premium warm look
 
   const toggleDarkMode = () => {
     setDarkmode(!darkmode);

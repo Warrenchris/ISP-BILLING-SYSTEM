@@ -16,17 +16,17 @@ const StatCard = ({
             <div className="p-6 pb-6">
                 <div className="flex items-start justify-between mb-4">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">
                             {title}
                         </p>
-                        <h4 className="text-2xl font-bold tracking-tight text-white">
+                        <h4 className="text-2xl font-bold tracking-tight text-text-primary">
                             {value}
                         </h4>
                     </div>
                     <div
                         className="flex items-center justify-center w-12 h-12 rounded-xl"
                         style={{
-                            backgroundColor: alpha(color, 0.15),
+                            backgroundColor: alpha(color, 0.12),
                             color: color }}
                     >
                         {React.cloneElement(icon, { sx: { fontSize: 24, color: 'inherit' } })}
@@ -39,7 +39,7 @@ const StatCard = ({
                             <GrowthIndicator value={trend} />
                         )}
                         {subtitle && (
-                            <span className="text-sm text-gray-400">
+                            <span className="text-sm text-text-secondary">
                                 {subtitle}
                             </span>
                         )}

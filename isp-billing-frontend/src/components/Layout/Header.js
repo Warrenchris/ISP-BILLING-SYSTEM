@@ -9,7 +9,7 @@ import {
     AccountCircleOutlined as ProfileIcon } from '@mui/icons-material';
 import {
     IconButton, Avatar, Badge, Menu, MenuItem,
-    Divider, Typography, Box, Tooltip } from '@mui/material';
+    Divider, Typography, Box, Tooltip, useTheme } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../contexts/ApiContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -33,21 +33,16 @@ const PAGE_META = {
 
 function usePageMeta() {
     const { pathname } = useLocation();
-    // Exact match first, then prefix match
     if (PAGE_META[pathname]) return PAGE_META[pathname];
     const key = Object.keys(PAGE_META).find(k => k !== '/' && pathname.startsWith(k));
     return PAGE_META[key] || { title: 'ISP Billing', sub: 'Welcome back' };
 }
 
-/* ─── Tokens ─────────────────────────────────────────────────────────────── */
-const Y = 'var(--brand-yellow)';
-const YG = 'var(--brand-yellow-glow)';
-const E = 'cubic-bezier(0.4, 0, 0.2, 1)';
-
-/* ─── Header ─────────────────────────────────────────────────────────────── */
+/* ─── Header Component ─────────────────────────────────────────────────────── */
 const Header = ({ onMenuClick }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const theme = useTheme();
     const { title, sub } = usePageMeta();
 
     const [anchorEl, setAnchorEl]     = useState(null);
@@ -59,14 +54,11 @@ const Header = ({ onMenuClick }) => {
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
-                // Determine if we should fetch admin logs or personal notifications
                 const response = user?.role === 'admin' 
                     ? await notificationService.getAll()
                     : await notificationService.getMyNotifications();
                 const data = response.data?.data || response.data || [];
                 const items = Array.isArray(data) ? data : data.notifications || data.items || [];
-                
-                // Assuming unread is when status is 'pending' or 'failed', or they have an isRead prop
                 const unread = items.filter(n => n.status !== 'read' && !n.isRead && !n.read).length;
                 setUnreadCount(unread);
             } catch (e) {
@@ -88,6 +80,8 @@ const Header = ({ onMenuClick }) => {
         navigate('/login');
     };
 
+    const E = 'cubic-bezier(0.4, 0, 0.2, 1)';
+
     return (
         <Box
             component="header"
@@ -100,11 +94,11 @@ const Header = ({ onMenuClick }) => {
                 justifyContent: 'space-between',
                 px:             { xs: 2, md: 4 },
                 py:             1.5,
-                background:     'rgba(10, 10, 18, 0.72)',
+                background:     'rgba(250, 247, 242, 0.8)',
                 backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
-                borderBottom:   '1px solid var(--topbar-border)',
-                boxShadow:      '0 1px 0 theme.palette.action.hover' }}
+                borderBottom:   '1px solid rgba(43, 43, 43, 0.06)',
+                boxShadow:      '0 2px 12px -2px rgba(43, 43, 43, 0.02)' }}
         >
             {/* ── Left: hamburger + page title ── */}
             <Box display="flex" alignItems="center" gap={2}>
@@ -113,33 +107,26 @@ const Header = ({ onMenuClick }) => {
                     onClick={onMenuClick}
                     sx={{
                         display: { md: 'none' },
-                        color:   'rgba(255,255,255,0.7)',
-                        '&:hover': { color: 'text.primary', bgcolor: 'theme.palette.action.hover' } }}
+                        color:   'text.primary',
+                        '&:hover': { bgcolor: 'rgba(43, 43, 43, 0.04)' } }}
                 >
                     <MenuIcon />
                 </IconButton>
 
                 {/* Page title block */}
-                <Box
-                    sx={{
-                        display:    'flex',
-                        alignItems: 'center',
-                        gap:        1.5 }}
-                >
-                    {/* Yellow accent bar */}
+                <Box display="flex" alignItems="center" gap={1.5}>
+                    {/* Gold brand bar */}
                     <Box
                         sx={{
                             width:        3,
-                            height:       36,
-                            
-                            background:   Y,
-                            boxShadow:    `0 0 10px ${YG}`,
+                            height:       32,
+                            borderRadius: '4px',
+                            background:   '#DDA15E',
                             flexShrink:   0 }}
                     />
                     <Box>
                         <Typography
                             sx={{
-                                
                                 fontWeight:    800,
                                 fontSize:      { xs: '1rem', md: '1.2rem' },
                                 color:         'text.primary',
@@ -151,9 +138,9 @@ const Header = ({ onMenuClick }) => {
                         <Typography
                             sx={{
                                 display:       { xs: 'none', sm: 'block' },
-                                fontSize:      '0.7rem',
-                                color:         'var(--text-muted)',
-                                letterSpacing: '0.06em',
+                                fontSize:      '0.75rem',
+                                color:         'text.secondary',
+                                letterSpacing: '0.01em',
                                 mt:            '2px',
                                 lineHeight:    1 }}
                         >
@@ -173,31 +160,28 @@ const Header = ({ onMenuClick }) => {
                         alignItems:   'center',
                         gap:          1,
                         px:           2,
-                        py:           0.85,
-                        
-                        background:   searchFocused
-                            ? 'rgba(255,255,255,0.07)'
-                            : 'rgba(255,255,255,0.04)',
-                        border:       `1px solid ${searchFocused
-                            ? 'rgba(255,214,0,0.35)'
-                            : 'rgba(255,255,255,0.09)'}`,
+                        py:           0.75,
+                        borderRadius: '12px',
+                        background:   searchFocused ? '#FFFFFF' : 'rgba(43, 43, 43, 0.03)',
+                        border:       `1.5px solid ${searchFocused ? '#DDA15E' : 'rgba(43, 43, 43, 0.06)'}`,
                         transition:   `all 0.2s ${E}`,
                         width:        220,
-                        boxShadow:    searchFocused ? `0 0 0 3px rgba(255,214,0,0.08)` : 'none' }}
+                        boxShadow:    searchFocused ? `0 4px 15px -4px rgba(221, 161, 94, 0.2)` : 'none' }}
                 >
-                    <SearchIcon sx={{ color: 'rgba(255,255,255,0.3)', fontSize: 18 }} />
+                    <SearchIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
                     <input
                         type="text"
-                        placeholder="Quick search…"
+                        placeholder="Search anything..."
                         onFocus={() => setFocused(true)}
                         onBlur={() => setFocused(false)}
                         style={{
                             background:  'transparent',
                             border:      'none',
                             outline:     'none',
-                            color:       'text.primary',
-                            fontSize:    '0.8rem',
-                            width:       '100%' }}
+                            color:       '#2B2B2B',
+                            fontSize:    '0.85rem',
+                            width:       '100%',
+                            fontFamily:  '"Inter", sans-serif' }}
                     />
                 </Box>
 
@@ -206,24 +190,24 @@ const Header = ({ onMenuClick }) => {
                     <IconButton
                         onClick={() => navigate('/notifications')}
                         sx={{
-                            color:     'rgba(255,255,255,0.65)',
+                            color:     'text.secondary',
                             transition:`all 0.2s ${E}`,
                             '&:hover': {
                                 color:  'text.primary',
-                                bgcolor:'theme.palette.action.hover',
-                                transform: 'scale(1.08)' } }}
+                                bgcolor:'rgba(43, 43, 43, 0.04)',
+                                transform: 'scale(1.05)' } }}
                     >
                         <Badge
                             badgeContent={unreadCount}
                             sx={{
                                 '& .MuiBadge-badge': {
-                                    bgcolor:   '#ef4444',
-                                    color:     'text.primary',
-                                    fontSize:  '0.6rem',
+                                    bgcolor:   '#EF4444',
+                                    color:     '#FFFFFF',
+                                    fontSize:  '0.65rem',
                                     fontWeight:700,
                                     minWidth:  16,
                                     height:    16,
-                                    boxShadow: '0 0 6px rgba(239,68,68,0.6)' } }}
+                                    boxShadow: '0 0 6px rgba(239,68,68,0.3)' } }}
                         >
                             <BellIcon />
                         </Badge>
@@ -236,19 +220,19 @@ const Header = ({ onMenuClick }) => {
                         onClick={() => navigate('/settings')}
                         sx={{
                             display:   { xs: 'none', sm: 'inline-flex' },
-                            color:     'rgba(255,255,255,0.55)',
+                            color:     'text.secondary',
                             transition:`all 0.2s ${E}`,
                             '&:hover': {
                                 color:   'text.primary',
-                                bgcolor: 'theme.palette.action.hover',
-                                transform:'rotate(22deg)' } }}
+                                bgcolor: 'rgba(43, 43, 43, 0.04)',
+                                transform:'rotate(20deg)' } }}
                     >
                         <SettingsIcon />
                     </IconButton>
                 </Tooltip>
 
                 {/* Divider */}
-                <Box sx={{ width: 1, height: 28, bgcolor: 'rgba(255,255,255,0.1)', display: { xs: 'none', sm: 'block' } }} />
+                <Box sx={{ width: '1px', height: 24, bgcolor: 'rgba(43, 43, 43, 0.08)', display: { xs: 'none', sm: 'block' } }} />
 
                 {/* User avatar + dropdown */}
                 <Box
@@ -258,25 +242,25 @@ const Header = ({ onMenuClick }) => {
                         alignItems:  'center',
                         gap:         1,
                         cursor:      'pointer',
-                        p:           '6px 10px 6px 6px',
-                        
-                        border:      `1px solid ${Boolean(anchorEl) ? 'rgba(255,214,0,0.35)' : 'rgba(255,255,255,0.09)'}`,
-                        background:  Boolean(anchorEl)
-                            ? 'rgba(255,214,0,0.06)'
-                            : 'theme.palette.action.hover',
+                        p:           '4px 8px 4px 4px',
+                        borderRadius:'12px',
+                        border:      `1.5px solid ${Boolean(anchorEl) ? '#DDA15E' : 'rgba(43, 43, 43, 0.06)'}`,
+                        background:  Boolean(anchorEl) ? 'rgba(221, 161, 94, 0.05)' : '#FFFFFF',
                         transition:  `all 0.2s ${E}`,
+                        boxShadow:   '0 2px 8px rgba(43, 43, 43, 0.02)',
                         '&:hover': {
-                            border:    '1px solid rgba(255,214,0,0.3)',
-                            background:'rgba(255,214,0,0.05)' } }}
+                            border:    '1.5px solid #DDA15E',
+                            background:'rgba(221, 161, 94, 0.04)' } }}
                 >
                     <Avatar
                         sx={{
-                            width:      34,
-                            height:     34,
-                            fontSize:   '0.78rem',
+                            width:      32,
+                            height:     32,
+                            fontSize:   '0.75rem',
                             fontWeight: 800,
-                            bgcolor: 'primary.main', color: 'primary.contrastText',
-                            boxShadow:  `0 0 10px ${YG}` }}
+                            bgcolor:    'primary.main',
+                            color:      '#FFFFFF',
+                            boxShadow:  `0 2px 8px rgba(221, 161, 94, 0.25)` }}
                     >
                         {initials}
                     </Avatar>
@@ -285,7 +269,7 @@ const Header = ({ onMenuClick }) => {
                         <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', lineHeight: 1.1 }}>
                             {user?.firstName}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1, textTransform: 'capitalize' }}>
+                        <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', lineHeight: 1, textTransform: 'capitalize' }}>
                             {user?.role || 'user'}
                         </Typography>
                     </Box>
@@ -294,7 +278,7 @@ const Header = ({ onMenuClick }) => {
                         sx={{
                             display:   { xs: 'none', md: 'block' },
                             fontSize:  16,
-                            color:     'rgba(255,255,255,0.4)',
+                            color:     'text.secondary',
                             transform: Boolean(anchorEl) ? 'rotate(180deg)' : 'none',
                             transition:`transform 0.2s ${E}` }}
                     />
@@ -309,21 +293,20 @@ const Header = ({ onMenuClick }) => {
                     anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     PaperProps={{
                         sx: {
-                            mt:             1.5,
-                            minWidth:       200,
-                            
-                            bgcolor:        'rgba(18,18,30,0.97)',
-                            backdropFilter: 'blur(20px)',
-                            border:         '1px solid rgba(255,255,255,0.1)',
-                            boxShadow:      '0 16px 48px rgba(0,0,0,0.5)',
+                            mt:             1,
+                            minWidth:       210,
+                            bgcolor:        '#FFFFFF',
+                            border:         '1px solid rgba(43, 43, 43, 0.08)',
+                            boxShadow:      '0 12px 30px -4px rgba(43, 43, 43, 0.08)',
+                            borderRadius:   '14px',
                             overflow:       'hidden' } }}
                 >
                     {/* User card at top */}
-                    <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                    <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid rgba(43, 43, 43, 0.06)', bgcolor: 'rgba(250, 247, 242, 0.5)' }}>
                         <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>
                             {displayName}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                        <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', textTransform: 'capitalize', mt: 0.25 }}>
                             {user?.role} · {user?.email}
                         </Typography>
                     </Box>
@@ -333,25 +316,25 @@ const Header = ({ onMenuClick }) => {
                             onClick={() => { handleMenuClose(); navigate('/profile'); }}
                             sx={menuItemSx}
                         >
-                            <ProfileIcon sx={{ fontSize: 18, mr: 1.5, color: 'rgba(255,255,255,0.6)' }} />
+                            <ProfileIcon sx={{ fontSize: 18, mr: 1.5, color: 'text.secondary' }} />
                             My Profile
                         </MenuItem>
                         <MenuItem
                             onClick={() => { handleMenuClose(); navigate('/settings'); }}
                             sx={menuItemSx}
                         >
-                            <SettingsIcon sx={{ fontSize: 18, mr: 1.5, color: 'rgba(255,255,255,0.6)' }} />
+                            <SettingsIcon sx={{ fontSize: 18, mr: 1.5, color: 'text.secondary' }} />
                             Account Settings
                         </MenuItem>
 
-                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.07)', my: '6px' }} />
+                        <Divider sx={{ borderColor: 'rgba(43, 43, 43, 0.06)', my: '6px' }} />
 
                         <MenuItem
                             onClick={handleLogout}
                             sx={{
                                 ...menuItemSx,
                                 color: '#EF4444',
-                                '&:hover': { bgcolor: 'rgba(239,68,68,0.12)', color: 'error.light' } }}
+                                '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.06)', color: '#EF4444' } }}
                         >
                             <LogoutIcon sx={{ fontSize: 18, mr: 1.5 }} />
                             Sign Out
@@ -365,15 +348,17 @@ const Header = ({ onMenuClick }) => {
 
 /* Shared menu item styles */
 const menuItemSx = {
-    
     fontSize:     '0.85rem',
     fontWeight:   500,
-    color:        'rgba(255,255,255,0.82)',
+    color:        'text.primary',
+    borderRadius: '8px',
+    py:           1,
+    px:           1.5,
+    my:           0.25,
     transition:   'all 0.15s ease',
-    gap:          0,
     '&:hover': {
-        bgcolor:   'rgba(255,255,255,0.07)',
+        bgcolor:   'rgba(221, 161, 94, 0.06)',
         color:     'text.primary',
-        transform: 'translateX(3px)' } };
+        transform: 'translateX(2px)' } };
 
 export default Header;

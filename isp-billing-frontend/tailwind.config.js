@@ -11,43 +11,49 @@ module.exports = {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#FFD300', // Primary Accent Yellow
-                    light: '#FFEB99', // Soft Gold Glow
-                    dark: '#FFCC00', // Hover/Active Yellow
-                    contrast: '#000000',
+                    DEFAULT: '#DDA15E', // Warm wheat/gold tone
+                    light: '#F4D3B2', // Soft warm glow
+                    dark: '#BC813F', // Hover/Active gold
+                    contrast: '#2B2B2B',
+                },
+                secondary: {
+                    DEFAULT: '#2D6A4F', // Elegant green tone
+                    light: '#52B788',
+                    dark: '#1B4332',
                 },
                 background: {
-                    DEFAULT: '#0B0B0B', // Primary System Background
-                    paper: '#111111', // Secondary Background
-                    sidebar: '#0E0E0E', // Sidebar/Navbar Background
+                    DEFAULT: '#FAF7F2', // Very light warm cream background
+                    paper: '#FFFFFF', // White surface
+                    sidebar: '#FFFFFF', // White sidebar surface
+                    elevated: '#F3EFE9', // Light elevated surface
                 },
                 text: {
-                    primary: '#FFFFFF',
-                    secondary: '#BFBFBF',
-                    muted: '#8A8A8A',
-                    disabled: '#5C5C5C',
+                    primary: '#2B2B2B', // Charcoal text
+                    secondary: '#5C5852', // Soft brown-gray text
+                    muted: '#8E877E', // Muted brown-gray text
+                    disabled: '#C5BEB5', // Disabled text
                 },
                 status: {
-                    success: '#22C55E',
-                    warning: '#FACC15',
+                    success: '#2D6A4F', // Using secondary green for success
+                    warning: '#DDA15E', // Using primary yellow for warning
                     error: '#EF4444',
                     info: '#3B82F6',
                 },
                 charts: {
                     blue: '#3B82F6',
-                    green: '#22C55E',
-                    orange: '#F97316',
-                    purple: '#A855F7',
+                    green: '#2D6A4F',
+                    orange: '#DDA15E',
+                    purple: '#8B5CF6',
                     teal: '#14B8A6',
                     pink: '#EC4899',
                 },
                 glass: {
-                    DEFAULT: 'rgba(255, 255, 255, 0.08)',
-                    border: 'rgba(255, 255, 255, 0.18)',
+                    DEFAULT: 'rgba(255, 255, 255, 0.7)',
+                    border: 'rgba(43, 43, 43, 0.1)',
                 }
             },
             backgroundImage: {
-                'gradient-primary': 'linear-gradient(135deg, #FFD300 0%, #FFCC00 100%)',
+                'gradient-primary': 'linear-gradient(135deg, #DDA15E 0%, #BC813F 100%)',
             },
             fontFamily: {
                 sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],

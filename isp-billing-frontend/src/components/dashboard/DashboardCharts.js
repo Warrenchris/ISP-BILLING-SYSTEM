@@ -35,22 +35,22 @@ const DashboardCharts = ({ userGrowthHistory = [], usageHistory = [], userStatus
             <div className="lg:col-span-2">
                 <CustomCard className="h-full">
                     <div className="p-6 sm:p-8">
-                        <h6 className="text-lg font-bold text-white mb-6">User Growth Trend</h6>
+                        <h6 className="text-lg font-bold text-text-primary mb-6">User Growth Trend</h6>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={growthSeries}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.custom.borderDefault} vertical={false} />
                                     <XAxis
                                         dataKey={xAxisKey}
                                         tickFormatter={formatTick}
                                         stroke={theme.palette.text.secondary}
-                                        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                                        tick={{ fill: theme.palette.text.secondary, fontSize: 12, fontFamily: '"Inter", sans-serif' }}
                                         axisLine={false}
                                         tickLine={false}
                                     />
                                     <YAxis
                                         stroke={theme.palette.text.secondary}
-                                        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                                        tick={{ fill: theme.palette.text.secondary, fontSize: 12, fontFamily: '"Inter", sans-serif' }}
                                         axisLine={false}
                                         tickLine={false}
                                     />
@@ -71,7 +71,7 @@ const DashboardCharts = ({ userGrowthHistory = [], usageHistory = [], userStatus
             <div className="lg:col-span-1">
                 <CustomCard className="h-full">
                     <div className="p-6 sm:p-8">
-                        <h6 className="text-lg font-bold text-white mb-6">User Status Distribution</h6>
+                        <h6 className="text-lg font-bold text-text-primary mb-6">User Status Distribution</h6>
                         <div className="h-[250px] w-full relative flex items-center justify-center">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -94,15 +94,15 @@ const DashboardCharts = ({ userGrowthHistory = [], usageHistory = [], userStatus
                         </div>
                         <div className="mt-6 space-y-3">
                             {userStatusData.map((item, index) => (
-                                <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
+                                <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-black/5 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div
                                             className="w-3 h-3 rounded-full"
                                             style={{ backgroundColor: chartColors[index % chartColors.length] }}
                                         />
-                                        <span className="text-sm text-gray-300 font-medium">{item.name}</span>
+                                        <span className="text-sm text-text-secondary font-medium">{item.name}</span>
                                     </div>
-                                    <span className="text-sm font-bold text-white">{item.value}</span>
+                                    <span className="text-sm font-bold text-text-primary">{item.value}</span>
                                 </div>
                             ))}
                         </div>

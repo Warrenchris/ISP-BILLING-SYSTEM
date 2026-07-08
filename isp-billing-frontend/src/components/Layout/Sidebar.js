@@ -28,16 +28,16 @@ import {
     useMediaQuery, useTheme, Avatar } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 
-/* ─── Brand tokens (kept in one place) ─────────────────────────────────────── */
+/* ─── Brand tokens ─────────────────────────────────────────────────────────── */
 const T = {
-    yellow:      'var(--brand-yellow)',
-    yellowGlow:  'var(--brand-yellow-glow)',
-    yellowDim:   'var(--brand-yellow-dim)',
-    bgTop:       'var(--sidebar-bg-top)',
-    bgBottom:    'var(--sidebar-bg-bottom)',
-    muted:       'var(--text-muted)',
-    inactive:    'var(--text-nav-inactive)',
-    hover:       'var(--nav-item-hover)',
+    yellow:      '#DDA15E', // Warm Gold
+    yellowGlow:  'rgba(221, 161, 94, 0.15)',
+    yellowDim:   'rgba(221, 161, 94, 0.08)',
+    bgTop:       '#FFFFFF',
+    bgBottom:    '#FAF7F2',
+    muted:       '#8E877E',
+    inactive:    '#5C5852',
+    hover:       'rgba(221, 161, 94, 0.05)',
     ease:        'cubic-bezier(0.4, 0, 0.2, 1)',
     displayFont: 'inherit' };
 
@@ -105,18 +105,11 @@ function SectionLabel({ title }) {
             display="flex"
             alignItems="center"
             gap={1}
-            sx={{ mb: 0.5, mt: 0.5, px: 1 }}
+            sx={{ mb: 0.5, mt: 1.5, px: 1 }}
         >
-            <Box
-                sx={{
-                    height: '1px',
-                    width: 16,
-                    bgcolor: 'primary.main', color: 'primary.contrastText',
-                    flexShrink: 0 }}
-            />
             <Typography
                 sx={{
-                    color:          T.muted,
+                    color:          'primary.main',
                     fontSize:       '10px',
                     fontWeight:     700,
                     letterSpacing:  '0.15em',
@@ -130,7 +123,7 @@ function SectionLabel({ title }) {
                 sx={{
                     height: '1px',
                     flex: 1,
-                    bgcolor: 'primary.main', color: 'primary.contrastText' }}
+                    bgcolor: 'custom.borderDefault' }}
             />
         </Box>
     );
@@ -148,7 +141,7 @@ function NavItem({ item, collapsed, index, onNavigate }) {
             title={collapsed ? item.text : ''}
             placement="right"
             arrow
-            slotProps={{ tooltip: { sx: { bgcolor: '#1a1a2e', fontSize: 12, fontWeight: 600 } } }}
+            slotProps={{ tooltip: { sx: { bgcolor: 'background.paper', border: '1px solid rgba(43, 43, 43, 0.08)', color: 'text.primary', fontSize: 12, fontWeight: 600 } } }}
         >
             <NavLink
                 to={item.path}
@@ -156,7 +149,6 @@ function NavItem({ item, collapsed, index, onNavigate }) {
                 onClick={onNavigate}
                 className="nav-item-animate"
                 style={{ textDecoration: 'none', display: 'block' }}
-                // inline delay for stagger
                 data-delay={`${index * 50}ms`}
             >
                 <Box
@@ -176,15 +168,14 @@ function NavItem({ item, collapsed, index, onNavigate }) {
 
                         // Active state
                         ...(isActive ? {
-                            background:  'linear-gradient(90deg, rgba(255,214,0,0.18) 0%, rgba(255,214,0,0.05) 100%)',
+                            background:  'linear-gradient(90deg, rgba(221,161,94,0.12) 0%, rgba(221,161,94,0.02) 100%)',
                             borderLeft:  `3px solid ${T.yellow}` } : {
                             borderLeft:  '3px solid transparent',
                             '&:hover': {
                                 background:  T.hover,
-                                borderLeft:  `3px solid rgba(255,214,0,0.45)`,
+                                borderLeft:  `3px solid rgba(221,161,94,0.45)`,
                                 '& .nav-icon': {
-                                    color: 'primary.main',
-                                    filter: `drop-shadow(0 0 5px ${T.yellowGlow})` },
+                                    color: 'primary.main' },
                                 '& .nav-label': { color: 'text.primary' } } }) }}
                 >
                     {/* Active left-glow bar (absolute) */}
@@ -197,9 +188,7 @@ function NavItem({ item, collapsed, index, onNavigate }) {
                                 transform:    'translateY(-50%)',
                                 width:        3,
                                 height:       '70%',
-                                
-                                background:   T.yellow,
-                                boxShadow:    `0 0 10px ${T.yellowGlow}` }}
+                                background:   T.yellow }}
                         />
                     )}
 
@@ -210,11 +199,8 @@ function NavItem({ item, collapsed, index, onNavigate }) {
                             fontSize:   21,
                             flexShrink: 0,
                             transition: `all 0.2s ${T.ease}`,
-                            color:      isActive ? T.yellow : T.inactive,
-                            opacity:    isActive ? 1 : 0.75,
-                            filter:     isActive
-                                ? `drop-shadow(0 0 6px ${T.yellowGlow})`
-                                : 'none' }}
+                            color:      isActive ? 'primary.main' : T.inactive,
+                            opacity:    isActive ? 1 : 0.75 }}
                     />
 
                     {/* Label */}
@@ -248,16 +234,16 @@ function CollapseToggle({ collapsed, onToggle }) {
                 right:           -16,
                 width:           32,
                 height:          32,
-                bgcolor:         '#14141f',
-                border:          `1.5px solid ${T.yellow}`,
-                color: 'primary.main',
+                bgcolor:         'background.paper',
+                border:          `1.5px solid rgba(43, 43, 43, 0.08)`,
+                color:           'text.primary',
                 transition:      `all 0.2s ${T.ease}`,
-                boxShadow:       `0 0 0 0 ${T.yellowGlow}`,
+                boxShadow:       `0 2px 10px rgba(43, 43, 43, 0.05)`,
                 zIndex:          10,
                 '&:hover': {
-                    boxShadow:   `0 0 0 4px ${T.yellowGlow}`,
+                    boxShadow:   `0 4px 15px rgba(43, 43, 43, 0.1)`,
                     transform:   'scale(1.12)',
-                    bgcolor:     '#1a1a2e' } }}
+                    bgcolor:     'background.elevated' } }}
         >
             {collapsed
                 ? <ChevronRight sx={{ fontSize: 17 }} />
@@ -292,19 +278,18 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                 position:      'relative',
                 overflow:      'hidden',
 
-                /* Gradient background */
-                bgcolor: 'primary.main', color: 'primary.contrastText',
+                bgcolor: 'background.paper',
+                color: 'text.primary',
 
-                /* Right-edge yellow accent line */
+                /* Right-edge border */
                 '&::after': {
                     content:    '""',
                     position:   'absolute',
                     top:        0,
                     right:      0,
-                    width:      '1.5px',
+                    width:      '1px',
                     height:     '100%',
-                    bgcolor: 'primary.main', color: 'primary.contrastText',
-                    opacity:    0.5,
+                    bgcolor:    'custom.borderDefault',
                     pointerEvents: 'none' } }}
         >
             {/* ── Logo / Brand ─────────────────────────────────────────── */}
@@ -314,7 +299,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                     display:        'flex',
                     alignItems:     'center',
                     justifyContent: collapsed ? 'center' : 'space-between',
-                    borderBottom:   '1px solid rgba(255,255,255,0.04)',
+                    borderBottom:   '1px solid rgba(43, 43, 43, 0.04)',
                     mb:             0.5 }}
             >
                 <Box display="flex" alignItems="center" gap={1.5}>
@@ -323,22 +308,22 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         sx={{
                             width:         42,
                             height:        42,
-                            
+                            borderRadius:  '12px',
                             flexShrink:    0,
-                            bgcolor: 'primary.main', color: 'primary.contrastText',
+                            bgcolor:       'primary.main',
                             display:       'flex',
                             alignItems:    'center',
                             justifyContent:'center',
-                            boxShadow:     `0 0 20px rgba(255,200,0,0.45), 0 0 8px rgba(255,200,0,0.3)`,
+                            boxShadow:     `0 4px 15px -2px rgba(221, 161, 94, 0.45)`,
                             transition:    `box-shadow 0.3s ${T.ease}`,
                             '&:hover': {
-                                boxShadow: `0 0 30px rgba(255,200,0,0.65), 0 0 12px rgba(255,200,0,0.45)` } }}
+                                boxShadow: `0 8px 20px -2px rgba(221, 161, 94, 0.6)` } }}
                     >
                         <Typography
                             sx={{
                                 fontWeight: 800,
                                 fontSize:   '0.9rem',
-                                color:      'text.primary',
+                                color:      '#FFFFFF',
                                 letterSpacing: '0.02em' }}
                         >
                             ISP
@@ -350,38 +335,40 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         <Box>
                             <Typography
                                 sx={{
-                                    fontWeight:  800,
-                                    fontSize:    '1rem',
-                                    lineHeight:  1.2,
-                                    bgcolor: 'primary.main', color: 'primary.contrastText',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor:  'transparent',
-                                    letterSpacing: '0.01em' }}
+                                    fontWeight:    800,
+                                    fontSize:      '1.1rem',
+                                    lineHeight:    1.2,
+                                    color:         'text.primary',
+                                    letterSpacing: '0.01em',
+                                }}
                             >
                                 ISP Billing
                             </Typography>
 
                             {/* Version badge */}
                             <Box
+                                component="span"
                                 sx={{
-                                    display:        'inline-flex',
-                                    alignItems:     'center',
-                                    mt:             '3px',
-                                    px:             '7px',
-                                    py:             '2px',
-                                    
-                                    background:     'rgba(0,0,0,0.45)',
-                                    border:         `1px solid rgba(255,214,0,0.3)`,
-                                    boxShadow:      `0 0 8px rgba(255,214,0,0.15)` }}
+                                    display:      'inline-flex',
+                                    alignItems:   'center',
+                                    mt:           '3px',
+                                    px:           '7px',
+                                    py:           '2px',
+                                    borderRadius: '4px',
+                                    background:   'rgba(45, 106, 79, 0.06)',
+                                    border:       '1px solid rgba(45, 106, 79, 0.15)',
+                                }}
                             >
                                 <Typography
+                                    component="span"
                                     sx={{
                                         fontSize:      '9px',
                                         fontWeight:    700,
-                                        color: 'primary.main',
-                                        letterSpacing: '0.08em' }}
+                                        color:         'secondary.main',
+                                        letterSpacing: '0.08em',
+                                    }}
                                 >
-                                    System v2.0
+                                    v2.0
                                 </Typography>
                             </Box>
                         </Box>
@@ -406,7 +393,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         {!collapsed ? (
                             <SectionLabel title={section.title} />
                         ) : (
-                            <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.05)' }} />
+                            <Divider sx={{ my: 1, borderColor: 'custom.borderDefault' }} />
                         )}
 
                         {section.items.map((item) => {
@@ -445,7 +432,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         left:     '10%',
                         right:    '10%',
                         height:   '1px',
-                        bgcolor: 'primary.main', color: 'primary.contrastText' } }}
+                        bgcolor:  'custom.borderDefault' } }}
             >
                 {/* Profile card */}
                 <NavLink
@@ -461,15 +448,15 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                                 gap:           1.5,
                                 p:             collapsed ? 1 : 1.25,
                                 mb:            0.75,
-                                
+                                borderRadius:  '12px',
                                 justifyContent: collapsed ? 'center' : 'flex-start',
-                                border:        `1px solid ${isActive ? 'rgba(255,214,0,0.25)' : 'rgba(255,255,255,0.07)'}`,
-                                background:    isActive ? 'rgba(255,214,0,0.06)' : 'rgba(255,255,255,0.02)',
+                                border:        `1px solid ${isActive ? 'rgba(221,161,94,0.25)' : 'rgba(43,43,43,0.04)'}`,
+                                background:    isActive ? 'rgba(221,161,94,0.06)' : 'rgba(43,43,43,0.02)',
                                 transition:    `all 0.2s ${T.ease}`,
                                 cursor:        'pointer',
                                 '&:hover': {
-                                    border:     `1px solid rgba(255,214,0,0.3)`,
-                                    background: 'rgba(255,214,0,0.06)' } }}
+                                    border:     `1px solid rgba(221,161,94,0.3)`,
+                                    background: 'rgba(221,161,94,0.08)' } }}
                         >
                             <Avatar
                                 sx={{
@@ -478,9 +465,9 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                                     fontSize:   '0.8rem',
                                     fontWeight: 700,
                                     flexShrink: 0,
-                                    bgcolor: 'primary.main',
-                                    color:      '#000',
-                                    boxShadow:  `0 0 10px ${T.yellowDim}` }}
+                                    bgcolor:    'secondary.main',
+                                    color:      '#FFFFFF',
+                                    boxShadow:  `0 2px 8px rgba(45, 106, 79, 0.2)` }}
                             >
                                 {initials}
                             </Avatar>
@@ -509,12 +496,12 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                             gap:            1.5,
                             px:             collapsed ? 1 : 1.5,
                             py:             1,
-                            
+                            borderRadius:   '8px',
                             cursor:         'pointer',
-                            color:          'rgba(239,68,68,0.75)',
+                            color:          'rgba(239,68,68,0.85)',
                             transition:     `all 0.2s ${T.ease}`,
                             '&:hover': {
-                                bgcolor: 'rgba(239,68,68,0.1)',
+                                bgcolor: 'rgba(239,68,68,0.08)',
                                 color:   '#EF4444',
                                 '& .logout-icon': {
                                     transform: 'translateX(3px)' } } }}
@@ -543,7 +530,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
 /* ─── Sidebar wrapper ───────────────────────────────────────────────────────── */
 const Sidebar = ({ mobileOpen, setMobileOpen }) => {
     const theme     = useTheme();
-    const isDesktop = useMediaQuery(theme.breakpoints.up('md')); // eslint-disable-line no-unused-vars
+    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
     const [collapsed, setCollapsed] = useState(false);
 
     const drawerWidth = collapsed ? 72 : 272;
