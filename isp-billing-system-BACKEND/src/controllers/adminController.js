@@ -302,8 +302,23 @@ exports.getSystemStats = async (req, res, next) => {
 
     // Get subscription counts
     const totalSubscriptions = await Subscription.count();
-    const activeSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.ACTIVE } });
-    const expiredSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.EXPIRED } });
+    const activeSubscriptions = await Subscription.count({
+      where: {
+        status: SubscriptionStatus.ACTIVE,
+        endDate: { [Op.gt]: new Date() }
+      }
+    });
+    const expiredSubscriptions = await Subscription.count({
+      where: {
+        [Op.or]: [
+          { status: SubscriptionStatus.EXPIRED },
+          {
+            status: SubscriptionStatus.ACTIVE,
+            endDate: { [Op.lte]: new Date() }
+          }
+        ]
+      }
+    });
     const pendingSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.PENDING } });
     const suspendedSubscriptions = await Subscription.count({ where: { status: SubscriptionStatus.SUSPENDED } });
 

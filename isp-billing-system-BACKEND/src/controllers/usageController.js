@@ -13,7 +13,8 @@ const getCurrentUsage = async (req, res) => {
     const subscription = await Subscription.findOne({
       where: {
         userId,
-        status: SubscriptionStatus.ACTIVE
+        status: SubscriptionStatus.ACTIVE,
+        endDate: { [Op.gt]: new Date() }
       },
       include: [{
         model: DataPlan,
@@ -238,7 +239,9 @@ const getUsageAnalytics = async (req, res) => {
     // Get current subscription
     const subscription = await Subscription.findOne({
       where: {
-        status: SubscriptionStatus.ACTIVE
+        userId,
+        status: SubscriptionStatus.ACTIVE,
+        endDate: { [Op.gt]: new Date() }
       },
       include: [{
         model: DataPlan,

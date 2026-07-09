@@ -47,7 +47,8 @@ const createSubscription = async (req, res) => {
     const activeSubscription = await Subscription.findOne({
       where: {
         userId,
-        status: SubscriptionStatus.ACTIVE
+        status: SubscriptionStatus.ACTIVE,
+        endDate: { [Op.gt]: new Date() }
       }
     });
 
@@ -225,7 +226,8 @@ const getCurrentSubscription = async (req, res) => {
     const subscription = await Subscription.findOne({
       where: {
         userId,
-        status: SubscriptionStatus.ACTIVE
+        status: SubscriptionStatus.ACTIVE,
+        endDate: { [Op.gt]: new Date() }
       },
       include: [
         { model: DataPlan, as: 'plan' },

@@ -29,7 +29,14 @@ const Subscription = sequelize.define('Subscription', {
       SubscriptionStatus.SUSPENDED,
       SubscriptionStatus.CANCELLED
     ),
-    defaultValue: SubscriptionStatus.PENDING
+    defaultValue: SubscriptionStatus.PENDING,
+    get() {
+      const rawValue = this.getDataValue('status');
+      if (rawValue === SubscriptionStatus.ACTIVE && this.endDate && new Date() > new Date(this.endDate)) {
+        return SubscriptionStatus.EXPIRED;
+      }
+      return rawValue;
+    }
   },
   startDate: {
     type: DataTypes.DATE,
@@ -147,9 +154,9 @@ Subscription.prototype.updateDataUsage = async function (usedMB) {
   return this;
 };
 
-Subscription.prototype.activateSubscription = async function () {
+Subscription.prototype.activateSubscription = async function (options = {}) {
   const { DataPlan } = require('./index');
-  const plan = await DataPlan.findByPk(this.planId);
+  const plan = await DataPlan.findByPk(this.planId, options);
   if (!plan) throw new Error('Plan not found');
 
   const now = new Date();
@@ -163,13 +170,26 @@ Subscription.prototype.activateSubscription = async function () {
     default: endDate.setMonth(endDate.getMonth() + 1);
   }
 
+  // Deactivate any other active subscriptions for this user
+  await Subscription.update(
+    { status: SubscriptionStatus.CANCELLED, notes: 'Superseded by new subscription activation' },
+    {
+      where: {
+        userId: this.userId,
+        status: SubscriptionStatus.ACTIVE,
+        id: { [Op.ne]: this.id }
+      },
+      ...options
+    }
+  );
+
   await this.update({
     status: SubscriptionStatus.ACTIVE,
     activatedAt: now,
     endDate,
     dataUsed: 0,
     dataRemaining: plan.dataLimit
-  });
+  }, options);
 
   return this;
 };

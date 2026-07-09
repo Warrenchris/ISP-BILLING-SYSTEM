@@ -111,9 +111,24 @@ exports.getAdminOverview = async (req, res, next) => {
       User.count({ where: { created_at: { [Op.between]: [start, end] } } }),
       Payment.sum('amount', { where: { status: PaymentStatus.COMPLETED } }),
       Payment.sum('amount', { where: { status: PaymentStatus.COMPLETED, created_at: { [Op.between]: [start, end] } } }),
-      Subscription.count({ where: { status: SubscriptionStatus.ACTIVE } }),
+      Subscription.count({
+        where: {
+          status: SubscriptionStatus.ACTIVE,
+          endDate: { [Op.gt]: new Date() }
+        }
+      }),
       Subscription.count({ where: { status: SubscriptionStatus.PENDING } }),
-      Subscription.count({ where: { status: SubscriptionStatus.EXPIRED } }),
+      Subscription.count({
+        where: {
+          [Op.or]: [
+            { status: SubscriptionStatus.EXPIRED },
+            {
+              status: SubscriptionStatus.ACTIVE,
+              endDate: { [Op.lte]: new Date() }
+            }
+          ]
+        }
+      }),
       SupportTicket.count({ where: { status: { [Op.in]: ['open', 'in_progress'] } } }),
       SupportTicket.count({ where: { status: { [Op.in]: ['open', 'in_progress'] }, priority: { [Op.in]: ['high', 'critical'] } } }),
       // Invoice model doesn't have "pending" status; treat draft/sent as pending.

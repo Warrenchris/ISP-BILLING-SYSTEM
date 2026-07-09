@@ -27,7 +27,11 @@ async function fetchCustomerContext(customerId) {
 
   // Active subscription + plan details
   const subscription = await Subscription.findOne({
-    where: { userId: customerId, status: 'active' },
+    where: {
+      userId: customerId,
+      status: 'active',
+      endDate: { [Op.gt]: new Date() }
+    },
     include: [{ model: DataPlan, as: 'plan' }],
     order: [['created_at', 'DESC']]
   });

@@ -348,7 +348,7 @@ export default function Subscriptions() {
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="body2">Data usage</Typography>
                   <Typography variant="body2">
-                    {formatBytes(currentSub.dataRemaining || 0)} remaining
+                    {formatBytes((currentSub.dataRemaining || 0) * 1024 * 1024)} remaining
                   </Typography>
                 </Box>
                 <LinearProgress
@@ -379,7 +379,7 @@ export default function Subscriptions() {
                   <Box display="flex" alignItems="center" mb={1}>
                     <DataUsageIcon sx={{ mr: 1 }} fontSize="small" />
                     <Typography variant="body2">
-                      {formatBytes(currentSub.DataPlan?.dataLimit || 0)} total
+                      {formatBytes((currentSub.DataPlan?.dataLimit || 0) * 1024 * 1024)} total
                     </Typography>
                   </Box>
                 </Grid>
@@ -441,7 +441,7 @@ export default function Subscriptions() {
                       <Box display="flex" justifyContent="space-between">
                         <Typography variant="body2">Data usage</Typography>
                         <Typography variant="body2">
-                          {formatBytes(s.dataRemaining || 0)} left
+                          {formatBytes((s.dataRemaining || 0) * 1024 * 1024)} left
                         </Typography>
                       </Box>
                       <LinearProgress
@@ -461,7 +461,7 @@ export default function Subscriptions() {
                     <Box display="flex" alignItems="center" mb={2}>
                       <DataUsageIcon sx={{ mr: 1 }} fontSize="small" />
                       <Typography variant="body2">
-                        Total {formatBytes(s.DataPlan?.dataLimit || 0)}
+                        Total {formatBytes((s.DataPlan?.dataLimit || 0) * 1024 * 1024)}
                       </Typography>
                     </Box>
 
@@ -540,8 +540,8 @@ export default function Subscriptions() {
                           color={statusColor((row.paymentStatus || "").toLowerCase())}
                         />
                       </Box>
-                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {formatBytes(row.dataRemaining || 0)}
+                       <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {formatBytes((row.dataRemaining || 0) * 1024 * 1024)}
                       </Box>
                       <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {row.endDate ? new Date(row.endDate).toLocaleDateString() : "—"}

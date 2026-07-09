@@ -46,8 +46,8 @@ const PlanForm = ({ open, onClose, onSaved }) => {
         speed: form.speed.trim() || 'N/A',
         price: Number(form.price),
         validityPeriod: Number(form.validityPeriod),
-        // convert MB → bytes
-        dataLimit: Number(form.dataLimitMB) * 1024 * 1024,
+        // save in MB (matches backend/database schema unit)
+        dataLimit: Number(form.dataLimitMB),
         isPopular: false,
         features: []
       };

@@ -641,7 +641,7 @@ const DataPlans = () => {
                         <Box display="flex" alignItems="center">
                           <VerifiedIcon sx={{ color: config.borderColor, mr: 1, fontSize: 16 }} />
                           <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 'medium' }}>
-                            {formatBytes(plan.dataLimit)} Data
+                            {formatBytes(plan.dataLimit * 1024 * 1024)} Data
                           </Typography>
                         </Box>
 
@@ -908,7 +908,7 @@ const DataPlans = () => {
                           color: 'var(--color-text-primary)'
                         }}
                       >
-                        {formatBytes(selectedPlan.dataLimit)}
+                        {formatBytes(selectedPlan.dataLimit * 1024 * 1024)}
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 6 }}>

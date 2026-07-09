@@ -60,7 +60,10 @@ exports.getReportsSummary = async (req, res, next) => {
     const revenueChange = Math.round(pctChange(revCur, revPrev) * 10) / 10;
 
     const activeSubscribers = await Subscription.count({
-      where: { status: SubscriptionStatus.ACTIVE },
+      where: {
+        status: SubscriptionStatus.ACTIVE,
+        endDate: { [Op.gt]: new Date() }
+      },
     });
 
     const newSubsCur = await Subscription.count({

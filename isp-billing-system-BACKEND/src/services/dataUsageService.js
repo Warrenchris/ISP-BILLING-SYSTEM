@@ -13,7 +13,8 @@ class DataUsageService {
         where: {
           id: subscriptionId,
           userId: userId,
-          status: 'active'
+          status: 'active',
+          endDate: { [Op.gt]: new Date() }
         }
       });
 
