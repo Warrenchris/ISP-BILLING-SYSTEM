@@ -75,18 +75,39 @@ app.set("trust proxy", 1);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
+  const provisioningStatus = require('./services/provisioningStatus');
+  const provisioning = provisioningStatus.getStatus();
+
+  // Overall status reflects provisioning health:
+  // If provisioning is down, the system is DEGRADED (payments work, but customers
+  // won't get connected — the most dangerous silent failure mode).
+  const isHealthy = provisioningStatus.isOperational();
+  const overallStatus = isHealthy ? 'OK' : 'DEGRADED';
+
   const healthCheck = {
-    status: "OK",
+    status: overallStatus,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     version: "1.0.0",
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    pid: process.pid
+    pid: process.pid,
+    provisioning: {
+      status: provisioning.status,
+      since: provisioning.since,
+      reason: provisioning.reason,
+      worker: provisioning.details.worker,
+      expiryScheduler: provisioning.details.expiryScheduler,
+      reconciliationScheduler: provisioning.details.reconciliationScheduler,
+      redisConnected: provisioning.details.redisConnected,
+    },
   };
 
   logger.debug("Health check requested", healthCheck);
-  res.json(healthCheck);
+
+  // Return 200 for OK, 503 for DEGRADED (so monitoring tools alert)
+  const httpStatus = isHealthy ? 200 : 503;
+  res.status(httpStatus).json(healthCheck);
 });
 
 // Metrics endpoint (basic)

@@ -96,6 +96,15 @@ const startServer = async () => {
 
   // 4‑c  Phase 1: Start BullMQ workers and schedulers
   console.log('⚡   Starting Phase 1 provisioning workers…');
+  const provisioningStatus = require('./services/provisioningStatus');
+
+  if (process.env.MOCK_MIKROTIK === 'true') {
+    provisioningStatus.setStatus('disabled', 'MOCK_MIKROTIK=true — no real router connected (dev/CI mode)', {
+      worker: false, expiryScheduler: false, reconciliationScheduler: false, redisConnected: false,
+    });
+    console.log('ℹ️   MOCK_MIKROTIK=true — provisioning in mock mode');
+  }
+
   try {
     const { startWorker } = require('./services/queue/provisioningWorker');
     const { startExpiryScheduler } = require('./jobs/expireSubscriptions');
@@ -104,11 +113,28 @@ const startServer = async () => {
     startWorker();
     startExpiryScheduler();
     startReconciliationScheduler();
+
+    // Only mark as 'operational' if not in mock mode (mock stays 'disabled')
+    if (process.env.MOCK_MIKROTIK !== 'true') {
+      provisioningStatus.setStatus('operational', 'All workers and schedulers running', {
+        worker: true, expiryScheduler: true, reconciliationScheduler: true, redisConnected: true,
+      });
+    } else {
+      // In mock mode, still track that workers started
+      provisioningStatus.setStatus('disabled', 'MOCK_MIKROTIK=true — workers running in mock mode', {
+        worker: true, expiryScheduler: true, reconciliationScheduler: true, redisConnected: true,
+      });
+    }
+
     console.log('✅   Provisioning worker, expiry scheduler, and reconciliation scheduler started');
   } catch (queueErr) {
-    // Don't crash the server if Redis is unavailable — log and continue
-    console.error('⚠️   Failed to start provisioning workers (Redis may be unavailable):', queueErr.message);
-    console.error('     Provisioning features will not work until Redis is connected.');
+    // Don't crash the server — but mark provisioning as DOWN so /health returns 503
+    provisioningStatus.setStatus('down', `Failed to start: ${queueErr.message}`, {
+      worker: false, expiryScheduler: false, reconciliationScheduler: false, redisConnected: false,
+    });
+    console.error('🚨   PROVISIONING IS DOWN — Redis may be unavailable:', queueErr.message);
+    console.error('     /health will return 503 (DEGRADED) until this is resolved.');
+    console.error('     Payments will succeed but customers will NOT get connected.');
   }
 
   // 4‑d  Start Express
