@@ -27,11 +27,23 @@ services:
       - MPESA_PASS_KEY=${MPESA_PASS_KEY:-}
       - MPESA_CALLBACK_URL=${MPESA_CALLBACK_URL:-}
       - MPESA_ENV=${MPESA_ENV:-sandbox}
+      # Phase 1: Router provisioning
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MOCK_MIKROTIK=${MOCK_MIKROTIK:-false}
+      - ROUTER_ENCRYPTION_KEY=${ROUTER_ENCRYPTION_KEY:-}
+      - EXPIRY_CHECK_CRON=${EXPIRY_CHECK_CRON:-*/10 * * * *}
+      - RECONCILIATION_CRON=${RECONCILIATION_CRON:-*/30 * * * *}
+      - DEFAULT_GRACE_PERIOD_HOURS=${DEFAULT_GRACE_PERIOD_HOURS:-24}
+      - PROVISIONING_MAX_RETRIES=${PROVISIONING_MAX_RETRIES:-10}
+      - CIRCUIT_BREAKER_REQUEUE_DELAY_MS=${CIRCUIT_BREAKER_REQUEUE_DELAY_MS:-60000}
     depends_on:
       db:
         condition: service_healthy
       ai-service:
         condition: service_started
+      redis:
+        condition: service_healthy
     volumes:
       - ./isp-billing-system-BACKEND:/app
       - /app/node_modules
@@ -103,6 +115,22 @@ services:
       - isp-network
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: isp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - isp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   isp-network:
     driver: bridge
@@ -110,4 +138,5 @@ networks:
 volumes:
   mysql_data:
   ai_model_data:
+  redis_data:
 

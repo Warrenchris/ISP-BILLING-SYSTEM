@@ -63,7 +63,40 @@ const Subscription = sequelize.define('Subscription', {
   cancelledAt: DataTypes.DATE,
   suspensionReason: DataTypes.STRING(255),
   cancellationReason: DataTypes.STRING(255),
-  notes: DataTypes.TEXT
+  notes: DataTypes.TEXT,
+  // Phase 1: Network provisioning columns
+  connectionType: {
+    type: DataTypes.ENUM('address_list', 'pppoe', 'hotspot'),
+    allowNull: true,
+    defaultValue: null,
+  },
+  networkDeviceId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  networkIdentifier: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: 'Customer IP, MAC, or PPPoE username on the router',
+  },
+  gracePeriodHours: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 24,
+  },
+  provisioningRetryCount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  lastProvisioningAttempt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  reminderSentAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  }
 }, {
   tableName: 'subscriptions',
   underscored: true,

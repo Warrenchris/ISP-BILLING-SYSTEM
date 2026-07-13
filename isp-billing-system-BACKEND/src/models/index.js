@@ -13,6 +13,8 @@ const Notification = require('./Notification');
 const AuditLog = require('./AuditLog');
 const Setting = require('./Setting');
 const AIInsight = require('./AIInsight');
+const NetworkDevice = require('./NetworkDevice');
+const RouterCommandLog = require('./RouterCommandLog');
 
 User.hasMany(Subscription, { foreignKey: 'userId', as: 'Subscriptions' });
 User.hasMany(Payment, { foreignKey: 'userId', as: 'Payments' });
@@ -58,6 +60,13 @@ TicketReply.belongsTo(User, { foreignKey: 'userId', as: 'author' });
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'User' });
+
+// Phase 1: Network device & provisioning associations
+NetworkDevice.hasMany(RouterCommandLog, { foreignKey: 'deviceId', as: 'CommandLogs' });
+RouterCommandLog.belongsTo(NetworkDevice, { foreignKey: 'deviceId', as: 'Device' });
+
+NetworkDevice.hasMany(Subscription, { foreignKey: 'networkDeviceId', as: 'Subscriptions' });
+Subscription.belongsTo(NetworkDevice, { foreignKey: 'networkDeviceId', as: 'NetworkDevice' });
 
 const syncDatabase = async (force = false) => {
   const MAX_RETRIES = 10;
@@ -106,5 +115,7 @@ module.exports = {
   AuditLog,
   Setting,
   AIInsight,
+  NetworkDevice,
+  RouterCommandLog,
   syncDatabase
 };

@@ -94,7 +94,24 @@ const startServer = async () => {
   await syncDatabase(false);          // change to `true` to force‑sync
   console.log('✅   Models synced');
 
-  // 4‑c  Start Express
+  // 4‑c  Phase 1: Start BullMQ workers and schedulers
+  console.log('⚡   Starting Phase 1 provisioning workers…');
+  try {
+    const { startWorker } = require('./services/queue/provisioningWorker');
+    const { startExpiryScheduler } = require('./jobs/expireSubscriptions');
+    const { startReconciliationScheduler } = require('./jobs/reconcileProvisioning');
+
+    startWorker();
+    startExpiryScheduler();
+    startReconciliationScheduler();
+    console.log('✅   Provisioning worker, expiry scheduler, and reconciliation scheduler started');
+  } catch (queueErr) {
+    // Don't crash the server if Redis is unavailable — log and continue
+    console.error('⚠️   Failed to start provisioning workers (Redis may be unavailable):', queueErr.message);
+    console.error('     Provisioning features will not work until Redis is connected.');
+  }
+
+  // 4‑d  Start Express
   console.log('🚀  Starting HTTP server…');
   server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`
@@ -104,6 +121,7 @@ const startServer = async () => {
   → base URL   : http://localhost:${PORT}
   → health     : http://localhost:${PORT}/health
   → docs       : http://localhost:${PORT}/api/docs
+  → mock router: ${process.env.MOCK_MIKROTIK === 'true' ? 'YES (no real router)' : 'NO (real router mode)'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   });
 };

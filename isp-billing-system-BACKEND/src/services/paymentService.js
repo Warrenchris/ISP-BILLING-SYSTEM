@@ -2,6 +2,8 @@ const { Payment, Subscription, DataPlan, User, Invoice, InvoiceItem, sequelize }
 const { PaymentStatus, SubscriptionStatus, InvoiceStatus } = require('../config/constants');
 const MpesaService = require('./mpesaService');
 const mpesaService = new MpesaService();
+const logger = require('../config/logger');
+const { addProvisioningJob } = require('./queue/queueManager');
 
 class PaymentService {
     /**
@@ -413,6 +415,36 @@ class PaymentService {
             }
 
             await transaction.commit();
+
+            // ── Phase 1: Queue provisioning job AFTER transaction commit ──────
+            // This is deliberately outside the transaction. If the queue is down,
+            // the payment still succeeds. The reconciliation sweep catches gaps.
+            if (callbackResult.success && lockedPayment.subscriptionId) {
+                try {
+                    const sub = await Subscription.findByPk(lockedPayment.subscriptionId);
+                    if (sub && sub.connectionType && sub.networkDeviceId && sub.networkIdentifier) {
+                        const jobId = `enable-${sub.id}-${lockedPayment.mpesaReceiptNumber}`;
+                        await addProvisioningJob('enable', {
+                            customerId: sub.userId,
+                            subscriptionId: sub.id,
+                            triggeredBy: `mpesa:${lockedPayment.mpesaReceiptNumber}`,
+                        }, jobId);
+                        logger.info('Provisioning job queued after M-Pesa payment', {
+                            jobId,
+                            subscriptionId: sub.id,
+                            mpesaReceipt: lockedPayment.mpesaReceiptNumber,
+                        });
+                    }
+                } catch (queueError) {
+                    // Log but NEVER fail the payment — reconciliation sweep is the safety net
+                    logger.error('Failed to queue provisioning job after M-Pesa payment', {
+                        subscriptionId: lockedPayment.subscriptionId,
+                        mpesaReceipt: lockedPayment.mpesaReceiptNumber,
+                        error: queueError.message,
+                    });
+                }
+            }
+
             return callbackResult;
 
         } catch (error) {
