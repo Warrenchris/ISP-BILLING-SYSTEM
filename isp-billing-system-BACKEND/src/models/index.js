@@ -15,6 +15,12 @@ const Setting = require('./Setting');
 const AIInsight = require('./AIInsight');
 const NetworkDevice = require('./NetworkDevice');
 const RouterCommandLog = require('./RouterCommandLog');
+// Phase 2: Voucher & RADIUS models
+const Voucher = require('./Voucher');
+const RadCheck = require('./radius/RadCheck');
+const RadReply = require('./radius/RadReply');
+const RadAcct = require('./radius/RadAcct');
+const RadUserGroup = require('./radius/RadUserGroup');
 
 User.hasMany(Subscription, { foreignKey: 'userId', as: 'Subscriptions' });
 User.hasMany(Payment, { foreignKey: 'userId', as: 'Payments' });
@@ -68,6 +74,15 @@ RouterCommandLog.belongsTo(NetworkDevice, { foreignKey: 'deviceId', as: 'Device'
 NetworkDevice.hasMany(Subscription, { foreignKey: 'networkDeviceId', as: 'Subscriptions' });
 Subscription.belongsTo(NetworkDevice, { foreignKey: 'networkDeviceId', as: 'NetworkDevice' });
 
+// Phase 2: Voucher associations
+Voucher.belongsTo(DataPlan, { foreignKey: 'planId', as: 'plan' });
+Voucher.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+Voucher.belongsTo(User, { foreignKey: 'redeemedByCustomerId', as: 'redeemer' });
+Voucher.belongsTo(Subscription, { foreignKey: 'subscriptionId', as: 'subscription' });
+
+DataPlan.hasMany(Voucher, { foreignKey: 'planId', as: 'Vouchers' });
+Subscription.hasOne(Voucher, { foreignKey: 'subscriptionId', as: 'Voucher' });
+
 const syncDatabase = async (force = false) => {
   const MAX_RETRIES = 10;
   const RETRY_DELAY_MS = 5000;
@@ -117,5 +132,10 @@ module.exports = {
   AIInsight,
   NetworkDevice,
   RouterCommandLog,
+  Voucher,
+  RadCheck,
+  RadReply,
+  RadAcct,
+  RadUserGroup,
   syncDatabase
 };
