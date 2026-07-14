@@ -11,7 +11,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Tabs,
   Tab,
   Alert,
@@ -22,13 +21,10 @@ import {
   LinearProgress,
   useTheme,
   alpha,
-  Divider,
 } from '@mui/material';
 import {
-  Wifi as WifiIcon,
   ShoppingBag as ShoppingIcon,
   QrCode as VoucherIcon,
-  PhoneAndroid as MpesaIcon,
   CheckCircle as SuccessIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -43,7 +39,6 @@ export default function Portal() {
   // MikroTik Hotspot Query Parameters
   const linkLoginOnly = searchParams.get('link-login-only') || searchParams.get('link-login');
   const mac = searchParams.get('mac') || '';
-  const ip = searchParams.get('ip') || '';
   const dst = searchParams.get('dst') || 'http://google.com';
   const routerError = searchParams.get('error') || '';
 
