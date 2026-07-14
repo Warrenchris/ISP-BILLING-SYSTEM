@@ -110,11 +110,16 @@ const startServer = async () => {
     const { startExpiryScheduler } = require('./jobs/expireSubscriptions');
     const { startReconciliationScheduler } = require('./jobs/reconcileProvisioning');
     const { startAccountingWatcher } = require('./jobs/accountingWatcher');
+    // Phase 3: SMS Worker and Dunning Scheduler
+    const { startWorker: startSmsWorker } = require('./services/queue/smsWorker');
+    const { startDunningScheduler } = require('./jobs/sendSmsReminders');
 
     startWorker();
     startExpiryScheduler();
     startReconciliationScheduler();
     startAccountingWatcher();
+    startSmsWorker();
+    startDunningScheduler();
 
     // Only mark as 'operational' if not in mock mode (mock stays 'disabled')
     if (process.env.MOCK_MIKROTIK !== 'true') {
@@ -128,7 +133,7 @@ const startServer = async () => {
       });
     }
 
-    console.log('✅   Provisioning worker, expiry/reconciliation schedulers, and accounting watcher started');
+    console.log('✅   Provisioning workers, dunning schedulers, and watchers started');
   } catch (queueErr) {
     // Don't crash the server — but mark provisioning as DOWN so /health returns 503
     provisioningStatus.setStatus('down', `Failed to start: ${queueErr.message}`, {

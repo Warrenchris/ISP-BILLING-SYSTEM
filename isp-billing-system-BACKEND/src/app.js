@@ -30,6 +30,7 @@ const userUsageRoutes = require("./routes/userUsageRoutes");
 const configRoutes = require("./routes/configRoutes");
 const networkDeviceRoutes = require("./routes/networkDeviceRoutes");
 const voucherRoutes = require("./routes/voucherRoutes");
+const smsRoutes = require("./routes/smsRoutes");
 
 // Create Express app
 const app = express();
@@ -147,6 +148,7 @@ app.use("/api/admin/audit-logs", auditRoutes);
 app.use("/api/admin/settings", settingRoutes);
 app.use("/api/admin/network-devices", networkDeviceRoutes);
 app.use("/api/vouchers", voucherRoutes);
+app.use("/api/admin/sms", smsRoutes);
 
 // AI / Machine Learning Routes
 app.use("/api/ai", aiRoutes);
