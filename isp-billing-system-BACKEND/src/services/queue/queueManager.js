@@ -17,6 +17,7 @@ let connection = null;
 let provisioningQueue = null;
 let expiryQueue = null;
 let reconciliationQueue = null;
+let smsQueue = null;
 
 /**
  * Get or create the shared Redis connection for BullMQ.
@@ -105,6 +106,27 @@ function getReconciliationQueue() {
 }
 
 /**
+ * Get the SMS queue.
+ */
+function getSmsQueue() {
+  if (!smsQueue) {
+    smsQueue = new Queue('sms', {
+      connection: getRedisConnection(),
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 10000, // 10s -> 20s -> 40s
+        },
+        removeOnComplete: { age: 86400, count: 500 }, // Keep completed SMS jobs for 24h
+        removeOnFail: { age: 604800 }, // Keep failed SMS jobs for 7 days
+      },
+    });
+  }
+  return smsQueue;
+}
+
+/**
  * Add a provisioning job with a deterministic jobId for dedup.
  *
  * @param {string} action - 'enable' or 'disable'
@@ -134,10 +156,37 @@ async function addProvisioningJob(action, data, jobId) {
 }
 
 /**
+ * Add an SMS send job to the queue with deterministic jobId for dedup.
+ *
+ * @param {string} to - recipient phone number
+ * @param {string} templateKey - SmsTemplate key
+ * @param {object} variables - template replacement variables
+ * @param {string} [tag] - metadata tag for categorization
+ * @param {string} jobId - deterministic job ID for dedup
+ * @returns {object} BullMQ Job instance
+ */
+async function addSmsJob(to, templateKey, variables, tag, jobId) {
+  const queue = getSmsQueue();
+
+  const job = await queue.add('send-sms', {
+    to,
+    templateKey,
+    variables,
+    tag,
+    enqueuedAt: new Date().toISOString(),
+  }, {
+    jobId, // Idempotency check: BullMQ rejects if jobId already exists
+  });
+
+  logger.info(`Queued SMS job: "${templateKey}" to "${to}"`, { jobId });
+  return job;
+}
+
+/**
  * Gracefully close all queues and Redis connection.
  */
 async function closeAll() {
-  const queues = [provisioningQueue, expiryQueue, reconciliationQueue].filter(Boolean);
+  const queues = [provisioningQueue, expiryQueue, reconciliationQueue, smsQueue].filter(Boolean);
   for (const q of queues) {
     await q.close();
   }
@@ -148,6 +197,7 @@ async function closeAll() {
   provisioningQueue = null;
   expiryQueue = null;
   reconciliationQueue = null;
+  smsQueue = null;
   logger.info('All BullMQ queues closed');
 }
 
@@ -156,6 +206,8 @@ module.exports = {
   getProvisioningQueue,
   getExpiryQueue,
   getReconciliationQueue,
+  getSmsQueue,
   addProvisioningJob,
+  addSmsJob,
   closeAll,
 };

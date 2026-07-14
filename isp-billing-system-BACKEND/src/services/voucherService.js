@@ -342,9 +342,53 @@ async function getVoucherStats() {
   return summary;
 }
 
+/**
+ * Purchase a voucher remotely (not printed).
+ * Generates the voucher code and schedules it for immediate SMS delivery.
+ *
+ * @param {string} phoneNumber - buyer's phone number
+ * @param {string} planId - DataPlan UUID
+ * @param {string} createdByUserId - Admin or system user UUID
+ * @returns {Promise<object>} The generated voucher instance
+ */
+async function purchaseVoucherRemote(phoneNumber, planId, createdByUserId) {
+  const { Voucher, DataPlan } = require('../models');
+
+  const plan = await DataPlan.findByPk(planId);
+  if (!plan) throw new Error(`DataPlan ${planId} not found`);
+
+  // Generate a single code
+  const [code] = await Voucher.generateUniqueCodes(1);
+
+  const voucher = await Voucher.create({
+    code,
+    planId,
+    price: plan.price,
+    status: 'unused',
+    batchId: 'remote-purchase',
+    createdBy: createdByUserId,
+  });
+
+  logger.info(`Remote voucher purchased: ${code} for phone ${phoneNumber}`);
+
+  // Trigger SMS Delivery
+  try {
+    const smsSender = require('./sms/smsSender');
+    await smsSender.sendVoucherCode(phoneNumber, voucher, plan);
+  } catch (smsErr) {
+    logger.error('Failed to trigger SMS delivery for remote voucher purchase', {
+      voucherId: voucher.id,
+      error: smsErr.message,
+    });
+  }
+
+  return voucher;
+}
+
 module.exports = {
   generateBatch,
   redeemVoucher,
   revokeVoucher,
   getVoucherStats,
+  purchaseVoucherRemote,
 };

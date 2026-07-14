@@ -105,6 +105,22 @@ async function processJob(job) {
       );
       logger.info(`Subscription ${subscriptionId} marked as SUSPENDED`);
 
+      // Trigger outbound disconnection warning SMS (non-blocking)
+      try {
+        const { User, DataPlan } = require('../../models');
+        const updatedSub = await Subscription.findByPk(subscriptionId, {
+          include: [{ model: User, as: 'User' }, { model: DataPlan, as: 'plan' }]
+        });
+        if (updatedSub && updatedSub.User) {
+          const smsSender = require('../sms/smsSender');
+          await smsSender.sendDisconnectionNotice(updatedSub.User, updatedSub);
+        }
+      } catch (smsErr) {
+        logger.error(`Provisioning worker: Failed to queue disconnection SMS for sub ${subscriptionId}`, {
+          error: smsErr.message,
+        });
+      }
+
       // Sync associated voucher status if triggered by cron:expiry or cron:data-cap
       try {
         if (triggeredBy.includes('expiry')) {

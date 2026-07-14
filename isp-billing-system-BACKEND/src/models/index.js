@@ -22,6 +22,9 @@ const RadReply = require('./radius/RadReply');
 const RadAcct = require('./radius/RadAcct');
 const RadUserGroup = require('./radius/RadUserGroup');
 const Nas = require('./radius/Nas');
+// Phase 3: SMS models
+const SmsLog = require('./SmsLog');
+const SmsTemplate = require('./SmsTemplate');
 
 User.hasMany(Subscription, { foreignKey: 'userId', as: 'Subscriptions' });
 User.hasMany(Payment, { foreignKey: 'userId', as: 'Payments' });
@@ -104,6 +107,10 @@ const syncDatabase = async (force = false) => {
       }
 
       console.log('✅ Database synced successfully');
+
+      // Seed default SMS templates
+      await seedSmsTemplates();
+
       return;
     } catch (error) {
       console.error(`❌ DB sync attempt ${attempt} failed:`, error.message);
@@ -115,6 +122,50 @@ const syncDatabase = async (force = false) => {
     }
   }
 };
+
+/**
+ * Seed default SMS templates if they do not exist
+ */
+async function seedSmsTemplates() {
+  try {
+    const defaultTemplates = [
+      {
+        key: 'payment_receipt',
+        template: 'Dear {{firstName}}, payment of KES {{amount}} received for plan {{plan}}. Your subscription is active until {{endDate}}. Thank you for choosing us!',
+        variables: ['firstName', 'amount', 'plan', 'endDate'],
+        description: 'Payment confirmation receipt',
+      },
+      {
+        key: 'expiry_warning',
+        template: 'Dear {{firstName}}, your {{plan}} subscription expires in {{hours}} hours on {{endDate}}. Renew now via Paybill 123456, Account: {{subscriptionNumber}} to avoid cutoff.',
+        variables: ['firstName', 'plan', 'hours', 'endDate', 'subscriptionNumber'],
+        description: 'Pre-expiry dunning reminder warning',
+      },
+      {
+        key: 'disconnection_notice',
+        template: 'Dear {{firstName}}, your internet subscription {{subscriptionNumber}} has been suspended. Pay KES {{amount}} to Paybill 123456 to restore instantly.',
+        variables: ['firstName', 'subscriptionNumber', 'amount'],
+        description: 'Disconnection/suspension warning notification',
+      },
+      {
+        key: 'voucher_delivery',
+        template: 'Your voucher code is: {{code}}. Plan: {{plan}}, Data Limit: {{dataLimit}}, Validity: {{validity}}. Redeem this at the login portal to get online.',
+        variables: ['code', 'plan', 'dataLimit', 'validity'],
+        description: 'Remote purchase voucher code delivery',
+      },
+    ];
+
+    for (const t of defaultTemplates) {
+      await SmsTemplate.findOrCreate({
+        where: { key: t.key },
+        defaults: t,
+      });
+    }
+    console.log('✅ Default SMS templates seeded successfully');
+  } catch (err) {
+    console.error('⚠️ Failed to seed default SMS templates:', err.message);
+  }
+}
 
 module.exports = {
   sequelize,
@@ -139,5 +190,7 @@ module.exports = {
   RadAcct,
   RadUserGroup,
   Nas,
+  SmsLog,
+  SmsTemplate,
   syncDatabase
 };

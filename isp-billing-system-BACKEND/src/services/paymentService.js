@@ -339,6 +339,16 @@ class PaymentService {
                 return;
             }
 
+            // Idempotency Safeguard: If payment is already completed or failed, ignore callback.
+            if (lockedPayment.status === PaymentStatus.COMPLETED || lockedPayment.status === PaymentStatus.FAILED) {
+                await transaction.rollback();
+                logger.info('Callback ignored: Payment already processed', {
+                    checkoutRequestId: callbackResult.checkoutRequestId,
+                    status: lockedPayment.status
+                });
+                return callbackResult;
+            }
+
             if (callbackResult.success) {
                 await lockedPayment.markAsCompleted({
                     mpesaReceiptNumber: callbackResult.transactionDetails.mpesaReceiptNumber,
@@ -398,7 +408,8 @@ class PaymentService {
                         await subscription.update({
                             status: SubscriptionStatus.ACTIVE,
                             lastBillingDate: now,
-                            nextBillingDate: nextMonth
+                            nextBillingDate: nextMonth,
+                            reminderSentAt: null, // Clear dunning warning state for new cycle
                         }, { transaction });
 
                         console.log('✅ Subscription activated and invoice generated:', subscription.subscriptionNumber);
@@ -421,7 +432,16 @@ class PaymentService {
             // the payment still succeeds. The reconciliation sweep catches gaps.
             if (callbackResult.success && lockedPayment.subscriptionId) {
                 try {
-                    const sub = await Subscription.findByPk(lockedPayment.subscriptionId);
+                    const sub = await Subscription.findByPk(lockedPayment.subscriptionId, {
+                        include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User' }]
+                    });
+
+                    // Trigger outbound payment receipt SMS
+                    if (sub && sub.User) {
+                        const smsSender = require('./sms/smsSender');
+                        await smsSender.sendPaymentReceipt(sub.User, sub, lockedPayment);
+                    }
+
                     if (sub && sub.connectionType && sub.networkDeviceId && sub.networkIdentifier) {
                         const jobId = `enable-${sub.id}-${lockedPayment.mpesaReceiptNumber}`;
                         await addProvisioningJob('enable', {
@@ -437,7 +457,7 @@ class PaymentService {
                     }
                 } catch (queueError) {
                     // Log but NEVER fail the payment — reconciliation sweep is the safety net
-                    logger.error('Failed to queue provisioning job after M-Pesa payment', {
+                    logger.error('Failed to queue post-payment tasks', {
                         subscriptionId: lockedPayment.subscriptionId,
                         mpesaReceipt: lockedPayment.mpesaReceiptNumber,
                         error: queueError.message,
