@@ -73,9 +73,36 @@ const DataPlan = sequelize.define('DataPlan', {
   sortOrder: {
     type: DataTypes.INTEGER,
     defaultValue: 0
-  }
+  },
+  // Phase 2: Bandwidth profile for RADIUS Mikrotik-Rate-Limit
+  uploadSpeedKbps: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Upload speed in Kbps for RADIUS rate limiting',
+  },
+  downloadSpeedKbps: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Download speed in Kbps for RADIUS rate limiting',
+  },
+  burstUploadKbps: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Burst upload speed (optional)',
+  },
+  burstDownloadKbps: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Burst download speed (optional)',
+  },
+  sessionTimeoutSeconds: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'RADIUS Session-Timeout. NULL = use plan validity period',
+  },
 }, {
-  tableName: 'data_plans'
+  tableName: 'data_plans',
+  underscored: true,
 });
 
 // Instance methods
@@ -98,6 +125,30 @@ DataPlan.prototype.getValidityText = function() {
   if (days === 30) return '1 month';
   if (days === 365) return '1 year';
   return `${days} days`;
+};
+
+/**
+ * Generate the Mikrotik-Rate-Limit RADIUS attribute string.
+ * Format: {rx-rate}k/{tx-rate}k [{rx-burst}k/{tx-burst}k]
+ * rx = download (from client perspective), tx = upload
+ *
+ * @returns {string|null} Rate limit string, or null if no bandwidth profile set
+ */
+DataPlan.prototype.toMikrotikRateLimit = function () {
+  if (!this.downloadSpeedKbps || !this.uploadSpeedKbps) return null;
+
+  let rateLimit = `${this.downloadSpeedKbps}k/${this.uploadSpeedKbps}k`;
+
+  // Add burst if configured
+  if (this.burstDownloadKbps && this.burstUploadKbps) {
+    rateLimit += ` ${this.burstDownloadKbps}k/${this.burstUploadKbps}k`;
+    // Threshold = normal speed (burst kicks in above threshold)
+    rateLimit += ` ${this.downloadSpeedKbps}k/${this.uploadSpeedKbps}k`;
+    // Burst time / priority
+    rateLimit += ` 16/16 8`;
+  }
+
+  return rateLimit;
 };
 
 // Class methods

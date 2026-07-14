@@ -87,6 +87,19 @@ const NetworkDevice = sequelize.define('NetworkDevice', {
     allowNull: false,
     defaultValue: true,
   },
+  // Phase 2: Per-router RADIUS shared secret (encrypted)
+  radiusSecretEncrypted: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  radiusSecretIv: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+  },
+  radiusSecretTag: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+  },
 }, {
   tableName: 'network_devices',
   underscored: true,
@@ -132,6 +145,26 @@ NetworkDevice.prototype.getDecryptedPassword = function () {
 };
 
 /**
+ * Decrypt the stored RADIUS shared secret.
+ * @returns {string|null} Plaintext secret, or null if not set
+ */
+NetworkDevice.prototype.getDecryptedRadiusSecret = function () {
+  if (!this.radiusSecretEncrypted || !this.radiusSecretIv || !this.radiusSecretTag) {
+    return null;
+  }
+  const key = getEncryptionKey();
+  const iv = Buffer.from(this.radiusSecretIv, 'hex');
+  const tag = Buffer.from(this.radiusSecretTag, 'hex');
+
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+  decipher.setAuthTag(tag);
+
+  let decrypted = decipher.update(this.radiusSecretEncrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+};
+
+/**
  * Hook: encrypt password before creating a device.
  * Expects `_plaintextPassword` to be set on the instance (not persisted).
  */
@@ -143,6 +176,13 @@ NetworkDevice.addHook('beforeCreate', (device) => {
     device.encryptionTag = tag;
     delete device._plaintextPassword;
   }
+  if (device._plaintextRadiusSecret) {
+    const { encrypted, iv, tag } = NetworkDevice.encryptPassword(device._plaintextRadiusSecret);
+    device.radiusSecretEncrypted = encrypted;
+    device.radiusSecretIv = iv;
+    device.radiusSecretTag = tag;
+    delete device._plaintextRadiusSecret;
+  }
 });
 
 NetworkDevice.addHook('beforeUpdate', (device) => {
@@ -152,6 +192,13 @@ NetworkDevice.addHook('beforeUpdate', (device) => {
     device.encryptionIv = iv;
     device.encryptionTag = tag;
     delete device._plaintextPassword;
+  }
+  if (device._plaintextRadiusSecret) {
+    const { encrypted, iv, tag } = NetworkDevice.encryptPassword(device._plaintextRadiusSecret);
+    device.radiusSecretEncrypted = encrypted;
+    device.radiusSecretIv = iv;
+    device.radiusSecretTag = tag;
+    delete device._plaintextRadiusSecret;
   }
 });
 
@@ -163,6 +210,9 @@ NetworkDevice.prototype.toJSON = function () {
   delete values.passwordEncrypted;
   delete values.encryptionIv;
   delete values.encryptionTag;
+  delete values.radiusSecretEncrypted;
+  delete values.radiusSecretIv;
+  delete values.radiusSecretTag;
   return values;
 };
 
