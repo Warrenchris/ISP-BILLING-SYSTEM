@@ -29,6 +29,7 @@ import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import AuditLogs from './pages/AuditLogs';
 import AiDashboard from './pages/AiDashboard';
+import Portal from './pages/Portal';
 import ChatWidget from './components/ai/ChatWidget';
 import { useAuth } from './contexts/AuthContext';
 
@@ -48,6 +49,10 @@ function AppRoutes({ darkmode, toggleDarkMode }) {
               toggleDarkMode={toggleDarkMode}
             />
           }
+        />
+        <Route
+          path="/portal"
+          element={<Portal />}
         />
         <Route
           path="/*"

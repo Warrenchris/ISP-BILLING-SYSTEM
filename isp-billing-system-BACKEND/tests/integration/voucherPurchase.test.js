@@ -75,6 +75,7 @@ describe('Integration — Remote Voucher M-Pesa Purchases & IDOR Guard', () => {
       phoneNumber: '+254711000000',
       status: 'pending',
       callbackData: { planId: 'plan-vchr-uuid' },
+      markAsCompleted: jest.fn().mockResolvedValue(true),
       update: jest.fn().mockImplementation(function (updates) {
         Object.assign(this, updates);
         return Promise.resolve(this);
@@ -86,6 +87,7 @@ describe('Integration — Remote Voucher M-Pesa Purchases & IDOR Guard', () => {
     User.findOne = jest.fn();
     User.create = jest.fn().mockResolvedValue(mockUser);
     Payment.create = jest.fn().mockResolvedValue(mockPayment);
+    Payment.findOne = jest.fn().mockResolvedValue(mockPayment);
     Payment.findByPk = jest.fn().mockResolvedValue(mockPayment);
     Payment.findByCheckoutRequestId = jest.fn().mockResolvedValue(mockPayment);
     

@@ -87,6 +87,22 @@ const SIDEBAR_SECTIONS = [
 
 const getFilteredSections = (role) => {
     if (role === 'admin') return SIDEBAR_SECTIONS;
+    if (role === 'customer') {
+        // Customers only get access to Dashboard, Tickets, and Notifications
+        return [
+            {
+                title: 'MAIN',
+                items: [{ text: 'Dashboard', icon: DashboardOutlined, path: '/dashboard' }]
+            },
+            {
+                title: 'SUPPORT & OPS',
+                items: [
+                    { text: 'Support Tickets', icon: SupportAgentOutlined,  path: '/tickets'       },
+                    { text: 'Notifications',   icon: NotificationsOutlined,  path: '/notifications' },
+                ]
+            }
+        ];
+    }
     return SIDEBAR_SECTIONS.map(section => {
         if (section.title === 'ADMINISTRATION') return null;
         if (section.title === 'AI & ANALYTICS') return role === 'support' ? section : null;
