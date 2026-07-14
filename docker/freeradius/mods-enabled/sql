@@ -3,13 +3,13 @@ sql {
 	driver = "rlm_sql_mysql"
 
 	# Connection parameters (expanded from Docker env vars)
-	server = "${ENV{DB_HOST}}"
-	port = "${ENV{DB_PORT}}"
-	login = "${ENV{DB_USER}}"
-	password = "${ENV{DB_PASSWORD}}"
+	server = $ENV{DB_HOST}
+	port = $ENV{DB_PORT}
+	login = $ENV{DB_USER}
+	password = $ENV{DB_PASSWORD}
 
 	# Database name
-	radius_db = "${ENV{DB_NAME}}"
+	radius_db = $ENV{DB_NAME}
 
 	# Enable client read from database table (dynamic NAS clients)
 	# This reads NAS credentials from the `nas` table populated by the backend

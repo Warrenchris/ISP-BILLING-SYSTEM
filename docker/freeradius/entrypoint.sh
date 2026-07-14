@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export PATH=/opt/sbin:/opt/bin:$PATH
+
 echo "🔒 Validating RADIUS security configuration..."
 
 # Enforce check for RADIUS_SHARED_SECRET
@@ -25,4 +27,4 @@ fi
 echo "✅ Security validation passed. Starting FreeRADIUS..."
 
 # Execute standard FreeRADIUS entrypoint command
-exec /usr/sbin/radiusd -f -l stdout
+exec radiusd -f -l stdout
