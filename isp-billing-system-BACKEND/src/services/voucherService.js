@@ -172,6 +172,7 @@ async function redeemVoucher(code, customerId, options = {}) {
       connectionType: 'hotspot',
       networkDeviceId: options.networkDeviceId || null,
       networkIdentifier: radiusUsername,
+      _plaintextRadiusPassword: radiusPassword,
       gracePeriodHours: 0, // Vouchers have no grace period
     }, { transaction });
 

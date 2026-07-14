@@ -140,9 +140,55 @@ module.exports = {
     await queryInterface.addIndex('radacct', ['acctsessionid'], { name: 'idx_radacct_acctsessionid' });
     await queryInterface.addIndex('radacct', ['acctstarttime'], { name: 'idx_radacct_acctstarttime' });
     await queryInterface.addIndex('radacct', ['acctstoptime'], { name: 'idx_radacct_acctstoptime' });
+    // ── nas ──────────────────────────────────────────────────────────
+    await queryInterface.createTable('nas', {
+      id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      nasname: {
+        type: Sequelize.STRING(128),
+        allowNull: false,
+        defaultValue: '',
+      },
+      shortname: {
+        type: Sequelize.STRING(32),
+        allowNull: true,
+      },
+      type: {
+        type: Sequelize.STRING(30),
+        allowNull: true,
+        defaultValue: 'other',
+      },
+      ports: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      secret: {
+        type: Sequelize.STRING(60),
+        allowNull: false,
+        defaultValue: 'secret',
+      },
+      server: {
+        type: Sequelize.STRING(64),
+        allowNull: true,
+      },
+      community: {
+        type: Sequelize.STRING(50),
+        allowNull: true,
+      },
+      description: {
+        type: Sequelize.STRING(200),
+        allowNull: true,
+        defaultValue: 'RADIUS Client',
+      },
+    });
+    await queryInterface.addIndex('nas', ['nasname'], { name: 'idx_nas_nasname' });
   },
 
   async down(queryInterface) {
+    await queryInterface.dropTable('nas');
     await queryInterface.dropTable('radacct');
     await queryInterface.dropTable('radusergroup');
     await queryInterface.dropTable('radreply');

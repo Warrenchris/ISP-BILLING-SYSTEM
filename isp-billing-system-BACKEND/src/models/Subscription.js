@@ -96,6 +96,19 @@ const Subscription = sequelize.define('Subscription', {
   reminderSentAt: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  // Phase 2: Encrypted RADIUS password (for PPPoE or Hotspot voucher access)
+  radiusPasswordEncrypted: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  radiusPasswordIv: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+  },
+  radiusPasswordTag: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
   }
 }, {
   tableName: 'subscriptions',
@@ -122,6 +135,16 @@ const Subscription = sequelize.define('Subscription', {
       const timestamp = Date.now().toString().slice(-8);
       const rand = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
       sub.subscriptionNumber = `SUB${timestamp}${rand}`;
+
+      // Hook encryption for _plaintextRadiusPassword
+      if (sub._plaintextRadiusPassword) {
+        const { NetworkDevice } = require('./index');
+        const { encrypted, iv, tag } = NetworkDevice.encryptPassword(sub._plaintextRadiusPassword);
+        sub.radiusPasswordEncrypted = encrypted;
+        sub.radiusPasswordIv = iv;
+        sub.radiusPasswordTag = tag;
+        delete sub._plaintextRadiusPassword;
+      }
     },
     beforeUpdate: (sub) => {
       if (sub.changed('status')) {
@@ -130,9 +153,40 @@ const Subscription = sequelize.define('Subscription', {
         if (sub.status === SubscriptionStatus.SUSPENDED) sub.suspendedAt = now;
         if (sub.status === SubscriptionStatus.CANCELLED) sub.cancelledAt = now;
       }
+
+      // Hook encryption for _plaintextRadiusPassword
+      if (sub._plaintextRadiusPassword) {
+        const { NetworkDevice } = require('./index');
+        const { encrypted, iv, tag } = NetworkDevice.encryptPassword(sub._plaintextRadiusPassword);
+        sub.radiusPasswordEncrypted = encrypted;
+        sub.radiusPasswordIv = iv;
+        sub.radiusPasswordTag = tag;
+        delete sub._plaintextRadiusPassword;
+      }
     }
   }
 });
+
+/**
+ * Decrypt the stored RADIUS password.
+ * @returns {string|null} Plaintext password, or null if not set
+ */
+Subscription.prototype.getDecryptedRadiusPassword = function () {
+  if (!this.radiusPasswordEncrypted || !this.radiusPasswordIv || !this.radiusPasswordTag) {
+    return null;
+  }
+  const crypto = require('crypto');
+  const key = Buffer.from(process.env.ROUTER_ENCRYPTION_KEY, 'hex');
+  const iv = Buffer.from(this.radiusPasswordIv, 'hex');
+  const tag = Buffer.from(this.radiusPasswordTag, 'hex');
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+
+  let decrypted = decipher.update(this.radiusPasswordEncrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+};
 
 // Associations
 Subscription.associate = function (models) {

@@ -202,6 +202,33 @@ NetworkDevice.addHook('beforeUpdate', (device) => {
   }
 });
 
+NetworkDevice.addHook('afterCreate', async (device) => {
+  try {
+    const { syncDeviceToNas } = require('../../services/radius/syncNas');
+    await syncDeviceToNas(device);
+  } catch (err) {
+    console.error('afterCreate Hook error (syncDeviceToNas):', err.message);
+  }
+});
+
+NetworkDevice.addHook('afterUpdate', async (device) => {
+  try {
+    const { syncDeviceToNas } = require('../../services/radius/syncNas');
+    await syncDeviceToNas(device);
+  } catch (err) {
+    console.error('afterUpdate Hook error (syncDeviceToNas):', err.message);
+  }
+});
+
+NetworkDevice.addHook('afterDestroy', async (device) => {
+  try {
+    const { removeDeviceFromNas } = require('../../services/radius/syncNas');
+    await removeDeviceFromNas(device.ipAddress);
+  } catch (err) {
+    console.error('afterDestroy Hook error (removeDeviceFromNas):', err.message);
+  }
+});
+
 /**
  * Override toJSON to never expose encrypted password fields.
  */

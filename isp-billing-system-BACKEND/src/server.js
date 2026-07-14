@@ -109,10 +109,12 @@ const startServer = async () => {
     const { startWorker } = require('./services/queue/provisioningWorker');
     const { startExpiryScheduler } = require('./jobs/expireSubscriptions');
     const { startReconciliationScheduler } = require('./jobs/reconcileProvisioning');
+    const { startAccountingWatcher } = require('./jobs/accountingWatcher');
 
     startWorker();
     startExpiryScheduler();
     startReconciliationScheduler();
+    startAccountingWatcher();
 
     // Only mark as 'operational' if not in mock mode (mock stays 'disabled')
     if (process.env.MOCK_MIKROTIK !== 'true') {
@@ -126,7 +128,7 @@ const startServer = async () => {
       });
     }
 
-    console.log('✅   Provisioning worker, expiry scheduler, and reconciliation scheduler started');
+    console.log('✅   Provisioning worker, expiry/reconciliation schedulers, and accounting watcher started');
   } catch (queueErr) {
     // Don't crash the server — but mark provisioning as DOWN so /health returns 503
     provisioningStatus.setStatus('down', `Failed to start: ${queueErr.message}`, {

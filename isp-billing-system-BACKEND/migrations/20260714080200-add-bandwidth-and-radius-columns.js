@@ -48,6 +48,21 @@ module.exports = {
       type: Sequelize.STRING(64),
       allowNull: true,
     });
+
+    // ── Subscription RADIUS password columns ──────────────────────────
+    await queryInterface.addColumn('subscriptions', 'radius_password_encrypted', {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: 'AES-256-GCM encrypted RADIUS password (PPPoE / Hotspot)',
+    });
+    await queryInterface.addColumn('subscriptions', 'radius_password_iv', {
+      type: Sequelize.STRING(64),
+      allowNull: true,
+    });
+    await queryInterface.addColumn('subscriptions', 'radius_password_tag', {
+      type: Sequelize.STRING(64),
+      allowNull: true,
+    });
   },
 
   async down(queryInterface) {
@@ -62,5 +77,10 @@ module.exports = {
     await queryInterface.removeColumn('network_devices', 'radius_secret_encrypted');
     await queryInterface.removeColumn('network_devices', 'radius_secret_iv');
     await queryInterface.removeColumn('network_devices', 'radius_secret_tag');
+
+    // Subscription columns
+    await queryInterface.removeColumn('subscriptions', 'radius_password_encrypted');
+    await queryInterface.removeColumn('subscriptions', 'radius_password_iv');
+    await queryInterface.removeColumn('subscriptions', 'radius_password_tag');
   },
 };

@@ -27,14 +27,34 @@ const { buildMikrotikRateLimit, getAcctInterimInterval } = require('./radiusHelp
  */
 async function syncToRadius(subscription, options = {}) {
   const { RadCheck, RadReply, RadUserGroup } = require('../../models');
+  const { generateRadiusPassword } = require('./radiusHelper');
 
-  const { radiusUsername, password, voucher } = options;
+  let radiusUsername = options.radiusUsername || getRadiusUsername(subscription, options.voucher);
+  let password = options.password;
+  const voucher = options.voucher;
 
-  if (!radiusUsername || !password) {
-    logger.warn('syncToRadius: missing radiusUsername or password, skipping', {
+  if (!radiusUsername) {
+    logger.warn('syncToRadius: could not resolve radiusUsername, skipping', {
       subscriptionId: subscription.id,
     });
     return;
+  }
+
+  // Resolve password:
+  // 1. Explicitly passed in options
+  // 2. Decrypted from subscription database row
+  // 3. Fallback: generate and encrypt a new password
+  if (!password) {
+    password = subscription.getDecryptedRadiusPassword();
+  }
+
+  if (!password) {
+    password = generateRadiusPassword();
+    subscription._plaintextRadiusPassword = password;
+    await subscription.save();
+    logger.info(`Generated and encrypted new RADIUS password for "${radiusUsername}"`, {
+      subscriptionId: subscription.id,
+    });
   }
 
   const plan = subscription.plan;

@@ -54,17 +54,45 @@ async function processJob(job) {
   }
 
   // ── Execute the provisioning action ─────────────────────────────────
+  const { syncToRadius, removeFromRadius, getRadiusUsername } = require('../radius/syncUser');
+
   if (action === 'enable') {
     const result = await provisioning.enableCustomer(customerId, triggeredBy, subscriptionId);
+
+    // Sync to RADIUS if configured for PPPoE or Hotspot
+    if (subData && subData.subscription && ['pppoe', 'hotspot'].includes(subData.subscription.connectionType)) {
+      try {
+        await syncToRadius(subData.subscription);
+      } catch (radiusErr) {
+        logger.error(`Provisioning worker: RADIUS sync failed for sub ${subscriptionId}`, {
+          error: radiusErr.message,
+        });
+      }
+    }
+
     logger.info(`Provisioning enable completed for customer ${customerId}`, { result });
     return result;
 
   } else if (action === 'disable') {
     const result = await provisioning.disableCustomer(customerId, triggeredBy, subscriptionId);
 
+    // Remove from RADIUS if configured
+    if (subData && subData.subscription && ['pppoe', 'hotspot'].includes(subData.subscription.connectionType)) {
+      const radiusUsername = getRadiusUsername(subData.subscription);
+      if (radiusUsername) {
+        try {
+          await removeFromRadius(radiusUsername);
+        } catch (radiusErr) {
+          logger.error(`Provisioning worker: RADIUS removal failed for sub ${subscriptionId}`, {
+            error: radiusErr.message,
+          });
+        }
+      }
+    }
+
     // On successful disable, update subscription status
     if (result && !result.skipped) {
-      const { Subscription } = require('../../models');
+      const { Subscription, Voucher } = require('../../models');
       const { SubscriptionStatus } = require('../../config/constants');
 
       await Subscription.update(
@@ -76,6 +104,27 @@ async function processJob(job) {
         { where: { id: subscriptionId } }
       );
       logger.info(`Subscription ${subscriptionId} marked as SUSPENDED`);
+
+      // Sync associated voucher status if triggered by cron:expiry or cron:data-cap
+      try {
+        if (triggeredBy.includes('expiry')) {
+          await Voucher.update(
+            { status: 'expired' },
+            { where: { subscriptionId } }
+          );
+          logger.info(`Associated voucher for sub ${subscriptionId} marked as EXPIRED`);
+        } else if (triggeredBy.includes('data-cap')) {
+          await Voucher.update(
+            { status: 'used' },
+            { where: { subscriptionId } }
+          );
+          logger.info(`Associated voucher for sub ${subscriptionId} marked as USED`);
+        }
+      } catch (voucherErr) {
+        logger.error(`Provisioning worker: Failed to update voucher status for sub ${subscriptionId}`, {
+          error: voucherErr.message,
+        });
+      }
     }
 
     return result;

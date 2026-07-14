@@ -1,0 +1,93 @@
+sql {
+	# Database driver
+	driver = "rlm_sql_mysql"
+
+	# Connection parameters (expanded from Docker env vars)
+	server = "${ENV{DB_HOST}}"
+	port = "${ENV{DB_PORT}}"
+	login = "${ENV{DB_USER}}"
+	password = "${ENV{DB_PASSWORD}}"
+
+	# Database name
+	radius_db = "${ENV{DB_NAME}}"
+
+	# Enable client read from database table (dynamic NAS clients)
+	# This reads NAS credentials from the `nas` table populated by the backend
+	read_clients = yes
+	client_table = "nas"
+
+	# Prevent connection timeouts
+	num_sql_socks = 8
+	connect_failure_retry_delay = 60
+	lifetime = 0
+	max_queries = 0
+
+	# Query map configuration mapping attributes to SQL queries
+	query_on_not_found = no
+
+	# Standard tables mapping
+	radcheck_table = "radcheck"
+	radreply_table = "radreply"
+	radgroupcheck_table = "radgroupcheck"
+	radgroupreply_table = "radgroupreply"
+	radusergroup_table = "radusergroup"
+	radacct_table = "radacct"
+
+	# Standard FreeRADIUS MySQL queries mapping (included inside main module config)
+	# Read queries
+	authorize_check_query = "SELECT id, username, attribute, value, op FROM ${..radcheck_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
+	authorize_reply_query = "SELECT id, username, attribute, value, op FROM ${..radreply_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
+	group_membership_query = "SELECT groupname FROM ${..radusergroup_table} WHERE username = '%{SQL-User-Name}' ORDER BY priority"
+
+	# Accounting queries
+	accounting {
+		reference = "%{tolower:type.%{Acct-Status-Type}.query}"
+
+		type {
+			start {
+				query = "INSERT INTO ${....radacct_table} \
+					(acctsessionid, acctuniqueid, username, \
+					realm, nasipaddress, nasportid, \
+					nasporttype, acctstarttime, acctupdatetime, \
+					acctstoptime, acctsessiontime, acctauthentic, \
+					connectinfo_start, connectinfo_stop, acctinputoctets, \
+					acctoutputoctets, calledstationid, callingstationid, \
+					acctterminatecause, servicetype, framedprotocol, \
+					framedipaddress, framedipv6address, framedipv6prefix, \
+					framedinterfaceid, delegatedipv6prefix) \
+					VALUES \
+					('%{Acct-Session-Id}', '%{Acct-Unique-Session-Id}', \
+					'%{SQL-User-Name}', '%{Realm}', '%{NAS-IP-Address}', \
+					'%{NAS-Port}', '%{NAS-Port-Type}', \
+					FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+					FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+					NULL, 0, '%{Acct-Authentic}', '%{Connect-Info}', \
+					'', 0, 0, '%{Called-Station-Id}', '%{Calling-Station-Id}', \
+					'', '%{Service-Type}', '%{Framed-Protocol}', \
+					'%{Framed-IP-Address}', '%{Framed-IPv6-Address}', \
+					'%{Framed-IPv6-Prefix}', '%{Framed-Interface-Id}', \
+					'%{Delegated-IPv6-Prefix}')"
+			}
+
+			interim-update {
+				query = "UPDATE ${....radacct_table} \
+					SET acctupdatetime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+					acctsessiontime = %{Acct-Session-Time}, \
+					acctinputoctets = (('%{Acct-Input-Gigawords:-0}' << 32) + '%{Acct-Input-Octets:-0}'), \
+					acctoutputoctets = (('%{Acct-Output-Gigawords:-0}' << 32) + '%{Acct-Output-Octets:-0}'), \
+					framedipaddress = '%{Framed-IP-Address}' \
+					WHERE acctuniqueid = '%{Acct-Unique-Session-Id}'"
+			}
+
+			stop {
+				query = "UPDATE ${....radacct_table} \
+					SET acctstoptime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+					acctsessiontime = %{Acct-Session-Time}, \
+					acctinputoctets = (('%{Acct-Input-Gigawords:-0}' << 32) + '%{Acct-Input-Octets:-0}'), \
+					acctoutputoctets = (('%{Acct-Output-Gigawords:-0}' << 32) + '%{Acct-Output-Octets:-0}'), \
+					acctterminatecause = '%{Acct-Terminate-Cause}' \
+					WHERE acctuniqueid = '%{Acct-Unique-Session-Id}'"
+			}
+		}
+	}
+}

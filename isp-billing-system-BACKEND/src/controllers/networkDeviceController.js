@@ -48,7 +48,7 @@ const createDevice = async (req, res) => {
   try {
     const { NetworkDevice } = require('../models');
 
-    const { name, ipAddress, apiPort, username, password, siteId, routerOsVersion, cutoffAddressList } = req.body;
+    const { name, ipAddress, apiPort, username, password, radiusSecret, siteId, routerOsVersion, cutoffAddressList } = req.body;
 
     if (!name || !ipAddress || !username || !password) {
       return res.status(400).json({
@@ -70,6 +70,9 @@ const createDevice = async (req, res) => {
     });
 
     device._plaintextPassword = password;
+    if (radiusSecret) {
+      device._plaintextRadiusSecret = radiusSecret;
+    }
     await device.save();
 
     logger.info(`Network device created: "${name}" (${ipAddress})`, {
@@ -101,7 +104,7 @@ const updateDevice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Device not found' });
     }
 
-    const { name, ipAddress, apiPort, username, password, siteId, routerOsVersion, cutoffAddressList, isActive } = req.body;
+    const { name, ipAddress, apiPort, username, password, radiusSecret, siteId, routerOsVersion, cutoffAddressList, isActive } = req.body;
 
     if (name !== undefined) device.name = name;
     if (ipAddress !== undefined) device.ipAddress = ipAddress;
@@ -115,6 +118,11 @@ const updateDevice = async (req, res) => {
     // If password is being changed, set _plaintextPassword for the hook
     if (password) {
       device._plaintextPassword = password;
+    }
+
+    // If radiusSecret is being changed, set _plaintextRadiusSecret for the hook
+    if (radiusSecret) {
+      device._plaintextRadiusSecret = radiusSecret;
     }
 
     await device.save();

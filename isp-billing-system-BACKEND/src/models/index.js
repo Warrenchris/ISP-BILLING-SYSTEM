@@ -21,6 +21,7 @@ const RadCheck = require('./radius/RadCheck');
 const RadReply = require('./radius/RadReply');
 const RadAcct = require('./radius/RadAcct');
 const RadUserGroup = require('./radius/RadUserGroup');
+const Nas = require('./radius/Nas');
 
 User.hasMany(Subscription, { foreignKey: 'userId', as: 'Subscriptions' });
 User.hasMany(Payment, { foreignKey: 'userId', as: 'Payments' });
@@ -137,5 +138,6 @@ module.exports = {
   RadReply,
   RadAcct,
   RadUserGroup,
+  Nas,
   syncDatabase
 };
