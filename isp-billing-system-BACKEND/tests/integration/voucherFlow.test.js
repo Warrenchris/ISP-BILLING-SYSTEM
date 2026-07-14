@@ -113,6 +113,16 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
     expect(redemption.voucher.status).toBe('active');
     expect(redemption.subscription.connectionType).toBe('hotspot');
     expect(redemption.radiusUsername).toBe('voucher-VCHR-1234');
+    expect(redemption.voucher.subscriptionId).toBe('sub-voucher-uuid');
+
+    // Verify voucher row back-linked the subscription ID in DB transaction
+    expect(mockVoucher.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'active',
+        subscriptionId: 'sub-voucher-uuid',
+      }),
+      expect.any(Object)
+    );
 
     // Verify subscription was created with right connections
     expect(Subscription.create).toHaveBeenCalledWith(
