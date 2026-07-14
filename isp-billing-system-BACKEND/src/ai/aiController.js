@@ -131,7 +131,55 @@ const getChurnRisks = async (req, res) => {
    GET /api/ai/anomalies
    ────────────────────────────────────────────────────────────── */
 const getAnomalies = async (req, res) => {
-  await proxy(res, 'GET', '/api/ai/anomalies', null, 6_000);
+  const timeoutMs = 6_000;
+  try {
+    const { status, data } = await callAiService('GET', '/api/ai/anomalies', null, timeoutMs);
+    
+    // Proactive Push Alert: Scan anomalies for critical usage spikes (> 3σ)
+    if (data && data.success && data.data && Array.isArray(data.data.anomalies)) {
+      const { User } = require('../models');
+      const { addSmsJob } = require('../services/queue/queueManager');
+      const logger = require('../config/logger');
+
+      // Resolve the system administrator's phone number
+      const adminUser = await User.findOne({ where: { role: 'admin' } });
+      const adminPhone = process.env.ADMIN_ALERT_PHONE || adminUser?.phoneNumber;
+
+      if (adminPhone) {
+        for (const anomaly of data.data.anomalies) {
+          if (anomaly.type === 'usage_spike' && anomaly.severity === 'critical') {
+            const dateStr = new Date().toISOString().split('T')[0];
+            // Deduplicate warning messages (maximum 1 warning SMS per admin per day per subscriber)
+            const jobId = `admin-anomaly-${anomaly.user_id}-${dateStr}`;
+            
+            const message = `⚠️ ISP Alert: Critical usage anomaly detected for user "${anomaly.customer_name}". Current: ${anomaly.current_usage_mb.toFixed(0)} MB, Z-score: ${anomaly.z_score.toFixed(1)}σ. Potential bypass/leak!`;
+            
+            try {
+              await addSmsJob(adminPhone, 'admin_alert', { message }, 'admin', jobId);
+              logger.info(`Queued admin critical usage spike warning SMS for "${anomaly.customer_name}"`, { jobId });
+            } catch (smsErr) {
+              logger.error('Failed to queue admin anomaly warning SMS', { error: smsErr.message });
+            }
+          }
+        }
+      }
+    }
+
+    return res.status(status).json(data);
+  } catch (err) {
+    const isConnRefused =
+      err.code === 'ECONNREFUSED' ||
+      err.code === 'ENOTFOUND' ||
+      err.message.includes('timed out');
+
+    if (isConnRefused) {
+      return res.status(503).json({
+        error: 'AI service temporarily unavailable',
+        fallback: true,
+      });
+    }
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 /* ──────────────────────────────────────────────────────────────

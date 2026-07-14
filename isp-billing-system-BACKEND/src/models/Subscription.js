@@ -97,6 +97,19 @@ const Subscription = sequelize.define('Subscription', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  // Phase 5: Telemetry raw counter bytes for delta/reset checks
+  lastDownloadBytesCounter: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'last_download_bytes_counter',
+  },
+  lastUploadBytesCounter: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'last_upload_bytes_counter',
+  },
   // Phase 2: Encrypted RADIUS password (for PPPoE or Hotspot voucher access)
   radiusPasswordEncrypted: {
     type: DataTypes.TEXT,
