@@ -25,4 +25,4 @@ fi
 echo "✅ Security validation passed. Starting FreeRADIUS..."
 
 # Execute standard FreeRADIUS entrypoint command
-exec radiusd -f -l stdout
+exec /usr/sbin/radiusd -f -l stdout
