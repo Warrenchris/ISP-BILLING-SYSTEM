@@ -10,16 +10,9 @@ process.env.MOCK_MIKROTIK = 'true';
 process.env.ROUTER_ENCRYPTION_KEY = 'a'.repeat(64);
 
 const voucherService = require('../../src/services/voucherService');
-const Voucher = require('../../src/models/Voucher');
-const DataPlan = require('../../src/models/DataPlan');
-const Subscription = require('../../src/models/Subscription');
-const User = require('../../src/models/User');
+const { Voucher, DataPlan, Subscription, User } = require('../../src/models');
 
-// Mock models and services
-jest.mock('../../src/models/Voucher');
-jest.mock('../../src/models/DataPlan');
-jest.mock('../../src/models/Subscription');
-jest.mock('../../src/models/User');
+// Mock only the RADIUS sync service
 jest.mock('../../src/services/radius/syncUser', () => ({
   syncToRadius: jest.fn().mockResolvedValue(true),
   removeFromRadius: jest.fn().mockResolvedValue(true),
@@ -51,6 +44,9 @@ describe('Voucher Code Generation', () => {
 describe('Voucher Service — Batch Generation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    DataPlan.findByPk = jest.fn();
+    Voucher.generateUniqueCodes = jest.fn();
+    Voucher.bulkCreate = jest.fn();
   });
 
   test('generates a batch of unique vouchers successfully', async () => {
@@ -137,9 +133,9 @@ describe('Voucher Service — Redemption', () => {
       endDate: new Date(),
     };
 
-    Voucher.findOne.mockResolvedValue(mockVoucher);
-    User.findByPk.mockResolvedValue(mockCustomer);
-    Subscription.create.mockResolvedValue(mockSub);
+    Voucher.findOne = jest.fn().mockResolvedValue(mockVoucher);
+    User.findByPk = jest.fn().mockResolvedValue(mockCustomer);
+    Subscription.create = jest.fn().mockResolvedValue(mockSub);
   });
 
   test('redeems unused voucher successfully', async () => {
@@ -197,8 +193,8 @@ describe('Voucher Service — Revocation', () => {
       }),
     };
 
-    Voucher.findByPk.mockResolvedValue(mockVoucher);
-    Subscription.update.mockResolvedValue([1]);
+    Voucher.findByPk = jest.fn().mockResolvedValue(mockVoucher);
+    Subscription.update = jest.fn().mockResolvedValue([1]);
 
     const result = await voucherService.revokeVoucher(mockVoucher.id);
 

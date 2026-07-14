@@ -11,15 +11,7 @@ process.env.ROUTER_ENCRYPTION_KEY = 'a'.repeat(64);
 
 const radiusSync = require('../../src/services/radius/syncUser');
 const radiusHelper = require('../../src/services/radius/radiusHelper');
-const RadCheck = require('../../src/models/radius/RadCheck');
-const RadReply = require('../../src/models/radius/RadReply');
-const RadUserGroup = require('../../src/models/radius/RadUserGroup');
-
-// Mock Sequelize models
-jest.mock('../../src/models/radius/RadCheck');
-jest.mock('../../src/models/radius/RadReply');
-jest.mock('../../src/models/radius/RadUserGroup');
-jest.mock('../../src/models/radius/RadAcct');
+const { RadCheck, RadReply, RadUserGroup } = require('../../src/models');
 
 describe('RADIUS Helper — Rate Limit Formatting', () => {
   test('formats symmetric rate limit from plan speed display string', () => {
@@ -102,9 +94,12 @@ describe('RADIUS Sync Layer', () => {
       getDecryptedRadiusPassword: () => 'secure-pppoe-password',
     };
 
-    RadCheck.destroy.mockResolvedValue(1);
-    RadReply.destroy.mockResolvedValue(1);
-    RadUserGroup.destroy.mockResolvedValue(1);
+    RadCheck.destroy = jest.fn().mockResolvedValue(1);
+    RadCheck.create = jest.fn().mockResolvedValue({});
+    RadReply.destroy = jest.fn().mockResolvedValue(1);
+    RadReply.bulkCreate = jest.fn().mockResolvedValue([]);
+    RadUserGroup.destroy = jest.fn().mockResolvedValue(1);
+    RadUserGroup.create = jest.fn().mockResolvedValue({});
   });
 
   test('syncs attributes to radcheck, radreply, and radusergroup', async () => {

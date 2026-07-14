@@ -16,30 +16,7 @@ const voucherService = require('../../src/services/voucherService');
 const { runAccountingSweep } = require('../../src/jobs/accountingWatcher');
 const { addProvisioningJob } = require('../../src/services/queue/queueManager');
 
-const Voucher = require('../../src/models/Voucher');
-const DataPlan = require('../../src/models/DataPlan');
-const Subscription = require('../../src/models/Subscription');
-const User = require('../../src/models/User');
-const RadAcct = require('../../src/models/radius/RadAcct');
-
-// Mock Sequelize models
-jest.mock('../../src/models/Voucher');
-jest.mock('../../src/models/DataPlan');
-jest.mock('../../src/models/Subscription');
-jest.mock('../../src/models/User');
-jest.mock('../../src/models/radius/RadCheck', () => ({
-  destroy: jest.fn().mockResolvedValue(1),
-  create: jest.fn().mockResolvedValue({}),
-}));
-jest.mock('../../src/models/radius/RadReply', () => ({
-  destroy: jest.fn().mockResolvedValue(1),
-  bulkCreate: jest.fn().mockResolvedValue([]),
-}));
-jest.mock('../../src/models/radius/RadUserGroup', () => ({
-  destroy: jest.fn().mockResolvedValue(1),
-  create: jest.fn().mockResolvedValue({}),
-}));
-jest.mock('../../src/models/radius/RadAcct');
+const { Voucher, DataPlan, Subscription, User, RadCheck, RadReply, RadUserGroup, RadAcct } = require('../../src/models');
 
 // Mock BullMQ queue manager
 jest.mock('../../src/services/queue/queueManager', () => ({
@@ -102,11 +79,21 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
       update: jest.fn().mockResolvedValue(true),
     };
 
-    DataPlan.findByPk.mockResolvedValue(mockPlan);
-    Voucher.findOne.mockResolvedValue(mockVoucher);
-    User.findByPk.mockResolvedValue(mockCustomer);
-    Subscription.create.mockResolvedValue(mockSub);
-    Subscription.findAll.mockResolvedValue([mockSub]);
+    DataPlan.findByPk = jest.fn().mockResolvedValue(mockPlan);
+    Voucher.findOne = jest.fn().mockResolvedValue(mockVoucher);
+    User.findByPk = jest.fn().mockResolvedValue(mockCustomer);
+    Subscription.create = jest.fn().mockResolvedValue(mockSub);
+    Subscription.findAll = jest.fn().mockResolvedValue([mockSub]);
+    Voucher.bulkCreate = jest.fn().mockImplementation(records => Promise.resolve(records));
+    Voucher.generateUniqueCodes = jest.fn().mockResolvedValue(['VCHR-1234']);
+
+    RadCheck.destroy = jest.fn().mockResolvedValue(1);
+    RadCheck.create = jest.fn().mockResolvedValue({});
+    RadReply.destroy = jest.fn().mockResolvedValue(1);
+    RadReply.bulkCreate = jest.fn().mockResolvedValue([]);
+    RadUserGroup.destroy = jest.fn().mockResolvedValue(1);
+    RadUserGroup.create = jest.fn().mockResolvedValue({});
+    RadAcct.findOne = jest.fn();
   });
 
   test('full redemption to sync integration', async () => {
