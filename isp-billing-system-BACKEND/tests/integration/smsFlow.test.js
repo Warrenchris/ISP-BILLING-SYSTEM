@@ -15,7 +15,7 @@ const paymentService = require('../../src/services/paymentService');
 const { runDunningSweep } = require('../../src/jobs/sendSmsReminders');
 const smsSender = require('../../src/services/sms/smsSender');
 
-const { Payment, Subscription, DataPlan, User, sequelize } = require('../../src/models');
+const { Payment, Subscription, DataPlan, User, Invoice, InvoiceItem, sequelize } = require('../../src/models');
 
 // Mock smsSender facade methods
 jest.mock('../../src/services/sms/smsSender', () => ({
@@ -87,6 +87,8 @@ describe('Integration — SMS Notification Triggers & Dunning Scheduler', () => 
     User.findByPk = jest.fn().mockResolvedValue(mockUser);
     Subscription.findByPk = jest.fn().mockResolvedValue(mockSub);
     Subscription.findAll = jest.fn().mockResolvedValue([mockSub]);
+    Invoice.create = jest.fn().mockResolvedValue({ id: 'invoice-123' });
+    InvoiceItem.create = jest.fn().mockResolvedValue({ id: 'item-123' });
 
     // Mock transaction
     const mockTransaction = {

@@ -44,6 +44,14 @@ services:
       - VOUCHER_CODE_LENGTH=${VOUCHER_CODE_LENGTH:-8}
       - VOUCHER_BRUTE_FORCE_LIMIT=${VOUCHER_BRUTE_FORCE_LIMIT:-5}
       - VOUCHER_DEFAULT_EXPIRY_DAYS=${VOUCHER_DEFAULT_EXPIRY_DAYS:-365}
+      # Phase 3: Smart Dunning & SMS Automation
+      - SMS_PROVIDER=${SMS_PROVIDER:-mock}
+      - AT_USERNAME=${AT_USERNAME:-sandbox}
+      - AT_API_KEY=${AT_API_KEY:-}
+      - AT_SENDER_ID=${AT_SENDER_ID:-}
+      - DUNNING_CHECK_CRON=${DUNNING_CHECK_CRON:-0 * * * *}
+      - SMS_DUNNING_WINDOW_HOURS=${SMS_DUNNING_WINDOW_HOURS:-24}
+      - DEFAULT_COUNTRY_CODE=${DEFAULT_COUNTRY_CODE:-254}
     depends_on:
       db:
         condition: service_healthy
