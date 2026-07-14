@@ -290,3 +290,17 @@ If you need to rotate the encryption key:
 
 6. **Strong passwords** — Use a randomly generated password (16+ characters) for the
    API user. It's encrypted at rest so length doesn't matter for usability.
+
+---
+
+## 9. Telemetry Limitations: Address-List Static IP Requirement
+
+> [!IMPORTANT]
+> For clients provisioned via the `address_list` strategy, real-time bandwidth telemetry collection relies on matching RouterOS `/queue/simple` targets with the customer's `networkIdentifier` (their IP address).
+>
+> **Limitation**: This requires that `address_list` customers **must** be allocated static IP addresses or static DHCP leases on the router. If a client's IP changes dynamically:
+> 1. Simple queue matching will fail.
+> 2. Traffic usage collection will drop to 0.
+> 3. Cap cutoff enforcement will fail to detect breaches.
+>
+> **Action**: Ensure static reservations are configured on RouterOS for all non-RADIUS PPPoE/Hotspot users.

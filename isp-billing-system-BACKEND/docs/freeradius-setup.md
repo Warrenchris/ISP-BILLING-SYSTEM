@@ -165,3 +165,16 @@ docker exec -it isp-freeradius radtest <radius_username> <radius_password> local
 
 A successful response outputs `Access-Accept` with mapped attributes (e.g. `Mikrotik-Rate-Limit`).
 An invalid password/username outputs `Access-Reject`.
+
+---
+
+## 8. Operational Warning: Accounting Table (`radacct`) Pruning
+
+> [!WARNING]
+> Since the telemetry collector uses continuous `SUM(acctinputoctets)` and `SUM(acctoutputoctets)` across both active and closed sessions to handle session boundary loss, **do not prune or truncate the `radacct` table without precautions**.
+>
+> If you prune the table:
+> 1. The total bytes sum will drop, which the telemetry sweep interprets as a **counter reset** (delta is set to the current value).
+> 2. No negative metrics are written, but historical telemetry averages inside the current month's window will drop to zero for closed sessions, skewing anomaly detection and cap tracking.
+>
+> **Best Practice**: If you must truncate `radacct` to control DB growth, schedule truncation at the end of a billing cycle (e.g., month end) or migrate/snapshot the cumulative processed bytes to the subscription counters before executing truncates.
