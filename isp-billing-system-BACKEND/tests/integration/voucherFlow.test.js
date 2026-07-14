@@ -16,7 +16,7 @@ const voucherService = require('../../src/services/voucherService');
 const { runAccountingSweep } = require('../../src/jobs/accountingWatcher');
 const { addProvisioningJob } = require('../../src/services/queue/queueManager');
 
-const { Voucher, DataPlan, Subscription, User, RadCheck, RadReply, RadUserGroup, RadAcct } = require('../../src/models');
+const { Voucher, DataPlan, Subscription, User, RadCheck, RadReply, RadUserGroup, RadAcct, sequelize } = require('../../src/models');
 
 // Mock BullMQ queue manager
 jest.mock('../../src/services/queue/queueManager', () => ({
@@ -94,6 +94,14 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
     RadUserGroup.destroy = jest.fn().mockResolvedValue(1);
     RadUserGroup.create = jest.fn().mockResolvedValue({});
     RadAcct.findOne = jest.fn();
+
+    // Mock transaction
+    const mockTransaction = {
+      commit: jest.fn().mockResolvedValue(true),
+      rollback: jest.fn().mockResolvedValue(true),
+      LOCK: { UPDATE: 'UPDATE' },
+    };
+    sequelize.transaction = jest.fn().mockResolvedValue(mockTransaction);
   });
 
   test('full redemption to sync integration', async () => {

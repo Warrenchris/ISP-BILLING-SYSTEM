@@ -10,7 +10,7 @@ process.env.MOCK_MIKROTIK = 'true';
 process.env.ROUTER_ENCRYPTION_KEY = 'a'.repeat(64);
 
 const voucherService = require('../../src/services/voucherService');
-const { Voucher, DataPlan, Subscription, User } = require('../../src/models');
+const { Voucher, DataPlan, Subscription, User, sequelize } = require('../../src/models');
 
 // Mock only the RADIUS sync service
 jest.mock('../../src/services/radius/syncUser', () => ({
@@ -136,6 +136,14 @@ describe('Voucher Service — Redemption', () => {
     Voucher.findOne = jest.fn().mockResolvedValue(mockVoucher);
     User.findByPk = jest.fn().mockResolvedValue(mockCustomer);
     Subscription.create = jest.fn().mockResolvedValue(mockSub);
+
+    // Mock transaction
+    const mockTransaction = {
+      commit: jest.fn().mockResolvedValue(true),
+      rollback: jest.fn().mockResolvedValue(true),
+      LOCK: { UPDATE: 'UPDATE' },
+    };
+    sequelize.transaction = jest.fn().mockResolvedValue(mockTransaction);
   });
 
   test('redeems unused voucher successfully', async () => {
