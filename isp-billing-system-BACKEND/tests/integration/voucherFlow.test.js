@@ -16,7 +16,7 @@ const voucherService = require('../../src/services/voucherService');
 const { runAccountingSweep } = require('../../src/jobs/accountingWatcher');
 const { addProvisioningJob } = require('../../src/services/queue/queueManager');
 
-const { Voucher, DataPlan, Subscription, User, RadCheck, RadReply, RadUserGroup, RadAcct, sequelize } = require('../../src/models');
+const { Voucher, DataPlan, Subscription, User, RadCheck, RadReply, RadUserGroup, RadAcct, DataUsage, sequelize } = require('../../src/models');
 
 // Mock BullMQ queue manager
 jest.mock('../../src/services/queue/queueManager', () => ({
@@ -75,8 +75,25 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
       connectionType: 'hotspot',
       networkDeviceId: 'router-uuid',
       networkIdentifier: 'voucher-VCHR-1234',
+      lastDownloadBytesCounter: 0,
+      lastUploadBytesCounter: 0,
       getDecryptedRadiusPassword: () => 'voucher-radius-password',
-      update: jest.fn().mockResolvedValue(true),
+      update: jest.fn().mockImplementation(function (updates) {
+        Object.assign(this, updates);
+        return Promise.resolve(this);
+      }),
+      decrement: jest.fn().mockImplementation(function (fields) {
+        if (fields.dataRemaining !== undefined) {
+          this.dataRemaining = Math.max(0, this.dataRemaining - fields.dataRemaining);
+        }
+        return Promise.resolve(this);
+      }),
+      increment: jest.fn().mockImplementation(function (fields) {
+        if (fields.dataUsed !== undefined) {
+          this.dataUsed += fields.dataUsed;
+        }
+        return Promise.resolve(this);
+      }),
     };
 
     DataPlan.findByPk = jest.fn().mockResolvedValue(mockPlan);
@@ -84,6 +101,7 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
     User.findByPk = jest.fn().mockResolvedValue(mockCustomer);
     Subscription.create = jest.fn().mockResolvedValue(mockSub);
     Subscription.findAll = jest.fn().mockResolvedValue([mockSub]);
+    Subscription.findByPk = jest.fn().mockResolvedValue(mockSub);
     Voucher.bulkCreate = jest.fn().mockImplementation(records => Promise.resolve(records));
     Voucher.generateUniqueCodes = jest.fn().mockResolvedValue(['VCHR-1234']);
 
@@ -94,6 +112,14 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
     RadUserGroup.destroy = jest.fn().mockResolvedValue(1);
     RadUserGroup.create = jest.fn().mockResolvedValue({});
     RadAcct.findOne = jest.fn();
+
+    // Mock DataUsage rollup upserts
+    DataUsage.findOrCreate = jest.fn().mockResolvedValue([
+      {
+        id: 'mock-daily-vchr',
+        increment: jest.fn().mockResolvedValue(true),
+      },
+    ]);
 
     // Mock transaction
     const mockTransaction = {
@@ -151,7 +177,13 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
 
     // Assert that no disable job was queued
     expect(addProvisioningJob).not.toHaveBeenCalled();
-    expect(mockSub.update).not.toHaveBeenCalled();
+    expect(mockSub.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lastDownloadBytesCounter: 300 * 1024 * 1024,
+        lastUploadBytesCounter: 200 * 1024 * 1024,
+      }),
+      expect.any(Object)
+    );
   });
 
   test('accountingWatcher: active session breaching cap is disabled immediately', async () => {
@@ -181,10 +213,13 @@ describe('Integration — Voucher Flow & RADIUS Cap Enforcement', () => {
     // Verify subscription database values are updated
     expect(mockSub.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        dataRemaining: 0,
         status: 'suspended',
         suspensionReason: 'Auto-suspended: Data cap limit reached',
-      })
+      }),
+      expect.any(Object)
     );
+
+    // Verify atomic decrement has reduced remaining data to 0 in memory
+    expect(mockSub.dataRemaining).toBe(0);
   });
 });

@@ -40,12 +40,45 @@ jest.mock('../../src/services/queue/queueManager', () => ({
   addSmsJob: jest.fn().mockResolvedValue(true),
 }));
 
-// Mock AI Service helper
-jest.mock('../../src/ai/aiController', () => {
-  const original = jest.requireActual('../../src/ai/aiController');
+// Mock HTTP request directly to mock internal callAiService network requests
+const http = require('http');
+jest.spyOn(http, 'request').mockImplementation((options, callback) => {
+  const dateStr = new Date().toISOString().split('T')[0];
+  const responseData = JSON.stringify({
+    success: true,
+    data: {
+      anomalies: [
+        {
+          type: 'usage_spike',
+          user_id: 'user-telemetry-99',
+          customer_name: 'Bypass Buyer',
+          current_usage_mb: 500000.0,
+          z_score: 4.5,
+          severity: 'critical',
+        },
+      ],
+    },
+  });
+
+  const mockResponse = {
+    statusCode: 200,
+    on: jest.fn().mockImplementation((event, handler) => {
+      if (event === 'data') {
+        handler(Buffer.from(responseData));
+      }
+      if (event === 'end') {
+        handler();
+      }
+    }),
+  };
+
+  callback(mockResponse);
+
   return {
-    ...original,
-    callAiService: jest.fn(),
+    on: jest.fn(),
+    setTimeout: jest.fn(),
+    write: jest.fn(),
+    end: jest.fn(),
   };
 });
 
@@ -222,13 +255,6 @@ describe('Integration — Bandwidth Telemetry & Anomaly alerts', () => {
         ],
       },
     };
-
-    // Override callAiService mock to return success payload
-    const { callAiService } = require('../../src/ai/aiController');
-    callAiService.mockResolvedValue({
-      status: 200,
-      data: mockFlaskPayload,
-    });
 
     const mockAdmin = {
       id: 'admin-user-1',
