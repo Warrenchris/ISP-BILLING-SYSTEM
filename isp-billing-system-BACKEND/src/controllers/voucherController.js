@@ -318,7 +318,13 @@ const queryVoucherPaymentStatus = async (req, res) => {
     // Format phone parameters using worker normalizer to perform exact matching
     const { formatPhoneNumber } = require('../services/queue/smsWorker');
     const normalizedQueryPhone = formatPhoneNumber(phone);
-    const normalizedPaymentPhone = formatPhoneNumber(payment.phoneNumber);
+    
+    // Retrieve verified phone number from M-Pesa callback details if completed, otherwise use the initiated phoneNumber
+    const actualPaymentPhone = payment.status === 'completed'
+      ? (payment.callbackData?.phoneNumber || payment.phoneNumber)
+      : payment.phoneNumber;
+      
+    const normalizedPaymentPhone = formatPhoneNumber(actualPaymentPhone);
 
     // IDOR Verification Guard: phone must match payment phone exactly
     if (normalizedQueryPhone !== normalizedPaymentPhone) {
