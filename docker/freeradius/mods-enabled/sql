@@ -35,9 +35,9 @@ sql {
 
 	# Standard FreeRADIUS MySQL queries mapping (included inside main module config)
 	# Read queries
-	authorize_check_query = "SELECT id, username, attribute, value, op FROM ${..radcheck_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
-	authorize_reply_query = "SELECT id, username, attribute, value, op FROM ${..radreply_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
-	group_membership_query = "SELECT groupname FROM ${..radusergroup_table} WHERE username = '%{SQL-User-Name}' ORDER BY priority"
+	authorize_check_query = "SELECT id, username, attribute, value, op FROM ${radcheck_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
+	authorize_reply_query = "SELECT id, username, attribute, value, op FROM ${radreply_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
+	group_membership_query = "SELECT groupname FROM ${radusergroup_table} WHERE username = '%{SQL-User-Name}' ORDER BY priority"
 
 	# Accounting queries
 	accounting {
