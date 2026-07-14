@@ -131,6 +131,26 @@ services:
       timeout: 5s
       retries: 5
 
+  freeradius:
+    build: ./docker/freeradius
+    container_name: isp-freeradius
+    ports:
+      - "1812:1812/udp" # Authentication
+      - "1813:1813/udp" # Accounting
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=isp_billing_db
+      - RADIUS_SHARED_SECRET=${RADIUS_SHARED_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - isp-network
+    restart: unless-stopped
+
 networks:
   isp-network:
     driver: bridge
