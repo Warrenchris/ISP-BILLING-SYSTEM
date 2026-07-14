@@ -3,13 +3,13 @@ sql {
 	driver = "rlm_sql_mysql"
 
 	# Connection parameters (expanded from Docker env vars)
-	server = "${ENV{DB_HOST}}"
-	port = "${ENV{DB_PORT}}"
-	login = "${ENV{DB_USER}}"
-	password = "${ENV{DB_PASSWORD}}"
+	server = $ENV{DB_HOST}
+	port = $ENV{DB_PORT}
+	login = $ENV{DB_USER}
+	password = $ENV{DB_PASSWORD}
 
 	# Database name
-	radius_db = "${ENV{DB_NAME}}"
+	radius_db = $ENV{DB_NAME}
 
 	# Enable client read from database table (dynamic NAS clients)
 	# This reads NAS credentials from the `nas` table populated by the backend
@@ -35,9 +35,9 @@ sql {
 
 	# Standard FreeRADIUS MySQL queries mapping (included inside main module config)
 	# Read queries
-	authorize_check_query = "SELECT id, username, attribute, value, op FROM ${..radcheck_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
-	authorize_reply_query = "SELECT id, username, attribute, value, op FROM ${..radreply_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
-	group_membership_query = "SELECT groupname FROM ${..radusergroup_table} WHERE username = '%{SQL-User-Name}' ORDER BY priority"
+	authorize_check_query = "SELECT id, username, attribute, value, op FROM ${radcheck_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
+	authorize_reply_query = "SELECT id, username, attribute, value, op FROM ${radreply_table} WHERE username = '%{SQL-User-Name}' ORDER BY id"
+	group_membership_query = "SELECT groupname FROM ${radusergroup_table} WHERE username = '%{SQL-User-Name}' ORDER BY priority"
 
 	# Accounting queries
 	accounting {
@@ -72,7 +72,7 @@ sql {
 			interim-update {
 				query = "UPDATE ${....radacct_table} \
 					SET acctupdatetime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
-					acctsessiontime = %{Acct-Session-Time}, \
+					acctsessiontime = %{%{Acct-Session-Time}:-NULL}, \
 					acctinputoctets = (('%{%{Acct-Input-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Input-Octets}:-0}'), \
 					acctoutputoctets = (('%{%{Acct-Output-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Output-Octets}:-0}'), \
 					framedipaddress = '%{Framed-IP-Address}' \
@@ -82,7 +82,7 @@ sql {
 			stop {
 				query = "UPDATE ${....radacct_table} \
 					SET acctstoptime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
-					acctsessiontime = %{Acct-Session-Time}, \
+					acctsessiontime = %{%{Acct-Session-Time}:-NULL}, \
 					acctinputoctets = (('%{%{Acct-Input-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Input-Octets}:-0}'), \
 					acctoutputoctets = (('%{%{Acct-Output-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Output-Octets}:-0}'), \
 					acctterminatecause = '%{Acct-Terminate-Cause}' \
