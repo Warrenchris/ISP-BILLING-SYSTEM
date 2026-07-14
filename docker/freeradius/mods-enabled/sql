@@ -73,8 +73,8 @@ sql {
 				query = "UPDATE ${....radacct_table} \
 					SET acctupdatetime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
 					acctsessiontime = %{Acct-Session-Time}, \
-					acctinputoctets = (('%{Acct-Input-Gigawords:-0}' << 32) + '%{Acct-Input-Octets:-0}'), \
-					acctoutputoctets = (('%{Acct-Output-Gigawords:-0}' << 32) + '%{Acct-Output-Octets:-0}'), \
+					acctinputoctets = (('%{%{Acct-Input-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Input-Octets}:-0}'), \
+					acctoutputoctets = (('%{%{Acct-Output-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Output-Octets}:-0}'), \
 					framedipaddress = '%{Framed-IP-Address}' \
 					WHERE acctuniqueid = '%{Acct-Unique-Session-Id}'"
 			}
@@ -83,8 +83,8 @@ sql {
 				query = "UPDATE ${....radacct_table} \
 					SET acctstoptime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
 					acctsessiontime = %{Acct-Session-Time}, \
-					acctinputoctets = (('%{Acct-Input-Gigawords:-0}' << 32) + '%{Acct-Input-Octets:-0}'), \
-					acctoutputoctets = (('%{Acct-Output-Gigawords:-0}' << 32) + '%{Acct-Output-Octets:-0}'), \
+					acctinputoctets = (('%{%{Acct-Input-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Input-Octets}:-0}'), \
+					acctoutputoctets = (('%{%{Acct-Output-Gigawords}:-0}' * 4294967296) + '%{%{Acct-Output-Octets}:-0}'), \
 					acctterminatecause = '%{Acct-Terminate-Cause}' \
 					WHERE acctuniqueid = '%{Acct-Unique-Session-Id}'"
 			}
