@@ -18,7 +18,7 @@ let cronTask = null;
  * Execute the accounting watcher sweep.
  */
 async function runAccountingSweep() {
-  const { Subscription, RadAcct, NetworkDevice, DataPlan } = require('../models');
+  const { Subscription, RadAcct, NetworkDevice, DataPlan, sequelize } = require('../models');
   const { SubscriptionStatus } = require('../config/constants');
 
   logger.info('Running RADIUS accounting data limit sweep...');
