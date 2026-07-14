@@ -17,6 +17,8 @@ const {
   revoke,
   exportBatch,
   redeem,
+  initiatePurchaseStk,
+  queryVoucherPaymentStatus,
 } = require('../controllers/voucherController');
 
 // ── Rate Limiter for Redemption ──────────────────────────────────────
@@ -32,9 +34,31 @@ const redemptionLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// ── Rate Limiter for STK Purchases (NAT & SPAM Protection) ────────────
+// Rate limits by combining NAT IP and target Phone number (max 3 STKs/min)
+const purchaseLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => {
+    return req.ip + '_' + (req.body.phone || '');
+  },
+  message: {
+    success: false,
+    message: 'Too many payment requests for this number. Please wait a minute.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ── Public Routes ─────────────────────────────────────────────────────
 // Captive portal calls this to get online
 router.post('/redeem', redemptionLimiter, redeem);
+
+// Public route to start remote voucher purchase STK
+router.post('/purchase-stk', purchaseLimiter, initiatePurchaseStk);
+
+// Public route to poll payment status and safely retrieve code
+router.get('/payment-status/:paymentId', redemptionLimiter, queryVoucherPaymentStatus);
 
 // ── Admin-Only Routes ─────────────────────────────────────────────────
 router.use(authenticate, authorize(['admin']));

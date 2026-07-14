@@ -268,6 +268,77 @@ const redeem = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/vouchers/purchase-stk
+ * Public route to initiate M-Pesa STK push for remote voucher purchase.
+ */
+const initiatePurchaseStk = async (req, res) => {
+  try {
+    const { phone, planId } = req.body;
+    const paymentService = require('../services/paymentService');
+
+    const result = await paymentService.initiateVoucherPurchaseStk(phone, planId);
+    res.json(result);
+  } catch (error) {
+    logger.logError(error, req);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Failed to initiate voucher purchase',
+    });
+  }
+};
+
+/**
+ * GET /api/vouchers/payment-status/:paymentId
+ * Public route to poll payment status and safely retrieve generated voucher code.
+ * IDOR Safeguard: Requires phone query parameter and validates it against payment.phoneNumber.
+ */
+const queryVoucherPaymentStatus = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { phone } = req.query;
+
+    if (!paymentId || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'paymentId and phone are required',
+      });
+    }
+
+    const { Payment } = require('../models');
+    const payment = await Payment.findByPk(paymentId);
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found',
+      });
+    }
+
+    // Format phone parameters using worker normalizer to perform exact matching
+    const { formatPhoneNumber } = require('../services/queue/smsWorker');
+    const normalizedQueryPhone = formatPhoneNumber(phone);
+    const normalizedPaymentPhone = formatPhoneNumber(payment.phoneNumber);
+
+    // IDOR Verification Guard: phone must match payment phone exactly
+    if (normalizedQueryPhone !== normalizedPaymentPhone) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Phone number does not match this payment record',
+      });
+    }
+
+    res.json({
+      success: true,
+      status: payment.status,
+      voucherCode: payment.status === 'completed' ? payment.callbackData?.voucherCode : null,
+    });
+  } catch (error) {
+    logger.logError(error, req);
+    res.status(500).json({ success: false, message: 'Failed to query payment status' });
+  }
+};
+
 module.exports = {
   generateBatch,
   listVouchers,
@@ -277,4 +348,6 @@ module.exports = {
   revoke,
   exportBatch,
   redeem,
+  initiatePurchaseStk,
+  queryVoucherPaymentStatus,
 };

@@ -362,7 +362,10 @@ class PaymentService {
                     completedAt: new Date(),
                     mpesaReceiptNumber: callbackResult.transactionDetails.mpesaReceiptNumber,
                     transactionDate: callbackResult.transactionDetails.transactionDate,
-                    callbackData: callbackResult.transactionDetails
+                    callbackData: {
+                        ...(lockedPayment.callbackData || {}),
+                        ...callbackResult.transactionDetails
+                    }
                 }, { transaction });
 
 
@@ -430,38 +433,64 @@ class PaymentService {
             // ── Phase 1: Queue provisioning job AFTER transaction commit ──────
             // This is deliberately outside the transaction. If the queue is down,
             // the payment still succeeds. The reconciliation sweep catches gaps.
-            if (callbackResult.success && lockedPayment.subscriptionId) {
-                try {
-                    const sub = await Subscription.findByPk(lockedPayment.subscriptionId, {
-                        include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User' }]
-                    });
+            if (callbackResult.success) {
+                if (lockedPayment.subscriptionId) {
+                    try {
+                        const sub = await Subscription.findByPk(lockedPayment.subscriptionId, {
+                            include: [{ model: DataPlan, as: 'plan' }, { model: User, as: 'User' }]
+                        });
 
-                    // Trigger outbound payment receipt SMS
-                    if (sub && sub.User) {
-                        const smsSender = require('./sms/smsSender');
-                        await smsSender.sendPaymentReceipt(sub.User, sub, lockedPayment);
-                    }
+                        // Trigger outbound payment receipt SMS
+                        if (sub && sub.User) {
+                            const smsSender = require('./sms/smsSender');
+                            await smsSender.sendPaymentReceipt(sub.User, sub, lockedPayment);
+                        }
 
-                    if (sub && sub.connectionType && sub.networkDeviceId && sub.networkIdentifier) {
-                        const jobId = `enable-${sub.id}-${lockedPayment.mpesaReceiptNumber}`;
-                        await addProvisioningJob('enable', {
-                            customerId: sub.userId,
-                            subscriptionId: sub.id,
-                            triggeredBy: `mpesa:${lockedPayment.mpesaReceiptNumber}`,
-                        }, jobId);
-                        logger.info('Provisioning job queued after M-Pesa payment', {
-                            jobId,
-                            subscriptionId: sub.id,
+                        if (sub && sub.connectionType && sub.networkDeviceId && sub.networkIdentifier) {
+                            const jobId = `enable-${sub.id}-${lockedPayment.mpesaReceiptNumber}`;
+                            await addProvisioningJob('enable', {
+                                customerId: sub.userId,
+                                subscriptionId: sub.id,
+                                triggeredBy: `mpesa:${lockedPayment.mpesaReceiptNumber}`,
+                            }, jobId);
+                            logger.info('Provisioning job queued after M-Pesa payment', {
+                                jobId,
+                                subscriptionId: sub.id,
+                                mpesaReceipt: lockedPayment.mpesaReceiptNumber,
+                            });
+                        }
+                    } catch (queueError) {
+                        // Log but NEVER fail the payment — reconciliation sweep is the safety net
+                        logger.error('Failed to queue post-payment tasks', {
+                            subscriptionId: lockedPayment.subscriptionId,
                             mpesaReceipt: lockedPayment.mpesaReceiptNumber,
+                            error: queueError.message,
                         });
                     }
-                } catch (queueError) {
-                    // Log but NEVER fail the payment — reconciliation sweep is the safety net
-                    logger.error('Failed to queue post-payment tasks', {
-                        subscriptionId: lockedPayment.subscriptionId,
-                        mpesaReceipt: lockedPayment.mpesaReceiptNumber,
-                        error: queueError.message,
-                    });
+                } else if (lockedPayment.callbackData && lockedPayment.callbackData.planId) {
+                    // Trigger remote voucher purchase generation and delivery
+                    try {
+                        const voucherService = require('./voucherService');
+                        const planId = lockedPayment.callbackData.planId;
+                        const phone = lockedPayment.phoneNumber;
+
+                        const voucher = await voucherService.purchaseVoucherRemote(phone, planId, lockedPayment.userId);
+                        
+                        // Save generated voucher code inside payment metadata for polling retrieval
+                        await lockedPayment.update({
+                            callbackData: {
+                                ...(lockedPayment.callbackData || {}),
+                                voucherCode: voucher.code,
+                            }
+                        });
+
+                        logger.info(`Voucher purchased successfully via M-Pesa callback: ${phone} (code: ${voucher.code}, plan: ${planId})`);
+                    } catch (voucherError) {
+                        logger.error('Failed to generate/deliver remote purchased voucher after callback commit', {
+                            paymentId: lockedPayment.id,
+                            error: voucherError.message,
+                        });
+                    }
                 }
             }
 
@@ -471,6 +500,128 @@ class PaymentService {
             await transaction.rollback();
             throw error;
         }
+    }
+
+    /**
+     * Initiate M-Pesa STK push for remote voucher purchase (Captive Portal)
+     *
+     * @param {string} phoneNumber - phone number to charge
+     * @param {string} planId - DataPlan ID
+     * @returns {Promise<Object>} Payment initiation result
+     */
+    async initiateVoucherPurchaseStk(phoneNumber, planId) {
+        if (!phoneNumber || !planId) {
+            throw { statusCode: 400, message: 'Phone number and plan ID are required' };
+        }
+
+        const plan = await DataPlan.findByPk(planId);
+        if (!plan) {
+            throw { statusCode: 404, message: 'Data plan not found' };
+        }
+
+        // Get or dynamically create a unique customer account keyed by phone number
+        const user = await this.getOrCreatePhoneUser(phoneNumber);
+        const formattedPhone = mpesaService.formatPhoneNumber(phoneNumber);
+
+        const transaction = await sequelize.transaction();
+
+        try {
+            // Create pending payment record
+            const payment = await Payment.create({
+                userId: user.id,
+                subscriptionId: null, // Null for voucher purchase
+                amount: plan.price,
+                phoneNumber: formattedPhone,
+                paymentType: 'top_up', // Valid Enum value
+                description: `Voucher Purchase: ${plan.name}`,
+                reference: `VCHR-${Date.now()}`,
+                callbackData: {
+                    planId: plan.id,
+                    planName: plan.name,
+                }
+            }, { transaction });
+
+            // Trigger the Safaricom M-Pesa STK Push
+            let stkPushResponse;
+            try {
+                stkPushResponse = await mpesaService.initSelfSTKPush({
+                    phoneNumber: payment.phoneNumber,
+                    amount: payment.amount,
+                    accountReference: payment.reference,
+                    transactionDesc: payment.description
+                });
+            } catch (stkError) {
+                // Try fallback format if initSelfSTKPush isn't available
+                try {
+                    stkPushResponse = await mpesaService.initiateSTKPush({
+                        phoneNumber: payment.phoneNumber,
+                        amount: payment.amount,
+                        accountReference: payment.reference,
+                        transactionDesc: payment.description
+                    });
+                } catch (stkErrorInner) {
+                    throw { statusCode: 500, message: stkErrorInner.message || 'Failed to initiate M-Pesa STK Push' };
+                }
+            }
+
+            // Update payment with STK Push details
+            await payment.update({
+                checkoutRequestId: stkPushResponse.CheckoutRequestID,
+                merchantRequestId: stkPushResponse.MerchantRequestID,
+                status: PaymentStatus.PENDING
+            }, { transaction });
+
+            await transaction.commit();
+
+            return {
+                success: true,
+                message: 'Payment initiated successfully. Please check your phone for M-Pesa prompt.',
+                payment: {
+                    id: payment.id,
+                    reference: payment.reference,
+                    amount: payment.amount,
+                    status: payment.status,
+                    checkoutRequestId: payment.checkoutRequestId,
+                    phoneNumber: payment.phoneNumber,
+                    plan: {
+                        id: plan.id,
+                        name: plan.name,
+                        price: plan.price
+                    }
+                }
+            };
+
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    /**
+     * Get or dynamically create a unique user record matching phone number.
+     * Ensures we don't pollute analytics with a single global guest user.
+     */
+    async getOrCreatePhoneUser(phoneNumber) {
+        const formattedPhone = mpesaService.formatPhoneNumber(phoneNumber);
+        let user = await User.findOne({ where: { phoneNumber: formattedPhone } });
+        
+        if (!user) {
+            const crypto = require('crypto');
+            const bcrypt = require('bcryptjs');
+            const randomPassword = crypto.randomBytes(16).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+            
+            user = await User.create({
+                firstName: 'Hotspot',
+                lastName: 'Guest',
+                email: `guest-${formattedPhone.replace('+', '')}@isp.com`,
+                phoneNumber: formattedPhone,
+                password: hashedPassword,
+                role: 'customer',
+            });
+            logger.info(`Dynamically created phone-keyed guest user record for "${formattedPhone}"`);
+        }
+        return user;
     }
 }
 
