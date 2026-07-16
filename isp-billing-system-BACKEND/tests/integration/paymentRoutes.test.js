@@ -32,10 +32,13 @@ jest.mock('../../src/middleware/auth', () => ({
 }));
 
 // 3. Mock Models
+const mockPaymentModel = {
+    findAndCountAll: jest.fn(),
+    findOne: jest.fn(),
+};
+
 jest.mock('../../src/models', () => ({
-    Payment: {
-        findAndCountAll: jest.fn(),
-    },
+    Payment: mockPaymentModel,
     Subscription: {},
     DataPlan: {},
     User: {},
@@ -98,6 +101,83 @@ describe('Payment Integration Tests', () => {
 
             expect(res.status).toBe(400);
             expect(mockPaymentService.initiateSubscriptionPayment).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('POST /api/payments/mpesa/callback/:token', () => {
+        const testToken = 'super_secure_callback_token_123';
+
+        beforeEach(() => {
+            process.env.MPESA_CALLBACK_TOKEN = testToken;
+            delete process.env.BYPASS_IP_CHECK;
+        });
+
+        it('should reject request with 403 if IP is not allowlisted', async () => {
+            const res = await request(app)
+                .post(`/api/payments/mpesa/callback/${testToken}`)
+                .set('x-forwarded-for', '8.8.8.8') // Non-allowlisted IP
+                .send({
+                    Body: {
+                        stkCallback: {
+                            CheckoutRequestID: 'ws_CO_1234',
+                            MerchantRequestID: '123456',
+                            ResultCode: 0
+                        }
+                    }
+                });
+
+            expect(res.status).toBe(403);
+            expect(res.body.ResultCode).toBe(1);
+            expect(res.body.ResultDesc).toMatch(/IP not allowlisted/i);
+        });
+
+        it('should reject request with 403 if token is invalid', async () => {
+            const res = await request(app)
+                .post('/api/payments/mpesa/callback/wrong_token')
+                .set('x-forwarded-for', '196.201.214.200') // Allowlisted IP
+                .send({
+                    Body: {
+                        stkCallback: {
+                            CheckoutRequestID: 'ws_CO_1234',
+                            MerchantRequestID: '123456',
+                            ResultCode: 0
+                        }
+                    }
+                });
+
+            expect(res.status).toBe(403);
+            expect(res.body.ResultCode).toBe(1);
+            expect(res.body.ResultDesc).toMatch(/Invalid token/i);
+        });
+
+        it('should proceed to structure check if IP and token are valid', async () => {
+            // Mock findOne to return a pending payment
+            mockPaymentModel.findOne.mockResolvedValue({
+                id: 'pay-123',
+                status: 'pending',
+            });
+
+            mockPaymentService.processCallback.mockResolvedValue({
+                success: true,
+                message: 'Callback processed successfully'
+            });
+
+            const res = await request(app)
+                .post(`/api/payments/mpesa/callback/${testToken}`)
+                .set('x-forwarded-for', '196.201.214.200') // Allowlisted IP
+                .send({
+                    Body: {
+                        stkCallback: {
+                            CheckoutRequestID: 'ws_CO_1234',
+                            MerchantRequestID: '123456',
+                            ResultCode: 0
+                        }
+                    }
+                });
+
+            // Since it passed the security guards, it reached the logic (which is mocked or returns success)
+            expect(res.status).toBe(200);
+            expect(mockPaymentModel.findOne).toHaveBeenCalled();
         });
     });
 });

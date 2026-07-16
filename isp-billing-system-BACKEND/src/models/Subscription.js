@@ -139,6 +139,10 @@ const Subscription = sequelize.define('Subscription', {
       fields: ['status']
     },
     {
+      name: 'idx_subscriptions_status_end_date',
+      fields: ['status', 'end_date']
+    },
+    {
       name: 'idx_subscriptions_active_lookup',
       fields: ['user_id', 'status', 'end_date']
     }

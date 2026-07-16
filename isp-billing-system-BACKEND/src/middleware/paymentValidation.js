@@ -1,5 +1,7 @@
 const { body, param, validationResult } = require('express-validator');
 const { Payment } = require('../models');
+const logger = require('../config/logger');
+const crypto = require('crypto');
 
 /**
  * Validation middleware for initiating subscription payment
@@ -201,11 +203,78 @@ const validateDirectPayment = [
   }
 ];
 
+const SAFARICOM_CALLBACK_IPS = [
+  '196.201.214.200',
+  '196.201.214.206',
+  '196.201.213.114',
+  '196.201.214.207',
+  '196.201.214.208',
+  '196.201.213.44',
+  '196.201.212.127',
+  '196.201.212.138',
+  '196.201.212.129',
+  '196.201.212.136',
+  '196.201.212.74',
+  '196.201.212.69'
+];
+
 /**
  * Middleware to validate M-Pesa callback structure
  */
 const validateMpesaCallback = async (req, res, next) => {
   try {
+    // 1. IP Allowlist Verification
+    const clientIp = req.headers['x-forwarded-for']
+      ? req.headers['x-forwarded-for'].split(',')[0].trim()
+      : req.socket.remoteAddress;
+
+    let normalizedIp = clientIp;
+    if (normalizedIp && normalizedIp.startsWith('::ffff:')) {
+      normalizedIp = normalizedIp.substring(7);
+    }
+
+    const isLocalhost = normalizedIp === '127.0.0.1' || normalizedIp === '::1';
+    const isProduction = process.env.NODE_ENV === 'production';
+    const bypassIpCheck = !isProduction && (process.env.BYPASS_IP_CHECK === 'true' || (process.env.NODE_ENV === 'development' && isLocalhost));
+    const isAllowlistedIp = SAFARICOM_CALLBACK_IPS.includes(normalizedIp);
+
+    if (!isAllowlistedIp && !bypassIpCheck) {
+      logger.logSecurity('MpesaCallbackSpoofAttempt', {
+        reason: 'Client IP is not allowlisted',
+        clientIp: normalizedIp,
+        url: req.originalUrl,
+      });
+      return res.status(403).json({
+        ResultCode: 1,
+        ResultDesc: 'Forbidden: IP not allowlisted'
+      });
+    }
+
+    // 2. Secret Token Verification
+    const token = req.params.token;
+    const expectedToken = process.env.MPESA_CALLBACK_TOKEN;
+
+    let isTokenMatch = false;
+    if (expectedToken && token) {
+      // Hash to fixed length to prevent timingSafeEqual from throwing on length mismatch
+      const tokenHash = crypto.createHash('sha256').update(token).digest();
+      const expectedHash = crypto.createHash('sha256').update(expectedToken).digest();
+      isTokenMatch = crypto.timingSafeEqual(tokenHash, expectedHash);
+    }
+
+    if (!expectedToken || !isTokenMatch) {
+      logger.logSecurity('MpesaCallbackTokenMismatch', {
+        reason: !expectedToken ? 'Server token unconfigured' : 'Token mismatch',
+        providedToken: token,
+        clientIp: normalizedIp,
+        url: req.originalUrl,
+      });
+      return res.status(403).json({
+        ResultCode: 1,
+        ResultDesc: 'Forbidden: Invalid token'
+      });
+    }
+
     const { Body } = req.body;
     
     if (!Body || !Body.stkCallback) {

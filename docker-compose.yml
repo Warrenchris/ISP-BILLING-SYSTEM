@@ -155,8 +155,8 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
+      - DB_USER=${RADIUS_DB_USER:-radius_user}
+      - DB_PASSWORD=${RADIUS_DB_PASSWORD:-radiuspassword}
       - DB_NAME=isp_billing_db
       - RADIUS_SHARED_SECRET=${RADIUS_SHARED_SECRET:-}
     depends_on:

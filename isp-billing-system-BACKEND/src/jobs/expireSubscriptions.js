@@ -19,7 +19,7 @@ let cronTask = null;
  * Run one sweep: find expired subscriptions and enqueue disable jobs.
  */
 async function runExpirySweep() {
-  const { Subscription, NetworkDevice } = require('../models');
+  const { Subscription, NetworkDevice, sequelize } = require('../models');
   const { SubscriptionStatus } = require('../config/constants');
 
   const now = new Date();
@@ -40,6 +40,7 @@ async function runExpirySweep() {
         connectionType: { [Op.ne]: null },
         networkDeviceId: { [Op.ne]: null },
         networkIdentifier: { [Op.ne]: null },
+        [Op.and]: sequelize.literal('DATE_ADD(end_date, INTERVAL grace_period_hours HOUR) < NOW()')
       },
       include: [
         { model: NetworkDevice, as: 'NetworkDevice', where: { isActive: true } },

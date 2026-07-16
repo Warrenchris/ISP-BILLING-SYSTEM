@@ -47,6 +47,12 @@ jest.mock('../../src/services/sms/smsSender', () => ({
   sendVoucherCode: jest.fn().mockResolvedValue(true),
 }));
 
+// Mock queueManager
+jest.mock('../../src/services/queue/queueManager', () => ({
+  addVoucherJob: jest.fn().mockResolvedValue({ id: 'job-123' }),
+  addSmsJob: jest.fn().mockResolvedValue({ id: 'sms-job-123' }),
+}));
+
 describe('Integration — Remote Voucher M-Pesa Purchases & IDOR Guard', () => {
   let mockPlan;
   let mockUser;
@@ -180,7 +186,7 @@ describe('Integration — Remote Voucher M-Pesa Purchases & IDOR Guard', () => {
     });
   });
 
-  test('processCallback triggers voucherService.purchaseVoucherRemote and stores generated code in payment', async () => {
+  test('processCallback enqueues voucher generation job instead of processing inline', async () => {
     const callbackBody = {
       Body: {
         stkCallback: {
@@ -203,21 +209,14 @@ describe('Integration — Remote Voucher M-Pesa Purchases & IDOR Guard', () => {
 
     expect(result.success).toBe(true);
 
-    // Verify voucher is created
-    expect(Voucher.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: 'VCHR-9999',
-        planId: 'plan-vchr-uuid',
-      })
-    );
-
-    // Verify generated voucher code is saved in payment metadata
-    expect(mockPayment.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        callbackData: expect.objectContaining({
-          voucherCode: 'VCHR-9999',
-        }),
-      })
+    // Verify voucher generation job is enqueued
+    const queueManager = require('../../src/services/queue/queueManager');
+    expect(queueManager.addVoucherJob).toHaveBeenCalledWith(
+      'pay-vchr-123',
+      '+254711000000',
+      'plan-vchr-uuid',
+      'dynamic-user-uuid',
+      'voucher-gen-pay-vchr-123'
     );
   });
 });

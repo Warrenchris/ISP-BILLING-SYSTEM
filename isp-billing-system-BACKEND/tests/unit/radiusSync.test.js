@@ -24,10 +24,10 @@ describe('RADIUS Helper — Rate Limit Formatting', () => {
     const plan = {
       downloadSpeedKbps: 5120,
       uploadSpeedKbps: 2048,
-      toMikrotikRateLimit: () => '5120k/2048k',
+      toMikrotikRateLimit: () => '2048k/5120k',
     };
     const limit = radiusHelper.buildMikrotikRateLimit(plan);
-    expect(limit).toBe('5120k/2048k');
+    expect(limit).toBe('2048k/5120k');
   });
 
   test('formats rate limit with burst parameters', () => {
@@ -37,11 +37,11 @@ describe('RADIUS Helper — Rate Limit Formatting', () => {
       burstDownloadKbps: 20000,
       burstUploadKbps: 10000,
       toMikrotikRateLimit() {
-        return `${this.downloadSpeedKbps}k/${this.uploadSpeedKbps}k ${this.burstDownloadKbps}k/${this.burstUploadKbps}k ${this.downloadSpeedKbps}k/${this.uploadSpeedKbps}k 16/16 8`;
+        return `${this.uploadSpeedKbps}k/${this.downloadSpeedKbps}k ${this.burstUploadKbps}k/${this.burstDownloadKbps}k ${this.uploadSpeedKbps}k/${this.downloadSpeedKbps}k 16/16 8`;
       },
     };
     const limit = radiusHelper.buildMikrotikRateLimit(plan);
-    expect(limit).toBe('10000k/5000k 20000k/10000k 10000k/5000k 16/16 8');
+    expect(limit).toBe('5000k/10000k 10000k/20000k 5000k/10000k 16/16 8');
   });
 
   test('returns null if no speed is set', () => {

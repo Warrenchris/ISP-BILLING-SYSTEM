@@ -20,6 +20,31 @@ if (!mpesaShortcode) {
   console.error('    Please set MPESA_BUSINESS_SHORT_CODE in your .env file.');
   process.exit(1);
 }
+
+// Check Router Encryption Key
+const routerEncryptionKey = process.env.ROUTER_ENCRYPTION_KEY;
+if (!routerEncryptionKey) {
+  console.error('❌  CRITICAL ERROR: ROUTER_ENCRYPTION_KEY is missing from environment variables.');
+  console.error('    Please set ROUTER_ENCRYPTION_KEY in your .env file.');
+  process.exit(1);
+}
+if (!/^[0-9a-fA-F]{64}$/.test(routerEncryptionKey)) {
+  console.error('❌  CRITICAL ERROR: ROUTER_ENCRYPTION_KEY must be a valid 32-byte hex string (64 characters).');
+  process.exit(1);
+}
+
+// Check BYPASS_IP_CHECK production guard
+if (process.env.NODE_ENV === 'production' && process.env.BYPASS_IP_CHECK === 'true') {
+  console.error('❌  CRITICAL ERROR: BYPASS_IP_CHECK cannot be set to "true" in production mode.');
+  process.exit(1);
+}
+
+// Check MPESA_CALLBACK_TOKEN presence in production
+if (process.env.NODE_ENV === 'production' && !process.env.MPESA_CALLBACK_TOKEN) {
+  console.error('❌  CRITICAL ERROR: MPESA_CALLBACK_TOKEN is missing from environment variables in production.');
+  console.error('    Please set MPESA_CALLBACK_TOKEN in your production .env file.');
+  process.exit(1);
+}
 console.log('🧪  Step 1 – dotenv loaded');
 
 let app;
@@ -90,9 +115,13 @@ const startServer = async () => {
   await waitForDatabase();
 
   // 4‑b  Sync models
-  console.log('🧱   Syncing Sequelize models…');
-  await syncDatabase(false);          // change to `true` to force‑sync
-  console.log('✅   Models synced');
+  if (process.env.NODE_ENV === 'test') {
+    console.log('🧱   Syncing Sequelize models (Test environment)…');
+    await syncDatabase(false);
+    console.log('✅   Models synced');
+  } else {
+    console.log('ℹ️   Skipping model sync (migrations are the source of truth)');
+  }
 
   // 4‑c  Phase 1: Start BullMQ workers and schedulers
   console.log('⚡   Starting Phase 1 provisioning workers…');
@@ -113,6 +142,8 @@ const startServer = async () => {
     // Phase 3: SMS Worker and Dunning Scheduler
     const { startWorker: startSmsWorker } = require('./services/queue/smsWorker');
     const { startDunningScheduler } = require('./jobs/sendSmsReminders');
+    // Voucher Generation Worker
+    const { startWorker: startVoucherWorker } = require('./services/queue/voucherWorker');
 
     startWorker();
     startExpiryScheduler();
@@ -120,6 +151,7 @@ const startServer = async () => {
     startAccountingWatcher();
     startSmsWorker();
     startDunningScheduler();
+    startVoucherWorker();
 
     // Only mark as 'operational' if not in mock mode (mock stays 'disabled')
     if (process.env.MOCK_MIKROTIK !== 'true') {

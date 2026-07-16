@@ -102,8 +102,8 @@ router.post(
 // GET /api/payments/status/:paymentId - Check payment status
 router.get('/status/:paymentId', authenticate, queryPaymentStatus);
 
-// POST /api/payments/mpesa/callback - M-Pesa callback handler
-router.post('/mpesa/callback', validateMpesaCallback, handleMpesaCallback);
+// POST /api/payments/mpesa/callback/:token - M-Pesa callback handler
+router.post('/mpesa/callback/:token', validateMpesaCallback, handleMpesaCallback);
 
 // GET /api/payments/history - Payment history for current user
 router.get('/history', authenticate, async (req, res) => {

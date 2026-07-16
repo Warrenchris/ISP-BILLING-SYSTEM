@@ -40,5 +40,8 @@ router.patch("/subscriptions/:id", admin.patchSubscription);
 router.get('/dashboard/overview', dashboardController.getAdminOverview);
 router.get('/dashboard/activity', dashboardController.getAdminActivity);
 
+// ─── RADIUS Resync Endpoint ───────────────────────────────────
+router.post('/resync-all-bandwidth', adminController.resyncAllBandwidth);
+
 
 module.exports = router;

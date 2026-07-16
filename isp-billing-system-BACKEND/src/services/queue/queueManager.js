@@ -182,11 +182,54 @@ async function addSmsJob(to, templateKey, variables, tag, jobId) {
   return job;
 }
 
+let voucherQueue = null;
+
+/**
+ * Get the voucher-generation queue.
+ */
+function getVoucherQueue() {
+  if (!voucherQueue) {
+    voucherQueue = new Queue('voucher-generation', {
+      connection: getRedisConnection(),
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: {
+          type: 'exponential',
+          delay: 2000, // 2s -> 4s -> 8s -> 16s -> 32s
+        },
+        removeOnComplete: { age: 86400, count: 1000 },
+        removeOnFail: { age: 604800 },
+      },
+    });
+  }
+  return voucherQueue;
+}
+
+/**
+ * Add a voucher generation job with a deterministic jobId for dedup.
+ */
+async function addVoucherJob(paymentId, phone, planId, userId, jobId) {
+  const queue = getVoucherQueue();
+
+  const job = await queue.add('generate-voucher', {
+    paymentId,
+    phone,
+    planId,
+    userId,
+    enqueuedAt: new Date().toISOString(),
+  }, {
+    jobId, // Deterministic - BullMQ silently ignores if jobId already exists
+  });
+
+  logger.info(`Queued voucher generation job for payment ${paymentId}`, { jobId });
+  return job;
+}
+
 /**
  * Gracefully close all queues and Redis connection.
  */
 async function closeAll() {
-  const queues = [provisioningQueue, expiryQueue, reconciliationQueue, smsQueue].filter(Boolean);
+  const queues = [provisioningQueue, expiryQueue, reconciliationQueue, smsQueue, voucherQueue].filter(Boolean);
   for (const q of queues) {
     await q.close();
   }
@@ -198,6 +241,7 @@ async function closeAll() {
   expiryQueue = null;
   reconciliationQueue = null;
   smsQueue = null;
+  voucherQueue = null;
   logger.info('All BullMQ queues closed');
 }
 
@@ -207,7 +251,9 @@ module.exports = {
   getExpiryQueue,
   getReconciliationQueue,
   getSmsQueue,
+  getVoucherQueue,
   addProvisioningJob,
   addSmsJob,
+  addVoucherJob,
   closeAll,
 };

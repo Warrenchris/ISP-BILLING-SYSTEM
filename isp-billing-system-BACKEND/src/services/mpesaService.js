@@ -9,7 +9,17 @@ class MpesaService {
     this.consumerSecret = process.env.MPESA_CONSUMER_SECRET;
     this.businessShortCode = process.env.MPESA_BUSINESS_SHORT_CODE || process.env.MPESA_SHORTCODE;
     this.passKey = process.env.MPESA_PASS_KEY || process.env.MPESA_PASSKEY;
-    this.callbackUrl = process.env.MPESA_CALLBACK_URL;
+    
+    let callbackUrl = process.env.MPESA_CALLBACK_URL;
+    const token = process.env.MPESA_CALLBACK_TOKEN;
+    if (callbackUrl && token) {
+      if (!callbackUrl.endsWith(token)) {
+        const separator = callbackUrl.endsWith('/') ? '' : '/';
+        callbackUrl = `${callbackUrl}${separator}${token}`;
+      }
+    }
+    this.callbackUrl = callbackUrl;
+    
     this.environment = process.env.MPESA_ENV || 'sandbox';
     
     // Set base URLs based on environment

@@ -437,3 +437,45 @@ exports.updateUserSubscription = async (req, res, next) => {
     next(err);
   }
 };
+
+/*───────────────────────────────────────────────────────────*/
+exports.resyncAllBandwidth = async (req, res, next) => {
+  try {
+    const { Subscription, DataPlan } = require('../models');
+    const { SubscriptionStatus } = require('../config/constants');
+    const radiusSync = require('../services/radius/syncUser');
+
+    // Find all active subscriptions and include their associated data plans
+    const activeSubscriptions = await Subscription.findAll({
+      where: {
+        status: SubscriptionStatus.ACTIVE,
+      },
+      include: [
+        { model: DataPlan, as: 'plan' }
+      ]
+    });
+
+    let resyncedCount = 0;
+    for (const sub of activeSubscriptions) {
+      if (sub.networkIdentifier) {
+        // Sync back to RADIUS (syncToRadius is idempotent)
+        await radiusSync.syncToRadius(sub, {
+          radiusUsername: sub.networkIdentifier,
+        });
+        resyncedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully resynced ${resyncedCount} active subscriptions in RADIUS`,
+      data: {
+        resyncedCount,
+        totalActive: activeSubscriptions.length,
+      }
+    });
+  } catch (err) {
+    console.error('RADIUS bandwidth resync error:', err);
+    next(err);
+  }
+};

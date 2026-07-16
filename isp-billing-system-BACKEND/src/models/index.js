@@ -153,6 +153,12 @@ async function seedSmsTemplates() {
         variables: ['code', 'plan', 'dataLimit', 'validity'],
         description: 'Remote purchase voucher code delivery',
       },
+      {
+        key: 'admin_alert',
+        template: 'SYSTEM ALERT: {{message}}',
+        variables: ['message'],
+        description: 'System alert message for administrators',
+      },
     ];
 
     for (const t of defaultTemplates) {

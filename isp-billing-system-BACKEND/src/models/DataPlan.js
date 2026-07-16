@@ -137,13 +137,14 @@ DataPlan.prototype.getValidityText = function() {
 DataPlan.prototype.toMikrotikRateLimit = function () {
   if (!this.downloadSpeedKbps || !this.uploadSpeedKbps) return null;
 
-  let rateLimit = `${this.downloadSpeedKbps}k/${this.uploadSpeedKbps}k`;
+  // MikroTik RouterOS simple queues/RADIUS expects upload/download (rx-rate/tx-rate)
+  let rateLimit = `${this.uploadSpeedKbps}k/${this.downloadSpeedKbps}k`;
 
   // Add burst if configured
   if (this.burstDownloadKbps && this.burstUploadKbps) {
-    rateLimit += ` ${this.burstDownloadKbps}k/${this.burstUploadKbps}k`;
+    rateLimit += ` ${this.burstUploadKbps}k/${this.burstDownloadKbps}k`;
     // Threshold = normal speed (burst kicks in above threshold)
-    rateLimit += ` ${this.downloadSpeedKbps}k/${this.uploadSpeedKbps}k`;
+    rateLimit += ` ${this.uploadSpeedKbps}k/${this.downloadSpeedKbps}k`;
     // Burst time / priority
     rateLimit += ` 16/16 8`;
   }

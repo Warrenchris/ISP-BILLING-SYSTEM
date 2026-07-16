@@ -468,27 +468,21 @@ class PaymentService {
                         });
                     }
                 } else if (lockedPayment.callbackData && lockedPayment.callbackData.planId) {
-                    // Trigger remote voucher purchase generation and delivery
+                    // Enqueue voucher generation as a BullMQ job (decoupled post-commit)
                     try {
-                        const voucherService = require('./voucherService');
+                        const { addVoucherJob } = require('./queue/queueManager');
                         const planId = lockedPayment.callbackData.planId;
                         const phone = lockedPayment.phoneNumber;
+                        const userId = lockedPayment.userId;
+                        const jobId = `voucher-gen-${lockedPayment.id}`;
 
-                        const voucher = await voucherService.purchaseVoucherRemote(phone, planId, lockedPayment.userId);
-                        
-                        // Save generated voucher code inside payment metadata for polling retrieval
-                        await lockedPayment.update({
-                            callbackData: {
-                                ...(lockedPayment.callbackData || {}),
-                                voucherCode: voucher.code,
-                            }
-                        });
+                        await addVoucherJob(lockedPayment.id, phone, planId, userId, jobId);
 
-                        logger.info(`Voucher purchased successfully via M-Pesa callback: ${phone} (code: ${voucher.code}, plan: ${planId})`);
-                    } catch (voucherError) {
-                        logger.error('Failed to generate/deliver remote purchased voucher after callback commit', {
+                        logger.info(`Voucher generation enqueued successfully via M-Pesa callback: ${phone} (jobId: ${jobId}, plan: ${planId})`);
+                    } catch (queueError) {
+                        logger.error('Failed to enqueue remote purchased voucher generation after callback commit', {
                             paymentId: lockedPayment.id,
-                            error: voucherError.message,
+                            error: queueError.message,
                         });
                     }
                 }

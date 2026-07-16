@@ -6,7 +6,7 @@
  * with a delay WITHOUT consuming a retry attempt.
  */
 
-const { Worker } = require('bullmq');
+const { Worker, DelayedError } = require('bullmq');
 const logger = require('../../config/logger');
 const provisioning = require('../mikrotik/provisioning');
 const mikrotikClient = require('../mikrotik/client');
@@ -42,14 +42,12 @@ async function processJob(job) {
 
     if (circuitState === 'open') {
       // Router is known-unreachable. DON'T burn a retry attempt.
-      // Throw a special error that our error handler will catch.
-      const err = new Error(
+      logger.info(
         `Circuit breaker OPEN for router "${subData.device.name}" (${subData.device.id}). ` +
         `Requeuing with ${CIRCUIT_REQUEUE_DELAY_MS}ms delay without consuming retry attempt.`
       );
-      err.code = 'CIRCUIT_OPEN';
-      err.retryAfterMs = CIRCUIT_REQUEUE_DELAY_MS;
-      throw err;
+      await job.moveToDelayed(Date.now() + CIRCUIT_REQUEUE_DELAY_MS, job.token);
+      throw new DelayedError();
     }
   }
 
@@ -179,20 +177,6 @@ function startWorker() {
   });
 
   worker.on('failed', async (job, err) => {
-    // ── Circuit breaker special handling ───────────────────────────────
-    // If the error is CIRCUIT_OPEN, requeue without consuming a retry attempt.
-    if (err.code === 'CIRCUIT_OPEN' && err.retryAfterMs) {
-      try {
-        // Move the job to delayed state manually, preserving attemptsMade
-        await job.moveToDelayed(Date.now() + err.retryAfterMs, job.token);
-        logger.info(`Provisioning job ${job.id} requeued (circuit open), delay ${err.retryAfterMs}ms. Attempts NOT consumed.`);
-        return;
-      } catch (moveErr) {
-        logger.warn(`Failed to requeue job ${job.id} after circuit open: ${moveErr.message}`);
-        // Fall through to normal failure handling
-      }
-    }
-
     // ── Normal failure handling ────────────────────────────────────────
     const isFinalAttempt = job.attemptsMade >= job.opts.attempts;
 
