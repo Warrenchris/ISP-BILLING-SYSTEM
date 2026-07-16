@@ -30,16 +30,18 @@ jest.mock('../../src/models', () => ({
     },
 }));
 
+var mockInitiateSTKPush = jest.fn().mockResolvedValue({
+    CheckoutRequestID: 'ws_CO_123456',
+    MerchantRequestID: '123456',
+    ResponseCode: '0',
+    CustomerMessage: 'Success',
+});
+
 // Mock MpesaService
 jest.mock('../../src/services/mpesaService', () => {
     return jest.fn().mockImplementation(() => ({
         formatPhoneNumber: jest.fn((phone) => phone),
-        initiateSTKPush: jest.fn().mockResolvedValue({
-            CheckoutRequestID: 'ws_CO_123456',
-            MerchantRequestID: '123456',
-            ResponseCode: '0',
-            CustomerMessage: 'Success',
-        }),
+        initiateSTKPush: (...args) => mockInitiateSTKPush(...args),
     }));
 });
 
@@ -125,10 +127,8 @@ describe('PaymentService', () => {
 
         it('should commit transaction and update payment to FAILED if STK Push fails post-commit', async () => {
             const { Subscription, Payment, sequelize } = require('../../src/models');
-            const MpesaService = require('../../src/services/mpesaService');
-            const mockMpesaInstance = MpesaService.mock.instances[0];
 
-            mockMpesaInstance.initiateSTKPush.mockRejectedValueOnce(new Error('Safaricom API Down'));
+            mockInitiateSTKPush.mockRejectedValueOnce(new Error('Safaricom API Down'));
 
             const mockPaymentUpdate = jest.fn();
             const mockTransactionCommit = jest.fn();
