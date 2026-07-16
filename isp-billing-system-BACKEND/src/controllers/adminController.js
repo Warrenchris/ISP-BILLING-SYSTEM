@@ -479,3 +479,47 @@ exports.resyncAllBandwidth = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * GET /api/admin/queues/stats
+ * Fetch aggregate job counts from all BullMQ queues for observability.
+ */
+exports.getQueueStats = async (req, res, next) => {
+  try {
+    const queueManager = require('../services/queue/queueManager');
+    const queueGetters = {
+      provisioning: queueManager.getProvisioningQueue,
+      expiryCheck: queueManager.getExpiryQueue,
+      reconciliation: queueManager.getReconciliationQueue,
+      sms: queueManager.getSmsQueue,
+      voucherGeneration: queueManager.getVoucherQueue
+    };
+
+    const stats = {};
+
+    for (const [name, getter] of Object.entries(queueGetters)) {
+      try {
+        const queue = getter();
+        const counts = await queue.getJobCounts();
+        stats[name] = {
+          active: counts.active,
+          completed: counts.completed,
+          failed: counts.failed,
+          delayed: counts.delayed,
+          waiting: counts.waiting,
+          paused: counts.paused || 0,
+        };
+      } catch (err) {
+        stats[name] = { error: `Failed to fetch stats: ${err.message}` };
+      }
+    }
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      queues: stats
+    });
+  } catch (err) {
+    next(err);
+  }
+};

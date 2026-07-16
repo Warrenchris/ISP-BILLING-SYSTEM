@@ -32,12 +32,20 @@
    ```
 
 5. **Run database migrations:**
+   > [!IMPORTANT]
+   > Sequelize auto-sync (`sync()`) is strictly disabled in development and production to prevent schema drifts. Running migrations is mandatory for all schema changes:
    ```bash
    npm run migrate
    npm run seed
    ```
 
-6. **Start with PM2:**
+6. **Align existing subscriber bandwidth (One-time Step):**
+   If you are upgrading an existing production deployment, trigger the one-time resync endpoint to update all active RADIUS subscriber speeds to the corrected format:
+   ```bash
+   curl -X POST -H "Authorization: Bearer <ADMIN_JWT>" http://localhost:3000/api/admin/resync-all-bandwidth
+   ```
+
+7. **Start with PM2:**
    ```bash
    npm install -g pm2
    pm2 start ecosystem.config.js --env production

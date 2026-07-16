@@ -13,6 +13,33 @@ console.log('🧪  Step 0 – entering server.js');
 
 require('dotenv').config();               // ← loads .env
 
+// Validate all required environment variables at startup
+const requiredEnvVars = [
+  'ROUTER_ENCRYPTION_KEY',
+  'JWT_SECRET',
+  'AT_API_KEY',
+  'AT_USERNAME',
+  'RADIUS_SHARED_SECRET',
+  'DB_HOST',
+  'DB_PORT',
+  'DB_USER',
+  'DB_PASSWORD',
+  'DB_NAME',
+  'REDIS_HOST',
+  'REDIS_PORT'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌  CRITICAL STARTUP ERROR: The following required environment variables are missing:');
+  missingEnvVars.forEach(varName => {
+    console.error(`    - ${varName}`);
+  });
+  console.error('    Please configure them in your environment or .env file before starting the server.');
+  process.exit(1);
+}
+
 // Check M-Pesa shortcode
 const mpesaShortcode = process.env.MPESA_BUSINESS_SHORT_CODE || process.env.MPESA_SHORTCODE;
 if (!mpesaShortcode) {

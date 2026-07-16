@@ -43,5 +43,7 @@ router.get('/dashboard/activity', dashboardController.getAdminActivity);
 // ─── RADIUS Resync Endpoint ───────────────────────────────────
 router.post('/resync-all-bandwidth', adminController.resyncAllBandwidth);
 
+// ─── Queue Observability Stats Endpoint ────────────────────────
+router.get('/queues/stats', adminController.getQueueStats);
 
 module.exports = router;

@@ -22,6 +22,27 @@ jest.mock('../../src/services/radius/syncUser', () => ({
   syncToRadius: jest.fn().mockResolvedValue(true),
 }));
 
+// Mock Queue Manager
+jest.mock('../../src/services/queue/queueManager', () => {
+  const mockQueue = {
+    getJobCounts: jest.fn().mockResolvedValue({
+      active: 1,
+      completed: 2,
+      failed: 3,
+      delayed: 4,
+      waiting: 5,
+    }),
+  };
+  return {
+    getRedisConnection: jest.fn(),
+    getProvisioningQueue: jest.fn(() => mockQueue),
+    getExpiryQueue: jest.fn(() => mockQueue),
+    getReconciliationQueue: jest.fn(() => mockQueue),
+    getSmsQueue: jest.fn(() => mockQueue),
+    getVoucherQueue: jest.fn(() => mockQueue),
+  };
+});
+
 describe('Admin Controller — resyncAllBandwidth', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -99,5 +120,28 @@ describe('Admin Controller — resyncAllBandwidth', () => {
     await adminController.resyncAllBandwidth(req, res, next);
 
     expect(next).toHaveBeenCalledWith(error);
+  });
+});
+
+describe('Admin Controller — getQueueStats', () => {
+  test('returns job counts for all BullMQ queues successfully', async () => {
+    const req = {};
+    const res = {
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    await adminController.getQueueStats(req, res, next);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        queues: expect.objectContaining({
+          provisioning: expect.objectContaining({ active: 1, completed: 2, failed: 3 }),
+          sms: expect.objectContaining({ active: 1, completed: 2, failed: 3 }),
+          voucherGeneration: expect.objectContaining({ active: 1, completed: 2, failed: 3 }),
+        })
+      })
+    );
   });
 });
