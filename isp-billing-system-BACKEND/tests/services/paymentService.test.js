@@ -122,5 +122,47 @@ describe('PaymentService', () => {
                 PaymentService.initiateSubscriptionPayment('user-123', 'sub-123', '0700000000')
             ).rejects.toEqual(expect.objectContaining({ message: 'Subscription is already active and paid' }));
         });
+
+        it('should commit transaction and update payment to FAILED if STK Push fails post-commit', async () => {
+            const { Subscription, Payment, sequelize } = require('../../src/models');
+            const MpesaService = require('../../src/services/mpesaService');
+            const mockMpesaInstance = MpesaService.mock.instances[0];
+
+            mockMpesaInstance.initiateSTKPush.mockRejectedValueOnce(new Error('Safaricom API Down'));
+
+            const mockPaymentUpdate = jest.fn();
+            const mockTransactionCommit = jest.fn();
+
+            Subscription.findOne.mockResolvedValue(mockSubscription);
+            Payment.findOne.mockResolvedValue(null);
+            Payment.create.mockResolvedValue({
+                ...mockSubscription,
+                id: 'payment-123',
+                status: PaymentStatus.PENDING,
+                amount: 1000,
+                phoneNumber: '254700000000',
+                reference: 'REF-123',
+                update: mockPaymentUpdate,
+                getFormattedAmount: jest.fn().mockReturnValue('1,000')
+            });
+
+            sequelize.transaction.mockResolvedValueOnce({
+                commit: mockTransactionCommit,
+                rollback: jest.fn(),
+            });
+
+            await expect(
+                PaymentService.initiateSubscriptionPayment('user-123', 'sub-123', '0700000000')
+            ).rejects.toEqual(expect.objectContaining({ message: 'Safaricom API Down' }));
+
+            expect(mockTransactionCommit).toHaveBeenCalled();
+            expect(mockPaymentUpdate).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: PaymentStatus.FAILED,
+                    errorMessage: 'Safaricom API Down',
+                    callbackData: expect.objectContaining({ stk_failed: true })
+                })
+            );
+        });
     });
 });

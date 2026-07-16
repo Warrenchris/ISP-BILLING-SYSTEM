@@ -45,6 +45,15 @@ if (process.env.NODE_ENV === 'production' && !process.env.MPESA_CALLBACK_TOKEN) 
   console.error('    Please set MPESA_CALLBACK_TOKEN in your production .env file.');
   process.exit(1);
 }
+
+// Check RADIUS_DB_PASSWORD strength and presence in production
+if (process.env.NODE_ENV === 'production') {
+  const radiusDbPassword = process.env.RADIUS_DB_PASSWORD;
+  if (!radiusDbPassword || radiusDbPassword === 'radiuspassword') {
+    console.error('❌  CRITICAL ERROR: RADIUS_DB_PASSWORD is missing or set to the weak fallback "radiuspassword" in production.');
+    process.exit(1);
+  }
+}
 console.log('🧪  Step 1 – dotenv loaded');
 
 let app;

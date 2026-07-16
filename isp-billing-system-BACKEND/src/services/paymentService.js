@@ -81,11 +81,8 @@ class PaymentService {
                 }
             }, { transaction });
 
-            // Initiate STK Push (External API call should ideally be outside transaction to avoid holding lock too long, 
-            // but we need to update the payment record with checkout ID. 
-            // Compromise: Keep it here but be aware of timeout risks, or update after commit if architectural complexity allows.)
-            // better pattern: Create Payment -> Commit -> Call API -> Update Payment
-            // For now, we'll keep it simple as per original logic flow, but acknowledge the external call.
+            // Commit transaction BEFORE external STK push to release database locks
+            await transaction.commit();
 
             let stkPushResponse;
             try {
@@ -96,18 +93,24 @@ class PaymentService {
                     transactionDesc: payment.description
                 });
             } catch (stkError) {
-                // If STK push fails, we should rollback the payment creation
+                // STK push failed post-commit: update payment row to failed state
+                await payment.update({
+                    status: PaymentStatus.FAILED,
+                    errorMessage: stkError.message || 'Failed to initiate M-Pesa STK Push',
+                    callbackData: {
+                        ...(payment.callbackData || {}),
+                        stk_failed: true
+                    }
+                });
                 throw { statusCode: 500, message: stkError.message || 'Failed to initiate M-Pesa STK Push' };
             }
 
-            // Update payment with STK Push details
+            // Update payment with STK Push details post-commit
             await payment.update({
                 checkoutRequestId: stkPushResponse.CheckoutRequestID,
                 merchantRequestId: stkPushResponse.MerchantRequestID,
                 status: PaymentStatus.PENDING
-            }, { transaction });
-
-            await transaction.commit();
+            });
 
             return {
                 success: true,
@@ -275,15 +278,29 @@ class PaymentService {
 
             if (newPhoneNumber) {
                 payment.phoneNumber = mpesaService.formatPhoneNumber(newPhoneNumber);
+                await payment.save({ transaction });
             }
 
-            // External call outside primary update but before final commit/update
-            const stkPushResponse = await mpesaService.initiateSTKPush({
-                phoneNumber: payment.phoneNumber,
-                amount: payment.amount,
-                accountReference: payment.reference,
-                transactionDesc: payment.description
-            });
+            // Commit transaction BEFORE external STK push to release database locks
+            await transaction.commit();
+
+            let stkPushResponse;
+            try {
+                stkPushResponse = await mpesaService.initiateSTKPush({
+                    phoneNumber: payment.phoneNumber,
+                    amount: payment.amount,
+                    accountReference: payment.reference,
+                    transactionDesc: payment.description
+                });
+            } catch (stkError) {
+                // Post-commit failure: update status and increment retry
+                await payment.update({
+                    status: PaymentStatus.FAILED,
+                    errorMessage: stkError.message || 'Failed to initiate M-Pesa STK Push'
+                });
+                await payment.incrementRetry();
+                throw { statusCode: 500, message: stkError.message || 'Failed to initiate M-Pesa STK Push' };
+            }
 
             await payment.update({
                 checkoutRequestId: stkPushResponse.CheckoutRequestID,
@@ -291,11 +308,9 @@ class PaymentService {
                 status: PaymentStatus.PENDING,
                 errorMessage: null,
                 expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-            }, { transaction });
+            });
 
-            await payment.incrementRetry({ transaction });
-
-            await transaction.commit();
+            await payment.incrementRetry();
 
             return {
                 success: true,
@@ -535,6 +550,9 @@ class PaymentService {
                 }
             }, { transaction });
 
+            // Commit transaction BEFORE external STK push to release database locks
+            await transaction.commit();
+
             // Trigger the Safaricom M-Pesa STK Push
             let stkPushResponse;
             try {
@@ -554,18 +572,25 @@ class PaymentService {
                         transactionDesc: payment.description
                     });
                 } catch (stkErrorInner) {
+                    // STK push failed post-commit: update payment row to failed state
+                    await payment.update({
+                        status: PaymentStatus.FAILED,
+                        errorMessage: stkErrorInner.message || 'Failed to initiate M-Pesa STK Push',
+                        callbackData: {
+                            ...(payment.callbackData || {}),
+                            stk_failed: true
+                        }
+                    });
                     throw { statusCode: 500, message: stkErrorInner.message || 'Failed to initiate M-Pesa STK Push' };
                 }
             }
 
-            // Update payment with STK Push details
+            // Update payment with STK Push details post-commit
             await payment.update({
                 checkoutRequestId: stkPushResponse.CheckoutRequestID,
                 merchantRequestId: stkPushResponse.MerchantRequestID,
                 status: PaymentStatus.PENDING
-            }, { transaction });
-
-            await transaction.commit();
+            });
 
             return {
                 success: true,
