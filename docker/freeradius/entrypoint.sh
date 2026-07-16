@@ -24,6 +24,19 @@ if [ ${#RADIUS_SHARED_SECRET} -lt 12 ]; then
   exit 1
 fi
 
+# Enforce check for DB_PASSWORD
+if [ -z "${DB_PASSWORD}" ]; then
+  echo "🚨 ERROR: DB_PASSWORD (RADIUS database password) environment variable is not set!"
+  exit 1
+fi
+
+if [ "${DB_PASSWORD}" = "radiuspassword" ]; then
+  echo "🚨 ERROR: DB_PASSWORD is set to the default weak value 'radiuspassword'!"
+  echo "   For security reasons, FreeRADIUS will not start with this weak credential."
+  echo "   Please update RADIUS_DB_PASSWORD in your .env to a strong, unique secret."
+  exit 1
+fi
+
 echo "✅ Security validation passed. Starting FreeRADIUS..."
 
 # Execute standard FreeRADIUS entrypoint command

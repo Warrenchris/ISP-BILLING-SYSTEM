@@ -40,12 +40,17 @@ async function runExpirySweep() {
         connectionType: { [Op.ne]: null },
         networkDeviceId: { [Op.ne]: null },
         networkIdentifier: { [Op.ne]: null },
-        [Op.and]: sequelize.literal('DATE_ADD(end_date, INTERVAL grace_period_hours HOUR) < NOW()')
+        [Op.and]: sequelize.literal('DATE_ADD(end_date, INTERVAL grace_period_hours HOUR) < NOW()'),
+        [Op.or]: [
+          { lastProvisioningAttempt: null },
+          { lastProvisioningAttempt: { [Op.lt]: new Date(Date.now() - 15 * 60 * 1000) } }
+        ]
       },
       include: [
         { model: NetworkDevice, as: 'NetworkDevice', where: { isActive: true } },
       ],
-      limit: 100, // Process in batches to avoid overload
+      order: [['endDate', 'ASC']],
+      limit: 1000, // Process in larger batches to resolve query starvation
     });
 
     // Filter in application code for grace period (Sequelize doesn't easily
@@ -78,6 +83,9 @@ async function runExpirySweep() {
           subscriptionId: sub.id,
           triggeredBy: 'cron:expiry',
         }, jobId);
+
+        // Update lastProvisioningAttempt to prevent consecutive sweep query starvation
+        await sub.update({ lastProvisioningAttempt: new Date() });
 
         enqueued++;
       } catch (err) {
