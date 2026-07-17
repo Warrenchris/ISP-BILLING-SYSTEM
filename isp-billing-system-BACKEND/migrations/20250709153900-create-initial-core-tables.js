@@ -189,26 +189,6 @@ module.exports = {
         allowNull: true,
         defaultValue: 0,
       },
-      upload_speed_kbps: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      download_speed_kbps: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      burst_upload_kbps: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      burst_download_kbps: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      session_timeout_seconds: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -292,58 +272,6 @@ module.exports = {
       notes: {
         type: Sequelize.TEXT,
         allowNull: true,
-      },
-      connection_type: {
-        type: Sequelize.ENUM('pppoe', 'hotspot', 'static', 'address_list', 'voucher'),
-        allowNull: true,
-      },
-      network_device_id: {
-        type: Sequelize.UUID,
-        allowNull: true,
-      },
-      network_identifier: {
-        type: Sequelize.STRING(255),
-        allowNull: true,
-      },
-      grace_period_hours: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 24,
-      },
-      provisioning_retry_count: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      last_provisioning_attempt: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
-      reminder_sent_at: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
-      radius_password_encrypted: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      radius_password_iv: {
-        type: Sequelize.STRING(64),
-        allowNull: true,
-      },
-      radius_password_tag: {
-        type: Sequelize.STRING(64),
-        allowNull: true,
-      },
-      last_download_bytes_counter: {
-        type: Sequelize.BIGINT,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      last_upload_bytes_counter: {
-        type: Sequelize.BIGINT,
-        allowNull: false,
-        defaultValue: 0,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -575,10 +503,6 @@ module.exports = {
         type: Sequelize.STRING(15),
         allowNull: true,
       },
-      checkout_request_id: {
-        type: Sequelize.STRING(100),
-        allowNull: true,
-      },
       merchant_request_id: {
         type: Sequelize.STRING(100),
         allowNull: true,
@@ -738,10 +662,98 @@ module.exports = {
         allowNull: false,
       },
     });
+
+    // 11. data_usage
+    await createTableIfMissing('data_usage', {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+      },
+      user_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      subscription_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      session_id: {
+        type: Sequelize.STRING(50),
+        allowNull: false,
+      },
+      start_time: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      end_time: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      bytes_downloaded: {
+        type: Sequelize.BIGINT,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      bytes_uploaded: {
+        type: Sequelize.BIGINT,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      total_bytes: {
+        type: Sequelize.BIGINT,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      ip_address: {
+        type: Sequelize.STRING(45),
+        allowNull: true,
+      },
+      device_info: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
+      location: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
+      connection_type: {
+        type: Sequelize.ENUM('wifi', '4g', '3g', '2g', 'fiber', 'unknown'),
+        allowNull: false,
+        defaultValue: 'unknown',
+      },
+      quality: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
+      status: {
+        type: Sequelize.ENUM('active', 'completed', 'terminated', 'error'),
+        allowNull: false,
+        defaultValue: 'active',
+      },
+      termination_reason: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
+      metadata: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+    });
   },
 
   down: async (queryInterface) => {
     // Drop in reverse dependency order
+    await queryInterface.dropTable('data_usage');
     await queryInterface.dropTable('ticket_replies');
     await queryInterface.dropTable('support_tickets');
     await queryInterface.dropTable('payments');

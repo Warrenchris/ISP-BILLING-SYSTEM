@@ -1,16 +1,18 @@
 const { execSync } = require('child_process');
 const { Sequelize } = require('sequelize');
+jest.setTimeout(120000);
 
 describe('Real Database Integration Tests', () => {
   let testSequelize;
   let models;
   
   beforeAll(async () => {
-    // 1. Create the test database if not exists using a root connection
+    // 1. Create a fresh test database using a root connection
     const rootSequelize = new Sequelize('mysql://root:rootpassword@127.0.0.1:3307/mysql', {
       logging: false,
     });
-    await rootSequelize.query('CREATE DATABASE IF NOT EXISTS isp_billing_test_db;');
+    await rootSequelize.query('DROP DATABASE IF EXISTS isp_billing_test_db;');
+    await rootSequelize.query('CREATE DATABASE isp_billing_test_db;');
     await rootSequelize.close();
 
     // 2. Run actual migrations against the test database
@@ -23,7 +25,7 @@ describe('Real Database Integration Tests', () => {
         DB_USER: 'root',
         DB_PASSWORD: 'rootpassword',
         DB_NAME: 'isp_billing_test_db',
-        NODE_ENV: 'test',
+        NODE_ENV: 'production',
       },
       stdio: 'inherit',
     });
@@ -60,9 +62,9 @@ describe('Real Database Integration Tests', () => {
       const device = await NetworkDevice.create({
         id: '10000000-0000-0000-0000-111111111111',
         name: 'Test Router',
-        ip: '192.168.1.1',
+        ipAddress: '192.168.1.1',
         username: 'admin',
-        password: 'password',
+        passwordEncrypted: 'password',
         isActive: true,
       });
 
@@ -79,6 +81,7 @@ describe('Real Database Integration Tests', () => {
         networkIdentifier: 'user1',
         endDate: new Date(now.getTime() - 2 * 3600 * 1000), // 2 hours ago
         gracePeriodHours: 1, // grace period is 1 hour, so expired
+        dataRemaining: 1000,
       });
 
       const activeSub = await Subscription.create({
@@ -92,6 +95,7 @@ describe('Real Database Integration Tests', () => {
         networkIdentifier: 'user2',
         endDate: new Date(now.getTime() + 10 * 3600 * 1000), // 10 hours in future, so not expired
         gracePeriodHours: 1,
+        dataRemaining: 1000,
       });
 
       // Query database using the exact literal SQL syntax

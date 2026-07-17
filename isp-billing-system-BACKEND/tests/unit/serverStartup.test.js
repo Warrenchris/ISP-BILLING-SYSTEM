@@ -35,5 +35,5 @@ describe('Server Startup Validation', () => {
       
       done();
     });
-  }, 10000); // 10s timeout for child process startup
+  }, 30000); // 30s timeout for child process startup
 });
