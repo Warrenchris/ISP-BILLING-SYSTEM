@@ -30,6 +30,7 @@ import Settings from './pages/Settings';
 import AuditLogs from './pages/AuditLogs';
 import AiDashboard from './pages/AiDashboard';
 import Portal from './pages/Portal';
+import NetworkDevices from './pages/NetworkDevices';
 import ChatWidget from './components/ai/ChatWidget';
 import { useAuth } from './contexts/AuthContext';
 
@@ -82,6 +83,7 @@ function AppRoutes({ darkmode, toggleDarkMode }) {
                     <Route path="/admin/users" element={<AdminUsers />} />
                     <Route path="/users" element={<UsersManagement />} />
                     <Route path="/users/:id" element={<UserDetails />} />
+                    <Route path="/network-devices" element={<NetworkDevices />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/staff" element={<StaffRoles />} />
                     <Route path="/settings" element={<Settings />} />

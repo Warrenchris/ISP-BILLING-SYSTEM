@@ -80,6 +80,7 @@ const SIDEBAR_SECTIONS = [
         title: 'ADMINISTRATION',
         items: [
             { text: 'Staff & Roles', icon: AdminPanelSettingsOutlined, path: '/staff'      },
+            { text: 'Network Devices', icon: RouterOutlined,           path: '/network-devices' },
             { text: 'Audit Logs',    icon: HistoryOutlined,            path: '/audit-logs' },
             { text: 'Settings',      icon: SettingsOutlined,           path: '/settings'   },
         ] },
