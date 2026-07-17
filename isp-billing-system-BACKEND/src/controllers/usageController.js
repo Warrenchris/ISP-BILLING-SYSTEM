@@ -18,7 +18,7 @@ const getCurrentUsage = async (req, res) => {
       },
       include: [{
         model: DataPlan,
-        as: 'DataPlan'
+        as: 'plan'
       }],
       order: [['createdAt', 'DESC']]
     });
@@ -143,7 +143,7 @@ const getUsageHistory = async (req, res) => {
       },
       include: [{
         model: DataPlan,
-        as: 'DataPlan'
+        as: 'plan'
       }],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
@@ -245,7 +245,7 @@ const getUsageAnalytics = async (req, res) => {
       },
       include: [{
         model: DataPlan,
-        as: 'DataPlan'
+        as: 'plan'
       }]
     });
 

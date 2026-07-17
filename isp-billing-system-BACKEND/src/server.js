@@ -17,8 +17,6 @@ require('dotenv').config();               // ← loads .env
 const requiredEnvVars = [
   'ROUTER_ENCRYPTION_KEY',
   'JWT_SECRET',
-  'AT_API_KEY',
-  'AT_USERNAME',
   'RADIUS_SHARED_SECRET',
   'DB_HOST',
   'DB_PORT',
@@ -28,6 +26,10 @@ const requiredEnvVars = [
   'REDIS_HOST',
   'REDIS_PORT'
 ];
+
+if ((process.env.SMS_PROVIDER || 'mock') !== 'mock') {
+  requiredEnvVars.push('AT_API_KEY', 'AT_USERNAME');
+}
 
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 

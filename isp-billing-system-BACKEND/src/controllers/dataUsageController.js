@@ -210,7 +210,7 @@ const getUsageHistory = async (req, res) => {
         {
           model: Subscription,
           as: 'Subscription',
-          include: [{ model: DataPlan, as: 'DataPlan' }]
+          include: [{ model: DataPlan, as: 'plan' }]
         }
       ],
       order: [['startTime', 'DESC']],
@@ -277,7 +277,7 @@ const getActiveSessions = async (req, res) => {
         {
           model: Subscription,
           as: 'Subscription',
-          include: [{ model: DataPlan, as: 'DataPlan' }]
+          include: [{ model: DataPlan, as: 'plan' }]
         }
       ],
       order: [['startTime', 'DESC']]

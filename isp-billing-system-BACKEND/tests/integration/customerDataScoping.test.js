@@ -1,3 +1,14 @@
+process.env.DB_HOST = '127.0.0.1';
+process.env.DB_PORT = '3307';
+process.env.DB_USER = 'root';
+process.env.DB_PASSWORD = 'rootpassword';
+process.env.DB_NAME = 'isp_billing_test_db';
+process.env.NODE_ENV = 'test';
+
+// Force require the models using the test database
+delete require.cache[require.resolve('../../src/config/database')];
+delete require.cache[require.resolve('../../src/models')];
+
 const request = require('supertest');
 const { Sequelize } = require('sequelize');
 const app = require('../../src/app');
@@ -16,21 +27,24 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
     // 1. Force load the test database models
     models = require('../../src/models');
     testSequelize = models.sequelize;
+    testSequelize.options.logging = console.log;
 
     // Clean tables before tests
     const { User, SupportTicket, Payment, Subscription, DataPlan, DataUsage } = models;
-    await SupportTicket.destroy({ where: {}, truncate: { cascade: true } });
-    await Payment.destroy({ where: {}, truncate: { cascade: true } });
-    await Subscription.destroy({ where: {}, truncate: { cascade: true } });
-    await DataUsage.destroy({ where: {}, truncate: { cascade: true } });
-    await User.destroy({ where: {}, truncate: { cascade: true } });
+    await SupportTicket.destroy({ where: {}, force: true });
+    await Payment.destroy({ where: {}, force: true });
+    await Subscription.destroy({ where: {}, force: true });
+    await DataUsage.destroy({ where: {}, force: true });
+    await DataPlan.destroy({ where: {}, force: true });
+    await User.destroy({ where: {}, force: true });
 
     // 2. Create customer users
     customerA = await User.create({
       id: 'a0000000-0000-0000-0000-111111111111',
       firstName: 'Customer',
-      lastName: 'A',
+      lastName: 'Alpha',
       email: 'customer.a@test.com',
+      phoneNumber: '+254711111111',
       password: 'hashedpassword123',
       role: 'customer',
       isActive: true,
@@ -39,16 +53,17 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
     customerB = await User.create({
       id: 'b0000000-0000-0000-0000-222222222222',
       firstName: 'Customer',
-      lastName: 'B',
+      lastName: 'Beta',
       email: 'customer.b@test.com',
+      phoneNumber: '+254722222222',
       password: 'hashedpassword123',
       role: 'customer',
       isActive: true,
     });
 
     // 3. Generate genuine tokens
-    tokenA = generateToken({ id: customerA.id, role: customerA.role });
-    tokenB = generateToken({ id: customerB.id, role: customerB.role });
+    tokenA = generateToken({ userId: customerA.id, role: customerA.role, email: customerA.email });
+    tokenB = generateToken({ userId: customerB.id, role: customerB.role, email: customerB.email });
 
     // 4. Create a dummy data plan
     const plan = await DataPlan.create({
@@ -57,7 +72,7 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
       speedLimit: '10M/10M',
       dataLimit: 1024 * 1024 * 1024 * 10, // 10 GB
       price: 1500,
-      durationDays: 30,
+      validityPeriod: 30,
       isActive: true,
     });
 
@@ -80,7 +95,7 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
       id: 'e0000000-0000-0000-0000-111111111111',
       userId: customerB.id,
       subject: 'Slow internet connection customer B',
-      message: 'Internet speed is very slow today.',
+      description: 'Internet speed is very slow today.',
       category: 'technical',
       priority: 'medium',
       status: 'open',
@@ -118,11 +133,12 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
   afterAll(async () => {
     // Cleanup records
     const { User, SupportTicket, Payment, Subscription, DataPlan, DataUsage } = models;
-    await SupportTicket.destroy({ where: {} });
-    await Payment.destroy({ where: {} });
-    await Subscription.destroy({ where: {} });
-    await DataUsage.destroy({ where: {} });
-    await User.destroy({ where: {} });
+    await SupportTicket.destroy({ where: {}, force: true });
+    await Payment.destroy({ where: {}, force: true });
+    await Subscription.destroy({ where: {}, force: true });
+    await DataUsage.destroy({ where: {}, force: true });
+    await DataPlan.destroy({ where: {}, force: true });
+    await User.destroy({ where: {}, force: true });
   });
 
   describe('Support Tickets Security Checks', () => {
@@ -151,7 +167,7 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
   describe('Payments Security Checks', () => {
     it('should NOT return Customer B payments when Customer A lists payments', async () => {
       const res = await request(app)
-        .get('/api/payments')
+        .get('/api/payments/history')
         .set('Authorization', `Bearer ${tokenA}`);
 
       expect(res.status).toBe(200);
@@ -162,10 +178,10 @@ describe('Customer Data Scoping & Authorization Integration Tests', () => {
 
     it('should reject access (403/404) when Customer A requests Customer B payment directly', async () => {
       const res = await request(app)
-        .get(`/api/payments/${paymentB.id}`)
+        .get(`/api/payments/status/${paymentB.id}`)
         .set('Authorization', `Bearer ${tokenA}`);
 
-      expect(res.status).toBe(403);
+      expect([403, 404]).toContain(res.status);
     });
   });
 
