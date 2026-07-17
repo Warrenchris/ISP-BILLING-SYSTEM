@@ -119,7 +119,7 @@ describe('Real Database Integration Tests', () => {
 
   describe('Schema Consistency Check (Models vs Database)', () => {
     it('should match Sequelize model definitions with the actual MySQL database schema', async () => {
-      const modelNames = Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize');
+      const modelNames = Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize' && key !== 'syncDatabase');
 
       for (const name of modelNames) {
         const model = models[name];
