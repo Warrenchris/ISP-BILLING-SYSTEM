@@ -91,3 +91,31 @@ The `MPESA_CALLBACK_TOKEN` is passed as a URL path parameter to the webhook endp
 2.  **Token Rotation**: Treat `MPESA_CALLBACK_TOKEN` as a rotatable credential. If a log leak or unauthorized access is suspected, change the token in `.env` and register the new webhook URL with Safaricom.
 3.  **Log Scrubbing**: If using a centralized logging system (e.g., Elasticsearch, Datadog), configure pattern matchers to scrub or mask the callback token from URL strings.
 
+---
+
+## 4. FreeRADIUS Database Credentials & Host Scope
+
+### 4.1 Host-Scope Requirement
+The MySQL database user account used by the FreeRADIUS container (default: `radius_user`) **must be scoped to a wildcard host (`'radius_user'@'%'`)** rather than a specific IP address or `localhost`.
+
+### 4.2 Rationale
+Because the FreeRADIUS service runs inside an isolated Docker bridge network container, its source IP address is dynamically assigned on startup (e.g., `172.19.0.5`, `172.19.0.6`) and is not stable across restarts. If MySQL restricts the user to `'radius_user'@'localhost'`, FreeRADIUS connections will fail with `Access denied` errors immediately upon bridge IP reassignment.
+
+### 4.3 Database User Creation / Password Sync
+If recreating the database user or synchronizing passwords manually:
+```sql
+-- 1. Create user with wildcard host scope and strong password
+CREATE USER IF NOT EXISTS 'radius_user'@'%' IDENTIFIED BY '<exact RADIUS_DB_PASSWORD value>';
+
+-- 2. Grant table-specific permissions only
+GRANT SELECT, INSERT, UPDATE, DELETE ON isp_billing_db.radcheck TO 'radius_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON isp_billing_db.radreply TO 'radius_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON isp_billing_db.radusergroup TO 'radius_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON isp_billing_db.radacct TO 'radius_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON isp_billing_db.nas TO 'radius_user'@'%';
+
+-- 3. Flush privileges to apply
+FLUSH PRIVILEGES;
+```
+
+

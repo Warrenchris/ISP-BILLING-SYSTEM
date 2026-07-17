@@ -19,7 +19,6 @@ class MpesaService {
       }
     }
     this.callbackUrl = callbackUrl;
-    console.log('🔌  MPESA SERVICE CALLBACK URL INITIALIZED:', this.callbackUrl);
     
     this.environment = process.env.MPESA_ENV || 'sandbox';
     
