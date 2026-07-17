@@ -39,11 +39,12 @@ const NetworkDevices = () => {
   const [formData, setFormData] = useState({
     name: '',
     ipAddress: '',
-    port: 8728,
+    apiPort: 8728,
     username: '',
     password: '',
-    type: 'mikrotik',
-    location: ''
+    siteId: '',
+    routerOsVersion: '7',
+    cutoffAddressList: 'cutoff-list'
   });
   const [submitting, setSubmitting] = useState(false);
 
