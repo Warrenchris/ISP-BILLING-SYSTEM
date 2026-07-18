@@ -78,7 +78,7 @@ const NetworkDevices = () => {
 
   const fetchLogs = useCallback(async () => {
     try {
-      const res = await api.get('/admin/router-logs');
+      const res = await api.get('/admin/network-devices/logs');
       setLogs(res.data?.data || []);
     } catch (err) {
       console.error('Error fetching router logs:', err);
@@ -327,10 +327,22 @@ const NetworkDevices = () => {
       {alert.show && (
         <Alert
           severity={alert.severity}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 3,
+            background: alpha(theme.palette.background.paper, 0.95),
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
+            '& .MuiAlert-icon': {
+              fontSize: 24
+            }
+          }}
           onClose={() => setAlert({ show: false, message: '', severity: 'info' })}
         >
-          {alert.message}
+          <Typography variant="body1" fontWeight={500}>
+            {alert.message}
+          </Typography>
         </Alert>
       )}
 
