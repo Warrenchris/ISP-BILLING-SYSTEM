@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Box, Card, CardContent, Typography, Button, Chip, Dialog,
+  Box, Card, CardContent, CardActions, Typography, Button, Chip, Dialog,
   DialogTitle, DialogContent, DialogActions, Alert, CircularProgress,
   Divider, IconButton, Grid, TextField, useTheme, alpha,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Tooltip, Tab, Tabs
+  TableRow, Paper, Tooltip
 } from '@mui/material';
 import {
   Router as RouterIcon,
@@ -65,6 +65,7 @@ const NetworkDevices = () => {
       setLoading(true);
       setError(null);
       const res = await api.get('/admin/network-devices');
+      console.log('Devices response:', res.data);
       setDevices(res.data?.data || []);
     } catch (err) {
       console.error('Error fetching network devices:', err);
@@ -77,7 +78,7 @@ const NetworkDevices = () => {
 
   const fetchLogs = useCallback(async () => {
     try {
-      const res = await api.get('/admin/network-devices/logs');
+      const res = await api.get('/admin/router-logs');
       setLogs(res.data?.data || []);
     } catch (err) {
       console.error('Error fetching router logs:', err);
@@ -94,23 +95,25 @@ const NetworkDevices = () => {
       setEditingDevice(device);
       setFormData({
         name: device.name || '',
-        ipAddress: device.ipAddress || '',
-        port: device.port || 8728,
+        ipAddress: device.ipAddress || device.ip_address || '',
+        apiPort: device.apiPort || device.api_port || 8728,
         username: device.username || '',
         password: '', // Don't pre-fill password for security
-        type: device.type || 'mikrotik',
-        location: device.location || ''
+        siteId: device.siteId || device.site_id || '',
+        routerOsVersion: device.routerOsVersion || device.router_os_version || '7',
+        cutoffAddressList: device.cutoffAddressList || device.cutoff_address_list || 'cutoff-list'
       });
     } else {
       setEditingDevice(null);
       setFormData({
         name: '',
         ipAddress: '',
-        port: 8728,
+        apiPort: 8728,
         username: '',
         password: '',
-        type: 'mikrotik',
-        location: ''
+        siteId: '',
+        routerOsVersion: '7',
+        cutoffAddressList: 'cutoff-list'
       });
     }
     setDialogOpen(true);
@@ -122,11 +125,12 @@ const NetworkDevices = () => {
     setFormData({
       name: '',
       ipAddress: '',
-      port: 8728,
+      apiPort: 8728,
       username: '',
       password: '',
-      type: 'mikrotik',
-      location: ''
+      siteId: '',
+      routerOsVersion: '7',
+      cutoffAddressList: 'cutoff-list'
     });
   };
 
@@ -142,11 +146,12 @@ const NetworkDevices = () => {
       const payload = {
         name: formData.name.trim(),
         ipAddress: formData.ipAddress.trim(),
-        port: parseInt(formData.port) || 8728,
+        apiPort: parseInt(formData.apiPort) || 8728,
         username: formData.username.trim(),
         password: formData.password,
-        type: formData.type,
-        location: formData.location.trim()
+        siteId: formData.siteId.trim(),
+        routerOsVersion: formData.routerOsVersion,
+        cutoffAddressList: formData.cutoffAddressList.trim()
       };
 
       if (editingDevice) {
@@ -390,20 +395,20 @@ const NetworkDevices = () => {
                     <Box display="flex" alignItems="center" gap={1}>
                       <WifiIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                       <Typography variant="body2" color="text.secondary">
-                        {device.ipAddress}:{device.port}
+                        {device.ipAddress || device.ip_address}:{device.apiPort || device.api_port}
                       </Typography>
                     </Box>
-                    {device.location && (
+                    {(device.siteId || device.site_id) && (
                       <Box display="flex" alignItems="center" gap={1}>
                         <SettingsIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
-                          {device.location}
+                          {device.siteId || device.site_id}
                         </Typography>
                       </Box>
                     )}
                     <Box display="flex" alignItems="center" gap={1}>
                       <Typography variant="caption" color="text.secondary">
-                        Type: {device.type || 'MikroTik'}
+                        RouterOS v{device.routerOsVersion || device.router_os_version}
                       </Typography>
                     </Box>
                   </Box>
@@ -489,8 +494,8 @@ const NetworkDevices = () => {
               fullWidth
               label="API Port"
               type="number"
-              value={formData.port}
-              onChange={(e) => setFormData({ ...formData, port: e.target.value })}
+              value={formData.apiPort}
+              onChange={(e) => setFormData({ ...formData, apiPort: e.target.value })}
               sx={{ mb: 2 }}
             />
             <TextField
@@ -511,10 +516,26 @@ const NetworkDevices = () => {
             />
             <TextField
               fullWidth
-              label="Location"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="e.g., Main Office, Branch A"
+              label="Site ID"
+              value={formData.siteId}
+              onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
+              placeholder="e.g., main-office, branch-a"
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="RouterOS Version"
+              value={formData.routerOsVersion}
+              onChange={(e) => setFormData({ ...formData, routerOsVersion: e.target.value })}
+              placeholder="7"
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Cutoff Address List"
+              value={formData.cutoffAddressList}
+              onChange={(e) => setFormData({ ...formData, cutoffAddressList: e.target.value })}
+              placeholder="cutoff-list"
               sx={{ mb: 2 }}
             />
           </Box>
