@@ -29,7 +29,10 @@ import {
   Info as InfoIcon,
   Payment as PaymentIcon,
   CreditCard as PayIcon,
-  MonetizationOn as CashIcon } from "@mui/icons-material";
+  MonetizationOn as CashIcon,
+  Router as RouterIcon,
+  Wifi as WifiIcon,
+  Ethernet as EthernetIcon } from "@mui/icons-material";
 import { CheckCircle as CheckIcon } from "@mui/icons-material";
 import { useApi } from "../contexts/ApiContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -391,6 +394,31 @@ export default function Subscriptions() {
                     </Typography>
                   </Box>
                 </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Divider sx={{ my: 1 }} />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    {currentSub.connectionType === 'pppoe' ? (
+                      <EthernetIcon sx={{ mr: 1 }} fontSize="small" />
+                    ) : currentSub.connectionType === 'hotspot' ? (
+                      <WifiIcon sx={{ mr: 1 }} fontSize="small" />
+                    ) : (
+                      <RouterIcon sx={{ mr: 1 }} fontSize="small" />
+                    )}
+                    <Typography variant="body2">
+                      Connection: {currentSub.connectionType || 'Not configured'}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <RouterIcon sx={{ mr: 1 }} fontSize="small" />
+                    <Typography variant="body2">
+                      {currentSub.networkIdentifier || 'No identifier'}
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
 
               {currentSub.status === "active" && (
@@ -502,13 +530,15 @@ export default function Subscriptions() {
               >
                 <Box component="thead">
                   <Box component="tr" sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
-                    <Box component="th" sx={{ width: "20%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Subscription #</Box>
-                    <Box component="th" sx={{ width: "20%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Plan</Box>
-                    <Box component="th" sx={{ width: "12%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Status</Box>
-                    <Box component="th" sx={{ width: "15%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Payment</Box>
-                    <Box component="th" sx={{ width: "13%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Data Left</Box>
-                    <Box component="th" sx={{ width: "13%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Expires</Box>
-                    <Box component="th" sx={{ width: "7%", minWidth: 120, textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Actions</Box>
+                    <Box component="th" sx={{ width: "15%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Subscription #</Box>
+                    <Box component="th" sx={{ width: "15%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Plan</Box>
+                    <Box component="th" sx={{ width: "10%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Status</Box>
+                    <Box component="th" sx={{ width: "12%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Payment</Box>
+                    <Box component="th" sx={{ width: "10%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Connection</Box>
+                    <Box component="th" sx={{ width: "12%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Identifier</Box>
+                    <Box component="th" sx={{ width: "10%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Data Left</Box>
+                    <Box component="th" sx={{ width: "10%", textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Expires</Box>
+                    <Box component="th" sx={{ width: "6%", minWidth: 100, textAlign: "left", py: 1.5, pr: 1, color: "text.secondary" }}>Actions</Box>
                   </Box>
                 </Box>
                 <Box component="tbody">
@@ -539,6 +569,25 @@ export default function Subscriptions() {
                           label={row.paymentStatus || "pending"}
                           color={statusColor((row.paymentStatus || "").toLowerCase())}
                         />
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          {row.connectionType === 'pppoe' ? (
+                            <EthernetIcon fontSize="small" sx={{ fontSize: 16 }} />
+                          ) : row.connectionType === 'hotspot' ? (
+                            <WifiIcon fontSize="small" sx={{ fontSize: 16 }} />
+                          ) : (
+                            <RouterIcon fontSize="small" sx={{ fontSize: 16 }} />
+                          )}
+                          <Typography variant="body2">
+                            {row.connectionType || '—'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Typography variant="body2">
+                          {row.networkIdentifier || '—'}
+                        </Typography>
                       </Box>
                        <Box component="td" sx={{ py: 1.5, pr: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {formatBytes((row.dataRemaining || 0) * 1024 * 1024)}
