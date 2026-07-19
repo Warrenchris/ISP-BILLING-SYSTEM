@@ -33,6 +33,7 @@ import Portal from './pages/Portal';
 import NetworkDevices from './pages/NetworkDevices';
 import Vouchers from './pages/Vouchers';
 import SmsLogs from './pages/SmsLogs';
+import QueueHealth from './pages/QueueHealth';
 import ChatWidget from './components/ai/ChatWidget';
 import { useAuth } from './contexts/AuthContext';
 
@@ -88,6 +89,7 @@ function AppRoutes({ darkmode, toggleDarkMode }) {
                     <Route path="/network-devices" element={<NetworkDevices />} />
                     <Route path="/vouchers" element={<Vouchers />} />
                     <Route path="/sms-logs" element={<SmsLogs />} />
+                    <Route path="/queue-health" element={<QueueHealth />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/staff" element={<StaffRoles />} />
                     <Route path="/settings" element={<Settings />} />
