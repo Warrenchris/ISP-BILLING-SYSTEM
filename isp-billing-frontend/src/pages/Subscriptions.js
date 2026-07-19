@@ -32,7 +32,7 @@ import {
   MonetizationOn as CashIcon,
   Router as RouterIcon,
   Wifi as WifiIcon,
-  Ethernet as EthernetIcon } from "@mui/icons-material";
+  Lan as EthernetIcon } from "@mui/icons-material";
 import { CheckCircle as CheckIcon } from "@mui/icons-material";
 import { useApi } from "../contexts/ApiContext";
 import { useAuth } from "../contexts/AuthContext";
