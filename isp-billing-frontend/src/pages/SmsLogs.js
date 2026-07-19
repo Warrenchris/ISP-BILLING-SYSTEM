@@ -507,7 +507,7 @@ const SmsLogs = () => {
             sx={{ mt: 2, fontFamily: 'monospace' }}
           />
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Available variables: {{name}}, {{amount}}, {{dueDate}}, etc.
+            Available variables: {'{{name}}'}, {'{{amount}}'}, {'{{dueDate}}'}, etc.
           </Typography>
         </DialogContent>
         <DialogActions>
