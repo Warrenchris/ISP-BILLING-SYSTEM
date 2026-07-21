@@ -18,6 +18,7 @@ const Subscription = sequelize.define('Subscription', {
   startDate: { type: Sequelize.DATE, field: 'start_date' },
   endDate: { type: Sequelize.DATE, field: 'end_date' },
   dataUsed: { type: Sequelize.BIGINT, field: 'data_used' },
+  dataRemaining: { type: Sequelize.BIGINT, field: 'data_remaining' },
   created_at: { type: Sequelize.DATE }
 }, { tableName: 'subscriptions' });
 
@@ -31,11 +32,11 @@ async function seedTestData() {
   const Jul1 = new Date(now.getFullYear(), now.getMonth(), 5);
 
   const sampleSubs = [
-    { id: 'sub-live-1', subscriptionNumber: 'SUB-LIVE-1', userId: 'usr-1', planId: 'plan-1', status: 'active', connectionType: 'pppoe', startDate: May1, endDate: new Date(2027, 0, 1), dataUsed: 15000000000, created_at: May1 },
-    { id: 'sub-live-2', subscriptionNumber: 'SUB-LIVE-2', userId: 'usr-2', planId: 'plan-1', status: 'active', connectionType: 'hotspot', startDate: May1, endDate: new Date(2027, 0, 1), dataUsed: 8000000000, created_at: May1 },
-    { id: 'sub-live-3', subscriptionNumber: 'SUB-LIVE-3', userId: 'usr-3', planId: 'plan-2', status: 'active', connectionType: 'pppoe', startDate: Jun1, endDate: new Date(2027, 0, 1), dataUsed: 22000000000, created_at: Jun1 },
-    { id: 'sub-live-4', subscriptionNumber: 'SUB-LIVE-4', userId: 'usr-4', planId: 'plan-2', status: 'expired', connectionType: 'hotspot', startDate: May1, endDate: Jun1, dataUsed: 5000000000, created_at: May1 },
-    { id: 'sub-live-5', subscriptionNumber: 'SUB-LIVE-5', userId: 'usr-5', planId: 'plan-2', status: 'active', connectionType: 'address_list', startDate: Jul1, endDate: new Date(2027, 0, 1), dataUsed: 12000000000, created_at: Jul1 },
+    { id: 'sub-live-1', subscriptionNumber: 'SUB-LIVE-1', userId: 'usr-1', planId: 'plan-1', status: 'active', connectionType: 'pppoe', startDate: May1, endDate: new Date(2027, 0, 1), dataUsed: 15000000000, dataRemaining: 5000000000, created_at: May1 },
+    { id: 'sub-live-2', subscriptionNumber: 'SUB-LIVE-2', userId: 'usr-2', planId: 'plan-1', status: 'active', connectionType: 'hotspot', startDate: May1, endDate: new Date(2027, 0, 1), dataUsed: 8000000000, dataRemaining: 2000000000, created_at: May1 },
+    { id: 'sub-live-3', subscriptionNumber: 'SUB-LIVE-3', userId: 'usr-3', planId: 'plan-2', status: 'active', connectionType: 'pppoe', startDate: Jun1, endDate: new Date(2027, 0, 1), dataUsed: 22000000000, dataRemaining: 8000000000, created_at: Jun1 },
+    { id: 'sub-live-4', subscriptionNumber: 'SUB-LIVE-4', userId: 'usr-4', planId: 'plan-2', status: 'expired', connectionType: 'hotspot', startDate: May1, endDate: Jun1, dataUsed: 5000000000, dataRemaining: 0, created_at: May1 },
+    { id: 'sub-live-5', subscriptionNumber: 'SUB-LIVE-5', userId: 'usr-5', planId: 'plan-2', status: 'active', connectionType: 'address_list', startDate: Jul1, endDate: new Date(2027, 0, 1), dataUsed: 12000000000, dataRemaining: 3000000000, created_at: Jul1 },
   ];
 
   for (const sub of sampleSubs) {
