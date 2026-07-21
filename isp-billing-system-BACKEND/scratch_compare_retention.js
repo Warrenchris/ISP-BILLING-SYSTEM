@@ -1,12 +1,40 @@
-const { sequelize } = require('./src/config/database');
-const { Subscription, SubscriptionStatus } = require('./src/models');
-const { Op } = require('sequelize');
+const { Sequelize, Op } = require('sequelize');
+
+const sequelize = new Sequelize('isp_billing_db', 'root', 'rootpassword', {
+  host: '127.0.0.1',
+  port: 3307,
+  dialect: 'mysql',
+  logging: false,
+  define: {
+    timestamps: true,
+    underscored: true,
+    freezeTableName: true
+  }
+});
+
+const SubscriptionStatus = {
+  ACTIVE: 'active',
+  PENDING: 'pending',
+  EXPIRED: 'expired',
+  CANCELLED: 'cancelled',
+  SUSPENDED: 'suspended'
+};
+
+const Subscription = sequelize.define('Subscription', {
+  id: { type: Sequelize.STRING, primaryKey: true },
+  status: { type: Sequelize.STRING },
+  startDate: { type: Sequelize.DATE, field: 'start_date' },
+  endDate: { type: Sequelize.DATE, field: 'end_date' },
+  cancelledAt: { type: Sequelize.DATE, field: 'cancelled_at' },
+  created_at: { type: Sequelize.DATE }
+}, { tableName: 'subscriptions' });
 
 async function runComparison() {
+  await sequelize.authenticate();
   const now = new Date();
-  console.log("==========================================================");
-  console.log("RETENTION & CHURN FORMULA COMPARISON: SHIPPED VS CORRECTED");
-  console.log("==========================================================");
+  console.log("==========================================================================");
+  console.log("LIVE DB RETENTION COMPARISON: SHIPPED VS CORRECTED (REAL DB ROWS)");
+  console.log("==========================================================================");
   console.log("Month    | Shipped Retention% | Corrected Retention% | Diff   | ActiveStart | ActiveEnd | NewSubs");
   console.log("---------+--------------------+----------------------+--------+-------------+-----------+--------");
 
@@ -16,7 +44,6 @@ async function runComparison() {
     const monthLabel = monthStart.toLocaleString('default', { month: 'short', year: 'numeric' });
 
     // --- OLD SHIPPED FORMULA ---
-    // Overlapping subscriptions in date range
     const oldActiveCount = await Subscription.count({
       where: {
         startDate: { [Op.lte]: monthEnd },
@@ -41,7 +68,6 @@ async function runComparison() {
     const oldRetentionRate = Math.max(0, Math.round((100 - oldChurnRate) * 10) / 10);
 
     // --- NEW CORRECTED POINT-IN-TIME FORMULA ---
-    // 1. Active at start of month
     const activeStart = await Subscription.count({
       where: {
         startDate: { [Op.lt]: monthStart },
@@ -52,7 +78,6 @@ async function runComparison() {
       }
     });
 
-    // 2. Active at end of month
     const activeEnd = await Subscription.count({
       where: {
         startDate: { [Op.lte]: monthEnd },
@@ -63,7 +88,6 @@ async function runComparison() {
       }
     });
 
-    // 3. New signups during month
     const newSignups = await Subscription.count({
       where: {
         created_at: { [Op.between]: [monthStart, monthEnd] }
@@ -71,10 +95,9 @@ async function runComparison() {
     });
 
     const retainedCount = Math.max(0, activeEnd - newSignups);
-    const denominator = Math.max(activeStart, 1);
     const newRetentionRate = activeStart === 0
-      ? 100.0 // If start base is 0, retention is 100% (no prior cohorts lost)
-      : Math.min(100, Math.round((retainedCount / denominator) * 1000) / 10);
+      ? 100.0
+      : Math.min(100, Math.round((retainedCount / activeStart) * 1000) / 10);
 
     const diff = (newRetentionRate - oldRetentionRate).toFixed(1);
     const diffStr = diff >= 0 ? `+${diff}%` : `${diff}%`;
@@ -89,7 +112,7 @@ async function runComparison() {
       `${newSignups}`
     );
   }
-  console.log("==========================================================");
+  console.log("==========================================================================");
   process.exit(0);
 }
 
