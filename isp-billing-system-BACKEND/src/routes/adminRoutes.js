@@ -39,6 +39,8 @@ router.patch("/subscriptions/:id", admin.patchSubscription);
 // ─── Admin dashboard aggregate endpoints ───────────────────────
 router.get('/dashboard/overview', dashboardController.getAdminOverview);
 router.get('/dashboard/activity', dashboardController.getAdminActivity);
+router.get('/dashboard/centipid-parity', dashboardController.getCentipidParityData);
+router.get('/dashboard/retention-trend', dashboardController.getRetentionTrend);
 
 // ─── RADIUS Resync Endpoint ───────────────────────────────────
 router.post('/resync-all-bandwidth', adminController.resyncAllBandwidth);

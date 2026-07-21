@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../contexts/ApiContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import GlobalSearchModal from '../common/GlobalSearchModal';
 
 /* ─── Page title map ─────────────────────────────────────────────────────── */
 const PAGE_META = {
@@ -46,9 +47,21 @@ const Header = ({ onMenuClick }) => {
 
     const [anchorEl, setAnchorEl]     = useState(null);
     const [searchFocused, setFocused] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
     
     const { notificationService } = useApi();
     const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'f')) {
+                e.preventDefault();
+                setSearchOpen(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -154,6 +167,7 @@ const Header = ({ onMenuClick }) => {
 
                 {/* Search bar (desktop) */}
                 <Box
+                    onClick={() => setSearchOpen(true)}
                     sx={{
                         display:      { xs: 'none', md: 'flex' },
                         alignItems:   'center',
@@ -161,6 +175,7 @@ const Header = ({ onMenuClick }) => {
                         px:           2,
                         py:           0.75,
                         borderRadius: '12px',
+                        cursor:       'pointer',
                         background:   searchFocused ? '#FFFFFF' : 'rgba(43, 43, 43, 0.03)',
                         border:       `1.5px solid ${searchFocused ? '#DDA15E' : 'rgba(43, 43, 43, 0.06)'}`,
                         transition:   `all 0.2s ${E}`,
@@ -168,20 +183,9 @@ const Header = ({ onMenuClick }) => {
                         boxShadow:    searchFocused ? `0 4px 15px -4px rgba(221, 161, 94, 0.2)` : 'none' }}
                 >
                     <SearchIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
-                    <input
-                        type="text"
-                        placeholder="Search anything..."
-                        onFocus={() => setFocused(true)}
-                        onBlur={() => setFocused(false)}
-                        style={{
-                            background:  'transparent',
-                            border:      'none',
-                            outline:     'none',
-                            color:       '#2B2B2B',
-                            fontSize:    '0.85rem',
-                            width:       '100%',
-                            fontFamily:  '"Inter", sans-serif' }}
-                    />
+                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1, fontSize: '0.85rem' }}>
+                        Search... (Ctrl+K)
+                    </Typography>
                 </Box>
 
                 {/* Notification bell */}
@@ -341,6 +345,8 @@ const Header = ({ onMenuClick }) => {
                     </Box>
                 </Menu>
             </Box>
+
+            <GlobalSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
         </Box>
     );
 };
