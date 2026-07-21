@@ -45,6 +45,9 @@ const Vouchers = () => {
     prefix: ''
   });
 
+  // Data plans for generate dialog
+  const [dataPlans, setDataPlans] = useState([]);
+
   // Filters
   const [filters, setFilters] = useState({
     status: 'all',
@@ -58,7 +61,7 @@ const Vouchers = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await api.get('/admin/vouchers/stats');
+      const res = await api.get('/vouchers/stats');
       setStats(res.data?.data || {});
     } catch (err) {
       console.error('Error fetching voucher stats:', err);
@@ -67,7 +70,7 @@ const Vouchers = () => {
 
   const fetchBatches = useCallback(async () => {
     try {
-      const res = await api.get('/admin/vouchers/batches');
+      const res = await api.get('/vouchers/batches');
       setBatches(res.data?.data || []);
     } catch (err) {
       console.error('Error fetching voucher batches:', err);
@@ -82,7 +85,7 @@ const Vouchers = () => {
       if (filters.status !== 'all') params.status = filters.status;
       if (filters.batchId) params.batchId = filters.batchId;
 
-      const res = await api.get('/admin/vouchers', { params });
+      const res = await api.get('/vouchers', { params });
       setVouchers(res.data?.data || []);
     } catch (err) {
       console.error('Error fetching vouchers:', err);
@@ -93,11 +96,22 @@ const Vouchers = () => {
     }
   }, [api, filters]);
 
+  // Fetch data plans for the generate dialog
+  const fetchDataPlans = useCallback(async () => {
+    try {
+      const res = await api.get('/plans');
+      setDataPlans(res.data?.data?.plans || res.data?.data || []);
+    } catch (err) {
+      console.error('Error fetching data plans:', err);
+    }
+  }, [api]);
+
   useEffect(() => {
     fetchStats();
     fetchBatches();
     fetchVouchers();
-  }, [fetchStats, fetchBatches, fetchVouchers]);
+    fetchDataPlans();
+  }, [fetchStats, fetchBatches, fetchVouchers, fetchDataPlans]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -119,7 +133,7 @@ const Vouchers = () => {
         prefix: generateForm.prefix.trim()
       };
 
-      await api.post('/admin/vouchers/generate', payload);
+      await api.post('/vouchers/generate', payload);
       showAlert('Vouchers generated successfully', 'success');
       setGenerateDialogOpen(false);
       setGenerateForm({
@@ -143,7 +157,7 @@ const Vouchers = () => {
     if (!window.confirm('Are you sure you want to revoke this voucher?')) return;
 
     try {
-      await api.post(`/admin/vouchers/${voucherId}/revoke`);
+      await api.post(`/vouchers/${voucherId}/revoke`);
       showAlert('Voucher revoked successfully', 'success');
       fetchVouchers();
       fetchStats();
@@ -155,7 +169,7 @@ const Vouchers = () => {
 
   const handleExport = async (batchId) => {
     try {
-      const res = await api.get(`/admin/vouchers/export/${batchId}`, {
+      const res = await api.get(`/vouchers/export/${batchId}`, {
         responseType: 'blob'
       });
       
@@ -657,10 +671,11 @@ const Vouchers = () => {
                 required
               >
                 <MenuItem value="">Select a plan</MenuItem>
-                {/* TODO: Fetch actual data plans */}
-                <MenuItem value="plan-1">Basic Plan</MenuItem>
-                <MenuItem value="plan-2">Standard Plan</MenuItem>
-                <MenuItem value="plan-3">Premium Plan</MenuItem>
+                {dataPlans.map((plan) => (
+                  <MenuItem key={plan.id} value={plan.id}>
+                    {plan.name} — {plan.price ? `KES ${plan.price}` : ''} {plan.dataLimit ? `(${plan.dataLimit} MB)` : ''}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
