@@ -10,8 +10,8 @@ export default function WeeklyBandwidthCard({ data = [] }) {
   const totalUl = data.reduce((acc, r) => acc + (r.uploadGB || 0), 0);
   const grandTotal = totalDl + totalUl;
 
-  const dlPct = grandTotal > 0 ? Math.round((totalDl / grandTotal) * 100) : 80;
-  const ulPct = grandTotal > 0 ? Math.round((totalUl / grandTotal) * 100) : 20;
+  const dlPct = grandTotal > 0 ? Math.round((totalDl / grandTotal) * 100) : 0;
+  const ulPct = grandTotal > 0 ? Math.round((totalUl / grandTotal) * 100) : 0;
 
   return (
     <CustomCard sx={{ height: '100%' }}>
