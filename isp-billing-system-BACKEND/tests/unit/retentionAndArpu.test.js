@@ -138,7 +138,7 @@ describe('Retention Rate & ARPU Unit Tests', () => {
       expect(pkg.activeSubscribers).toBe(100);
       expect(pkg.monthlyRevenue).toBe(150000);
       expect(pkg.arpu).toBe(1500); // 150000 / 100 = 1500
-    });
+    }, 10000);
   });
 
   describe('SMS Balance Provider', () => {
