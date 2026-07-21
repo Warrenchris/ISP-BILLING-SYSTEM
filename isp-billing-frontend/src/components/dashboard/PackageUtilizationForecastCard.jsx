@@ -97,9 +97,14 @@ export default function PackageUtilizationForecastCard({ packages = [], predicte
               <Box display="flex" flexDirection="column" gap={1}>
                 {projections.map((p, idx) => (
                   <Box key={idx} display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      {p.month} Forecast:
-                    </Typography>
+                    <Box>
+                      <Typography variant="caption" color="text.primary" fontWeight={700} display="block">
+                        {p.month}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" style={{ fontSize: '10px' }}>
+                        {p.subtitle}
+                      </Typography>
+                    </Box>
                     <Typography variant="body2" fontWeight={800} color="primary.main">
                       {formatCurrency(p.amount)}
                     </Typography>
