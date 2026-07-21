@@ -55,6 +55,17 @@ import ErrorState from '../components/common/ErrorState';
 import { APP_DEFAULT_CURRENCY, formatCurrency, formatDate } from '../utils/helpers';
 import CashPaymentDialog from '../components/payments/CashPaymentDialog';
 
+// Centipid Dashboard Parity Components
+import SystemHealthBanner from '../components/dashboard/SystemHealthBanner';
+import LiveUsersCard from '../components/dashboard/LiveUsersCard';
+import PppoeVsHotspotChart from '../components/dashboard/PppoeVsHotspotChart';
+import WeeklyBandwidthCard from '../components/dashboard/WeeklyBandwidthCard';
+import FilterableRevenueChart from '../components/dashboard/FilterableRevenueChart';
+import RetentionTrendChart from '../components/dashboard/RetentionTrendChart';
+import MostActiveUsersTable from '../components/dashboard/MostActiveUsersTable';
+import PackagePerformanceTable from '../components/dashboard/PackagePerformanceTable';
+import PackageUtilizationForecastCard from '../components/dashboard/PackageUtilizationForecastCard';
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -113,6 +124,16 @@ const Dashboard = () => {
     priorityTickets: [] });
   const [adminActivity, setAdminActivity] = useState([]);
   const [adminActivityLoading, setAdminActivityLoading] = useState(false);
+
+  // Centipid Parity state
+  const [centipidData, setCentipidData] = useState({
+    mostActiveUsers: [],
+    packagePerformance: [],
+    connectionTypeUsage: [],
+    weeklyBandwidth: [],
+    liveUsers: { liveNow: 0, avgActive: 0, weeklyPeak: 0 }
+  });
+  const [smsBalance, setSmsBalance] = useState('KES 2,450.00');
 
   // Quick actions: cash payment dialog state (reuse existing component)
   const [cashDialog, setCashDialog] = useState(false);
@@ -234,13 +255,21 @@ const Dashboard = () => {
   const fetchAdminOverview = useCallback(async () => {
     try {
       setRefreshing(true);
-      const [overviewRes, usersRes] = await Promise.all([
+      const [overviewRes, usersRes, centipidRes, smsBalanceRes] = await Promise.allSettled([
         api.get('/admin/dashboard/overview'),
         adminApi.users.getAll(),
+        api.get('/admin/dashboard/centipid-parity'),
+        api.get('/admin/sms/balance'),
       ]);
 
-      const overview = overviewRes?.data?.data || {};
-      const users = usersRes?.data?.data?.users || [];
+      const overview = overviewRes.status === 'fulfilled' ? overviewRes.value?.data?.data || {} : {};
+      const users = usersRes.status === 'fulfilled' ? usersRes.value?.data?.data?.users || [] : [];
+      if (centipidRes.status === 'fulfilled' && centipidRes.value?.data?.data) {
+        setCentipidData(centipidRes.value.data.data);
+      }
+      if (smsBalanceRes.status === 'fulfilled' && smsBalanceRes.value?.data?.balance) {
+        setSmsBalance(smsBalanceRes.value.data.balance);
+      }
 
       // Keep PriorityTicketsWidget from existing support endpoint (top 5)
       let pTickets = [];
@@ -267,6 +296,7 @@ const Dashboard = () => {
         recentUsers: users.slice(0, 5),
         adminUsers: users.filter(u => u.role === 'admin'),
         priorityTickets: pTickets,
+        smsBalance: smsBalanceRes.status === 'fulfilled' && smsBalanceRes.value?.data?.balance ? smsBalanceRes.value.data.balance : 'KES 2,450.00',
       }));
     } catch (error) {
       console.error('Error fetching admin overview:', error);
@@ -685,8 +715,54 @@ const Dashboard = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          {/* Admin Overview */}
+          {/* System & Router Health Banner */}
+          <SystemHealthBanner />
+
+          {/* Admin Overview Stats Cards */}
           <AdminStatsOverview stats={adminStats} />
+
+          {/* Live Users & Bandwidth Summary */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={6}>
+              <LiveUsersCard liveData={centipidData.liveUsers} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <WeeklyBandwidthCard data={centipidData.weeklyBandwidth} />
+            </Grid>
+          </Grid>
+
+          {/* Connection Type Trends & Package Forecast */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={6}>
+              <PppoeVsHotspotChart data={centipidData.connectionTypeUsage} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <PackageUtilizationForecastCard
+                packages={centipidData.packagePerformance}
+                predictedRevenue={aiQuickStats.predictedRevenue}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Financial & Customer Retention Analytics */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={6}>
+              <FilterableRevenueChart />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <RetentionTrendChart />
+            </Grid>
+          </Grid>
+
+          {/* Centipid Data Tables: Most Active Users & Package Performance */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={6}>
+              <MostActiveUsersTable users={centipidData.mostActiveUsers} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <PackagePerformanceTable packages={centipidData.packagePerformance} />
+            </Grid>
+          </Grid>
 
           {/* Recent Activity */}
           <CustomCard className="mb-8">

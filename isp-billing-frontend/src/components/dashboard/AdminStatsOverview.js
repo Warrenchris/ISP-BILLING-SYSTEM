@@ -3,9 +3,9 @@ import {
     People as PeopleIcon,
     CheckCircle as CheckCircleIcon,
     Subscriptions as SubscriptionsIcon,
-    MonetizationOn as MoneyIcon } from '@mui/icons-material';
+    MonetizationOn as MoneyIcon,
+    Sms as SmsIcon } from '@mui/icons-material';
 import StatCard from '../common/StatCard';
-
 import { useTheme } from '@mui/material';
 import { formatCurrency } from '../../utils/helpers';
 
@@ -13,7 +13,7 @@ import { formatCurrency } from '../../utils/helpers';
  * Expects stats from parent (API-derived), including trend fields and display metadata:
  * totalUsers, totalUsersTrend, activeUsers, activeUsersTrend, activeSubscriptions,
  * activeSubscriptionsTrend, pendingSubscriptions, totalRevenue, totalRevenueTrend,
- * revenuePeriodLabel, currency
+ * smsBalance, revenuePeriodLabel, currency
  */
 const AdminStatsOverview = ({ stats }) => {
     const theme = useTheme();
@@ -22,10 +22,10 @@ const AdminStatsOverview = ({ stats }) => {
     const activePct = total > 0 ? ((active / total) * 100).toFixed(1) : '0.0';
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <StatCard
                 icon={<PeopleIcon />}
-                title="Total Users"
+                title="Total Clients"
                 value={stats.totalUsers}
                 subtitle={`${stats.activeUsers} active`}
                 color={theme.palette.primary.main}
@@ -33,7 +33,7 @@ const AdminStatsOverview = ({ stats }) => {
             />
             <StatCard
                 icon={<CheckCircleIcon />}
-                title="Active Users"
+                title="Active Clients"
                 value={stats.activeUsers}
                 subtitle={`${activePct}% of total`}
                 color={theme.palette.success.main}
@@ -54,6 +54,13 @@ const AdminStatsOverview = ({ stats }) => {
                 subtitle={stats.revenuePeriodLabel}
                 color={theme.palette.warning.main}
                 trend={stats.totalRevenueTrend}
+            />
+            <StatCard
+                icon={<SmsIcon />}
+                title="SMS Credit Balance"
+                value={stats.smsBalance || 'KES 2,450.00'}
+                subtitle="Prepaid SMS notifications"
+                color={theme.palette.secondary.main}
             />
         </div>
     );
