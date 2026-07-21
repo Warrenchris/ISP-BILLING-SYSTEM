@@ -143,9 +143,62 @@ const updateTemplate = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/admin/sms/balance
+ * Fetch remaining credit balance from gateway.
+ */
+const getBalance = async (req, res) => {
+  try {
+    const { getSmsBalance } = require('../services/sms/smsClient');
+    const balanceInfo = await getSmsBalance();
+    res.json(balanceInfo);
+  } catch (error) {
+    logger.logError(error, req);
+    res.status(500).json({ success: false, message: 'Failed to fetch SMS balance' });
+  }
+};
+
+/**
+ * GET /api/admin/sms/trend
+ * Group SMS sent logs by day for trend chart.
+ */
+const getTrend = async (req, res) => {
+  try {
+    const { days = 14 } = req.query;
+    const daysInt = parseInt(days, 10) || 14;
+
+    const [rows] = await sequelize.query(`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as total_sent,
+        SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as success_count,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_count
+      FROM sms_logs
+      WHERE created_at >= NOW() - INTERVAL '${daysInt} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    res.json({
+      success: true,
+      data: rows.map(r => ({
+        date: r.date,
+        total: parseInt(r.total_sent || 0),
+        sent: parseInt(r.success_count || 0),
+        failed: parseInt(r.failed_count || 0),
+      })),
+    });
+  } catch (error) {
+    logger.logError(error, req);
+    res.status(500).json({ success: false, message: 'Failed to fetch SMS trend' });
+  }
+};
+
 module.exports = {
   listLogs,
   getStats,
   listTemplates,
   updateTemplate,
+  getBalance,
+  getTrend,
 };
