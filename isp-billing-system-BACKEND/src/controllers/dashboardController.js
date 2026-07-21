@@ -524,10 +524,10 @@ exports.getRetentionTrend = async (req, res, next) => {
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
       const monthLabel = monthStart.toLocaleString('default', { month: 'short' });
 
-      // Total active subscriptions during that month
-      const activeCount = await Subscription.count({
+      // 1. Active subscribers at START of month
+      const activeStart = await Subscription.count({
         where: {
-          startDate: { [Op.lte]: monthEnd },
+          startDate: { [Op.lt]: monthStart },
           [Op.or]: [
             { endDate: null },
             { endDate: { [Op.gte]: monthStart } }
@@ -535,27 +535,39 @@ exports.getRetentionTrend = async (req, res, next) => {
         }
       });
 
-      // Churned / Cancelled / Expired in that month
-      const churnedCount = await Subscription.count({
+      // 2. Active subscribers at END of month
+      const activeEnd = await Subscription.count({
         where: {
+          startDate: { [Op.lte]: monthEnd },
           [Op.or]: [
-            { status: SubscriptionStatus.CANCELLED, cancelledAt: { [Op.between]: [monthStart, monthEnd] } },
-            { status: SubscriptionStatus.EXPIRED, endDate: { [Op.between]: [monthStart, monthEnd] } }
+            { endDate: null },
+            { endDate: { [Op.gt]: monthEnd } }
           ]
         }
       });
 
-      const totalBase = Math.max(activeCount, 1);
-      const churnRate = Math.min(100, Math.round((churnedCount / totalBase) * 1000) / 10);
-      const retentionRate = Math.max(0, Math.round((100 - churnRate) * 10) / 10);
+      // 3. New signups during the month
+      const newSignups = await Subscription.count({
+        where: {
+          created_at: { [Op.between]: [monthStart, monthEnd] }
+        }
+      });
+
+      // 4. Retained subscribers = activeEnd - newSignups
+      const retainedCount = Math.max(0, activeEnd - newSignups);
+      const retentionRate = activeStart === 0
+        ? 100.0
+        : Math.min(100, Math.round((retainedCount / activeStart) * 1000) / 10);
+      const churnRate = Math.round((100 - retentionRate) * 10) / 10;
 
       trendData.push({
         month: monthLabel,
         year: monthStart.getFullYear(),
         retentionRate,
         churnRate,
-        activeSubscribers: activeCount,
-        churnedSubscribers: churnedCount,
+        activeStart,
+        activeEnd,
+        newSignups,
       });
     }
 
