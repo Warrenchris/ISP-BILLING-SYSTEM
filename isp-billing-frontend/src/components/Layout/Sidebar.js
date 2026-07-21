@@ -69,7 +69,6 @@ const SIDEBAR_SECTIONS = [
         items: [
             { text: 'Support Tickets', icon: SupportAgentOutlined,  path: '/tickets'       },
             { text: 'Notifications',   icon: NotificationsOutlined,  path: '/notifications' },
-            { text: 'Service Status',  icon: RouterOutlined,          path: '/service-status'},
         ] },
     {
         title: 'AI & ANALYTICS',
