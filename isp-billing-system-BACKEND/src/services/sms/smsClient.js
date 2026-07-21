@@ -148,6 +148,83 @@ async function sendMockSms(phone, message) {
   };
 }
 
+/**
+ * Fetch SMS Gateway balance (e.g. Africa's Talking prepaid account balance).
+ */
+async function getSmsBalance() {
+  const provider = process.env.SMS_PROVIDER || 'mock';
+
+  if (process.env.MOCK_MIKROTIK === 'true' || provider === 'mock') {
+    return {
+      success: true,
+      provider: 'mock',
+      balance: 'KES 2,450.00',
+      currency: 'KES',
+      amount: 2450.00,
+    };
+  }
+
+  if (provider === 'africastalking') {
+    const username = process.env.AT_USERNAME;
+    const apiKey = process.env.AT_API_KEY;
+
+    if (!username || !apiKey) {
+      return {
+        success: false,
+        provider: 'africastalking',
+        balance: 'KES 0.00',
+        currency: 'KES',
+        amount: 0,
+        errorMessage: 'Missing AT_USERNAME or AT_API_KEY',
+      };
+    }
+
+    const domain = username.toLowerCase() === 'sandbox' ? 'sandbox.africastalking.com' : 'api.africastalking.com';
+    const url = `https://api.${domain}/version1/user?username=${encodeURIComponent(username)}`;
+
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          Accept: 'application/json',
+          apiKey: apiKey,
+        },
+        timeout: 10000,
+      });
+
+      const userData = response.data?.UserData;
+      const balanceStr = userData?.balance || 'KES 0.00';
+      const parsedAmount = parseFloat(balanceStr.replace(/[^\d.]/g, '')) || 0;
+
+      return {
+        success: true,
+        provider: 'africastalking',
+        balance: balanceStr,
+        currency: balanceStr.split(' ')[0] || 'KES',
+        amount: parsedAmount,
+      };
+    } catch (err) {
+      logger.error("Africa's Talking getBalance error", { error: err.message });
+      return {
+        success: false,
+        provider: 'africastalking',
+        balance: 'KES 0.00',
+        currency: 'KES',
+        amount: 0,
+        errorMessage: err.message,
+      };
+    }
+  }
+
+  return {
+    success: true,
+    provider: provider,
+    balance: 'KES 0.00',
+    currency: 'KES',
+    amount: 0,
+  };
+}
+
 module.exports = {
   sendSms,
+  getSmsBalance,
 };
