@@ -318,7 +318,7 @@ exports.getCentipidParityData = async (req, res, next) => {
         where: { status: SubscriptionStatus.ACTIVE },
         limit: 10,
         order: [['dataUsed', 'DESC']],
-        include: [{ model: User, as: 'User', attributes: ['id', 'firstName', 'lastName', 'email', 'phone'] }]
+        include: [{ model: User, as: 'User', attributes: ['id', 'firstName', 'lastName', 'email', 'phoneNumber'] }]
       });
       mostActiveUsers = activeSubs.map(s => {
         const u = s.User || {};
@@ -328,10 +328,10 @@ exports.getCentipidParityData = async (req, res, next) => {
           id: u.id || s.id,
           name,
           email: u.email || 'N/A',
-          phone: u.phone || 'N/A',
+          phone: u.phoneNumber || 'N/A',
           totalBytes: bytes,
-          downloadBytes: Math.round(bytes * 0.8),
-          uploadBytes: Math.round(bytes * 0.2),
+          downloadBytes: 0,
+          uploadBytes: 0,
           totalGB: Math.round((bytes / (1024 * 1024 * 1024)) * 100) / 100,
         };
       });
