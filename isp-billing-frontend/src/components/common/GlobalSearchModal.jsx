@@ -64,16 +64,19 @@ export default function GlobalSearchModal({ open, onClose }) {
       }
     });
 
-    // 2. Fetch Users and Vouchers matching search
+    // 2. Fetch Users, Plans, Vouchers, Tickets, and Audit Logs
     try {
-      const [usersRes, vouchersRes] = await Promise.allSettled([
-        api.get('/admin/users', { params: { search: q, limit: 5 } }),
-        api.get('/vouchers', { params: { search: q, limit: 5 } })
+      const [usersRes, plansRes, vouchersRes, ticketsRes, auditRes] = await Promise.allSettled([
+        api.get('/admin/users', { params: { search: q, limit: 4 } }),
+        api.get('/plans', { params: { search: q } }),
+        api.get('/vouchers', { params: { search: q, limit: 4 } }),
+        api.get('/support/tickets', { params: { search: q, limit: 4 } }),
+        api.get('/admin/audit-logs', { params: { search: q, limit: 4 } }),
       ]);
 
       if (usersRes.status === 'fulfilled') {
         const users = usersRes.value?.data?.data?.users || usersRes.value?.data?.data || [];
-        users.slice(0, 4).forEach(u => {
+        users.slice(0, 3).forEach(u => {
           const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email;
           matches.push({
             id: `user-${u.id}`,
@@ -86,9 +89,23 @@ export default function GlobalSearchModal({ open, onClose }) {
         });
       }
 
+      if (plansRes.status === 'fulfilled') {
+        const plans = plansRes.value?.data?.data?.plans || plansRes.value?.data?.data || [];
+        plans.filter(p => p.name?.toLowerCase().includes(q)).slice(0, 3).forEach(p => {
+          matches.push({
+            id: `plan-${p.id}`,
+            title: `Package: ${p.name}`,
+            subtitle: `KES ${p.price} · ${p.dataLimit} MB · ${p.validityDays} days`,
+            category: 'Package',
+            path: '/data-plans',
+            icon: PlansIcon,
+          });
+        });
+      }
+
       if (vouchersRes.status === 'fulfilled') {
         const vouchers = vouchersRes.value?.data?.data || [];
-        vouchers.slice(0, 4).forEach(v => {
+        vouchers.slice(0, 3).forEach(v => {
           matches.push({
             id: `voucher-${v.id}`,
             title: `Voucher: ${v.code}`,
@@ -96,6 +113,34 @@ export default function GlobalSearchModal({ open, onClose }) {
             category: 'Voucher',
             path: '/vouchers',
             icon: VoucherIcon,
+          });
+        });
+      }
+
+      if (ticketsRes.status === 'fulfilled') {
+        const tickets = ticketsRes.value?.data?.data || [];
+        tickets.slice(0, 3).forEach(t => {
+          matches.push({
+            id: `ticket-${t.id}`,
+            title: `Ticket: ${t.subject}`,
+            subtitle: `Status: ${t.status} · Priority: ${t.priority}`,
+            category: 'Ticket',
+            path: '/tickets',
+            icon: TicketIcon,
+          });
+        });
+      }
+
+      if (auditRes.status === 'fulfilled') {
+        const logs = auditRes.value?.data?.data || [];
+        logs.slice(0, 3).forEach(l => {
+          matches.push({
+            id: `log-${l.id}`,
+            title: `Audit: ${l.action || l.event || 'System Log'}`,
+            subtitle: `${l.details || l.description || 'Audit record'}`,
+            category: 'Log',
+            path: '/audit-logs',
+            icon: SettingsIcon,
           });
         });
       }
