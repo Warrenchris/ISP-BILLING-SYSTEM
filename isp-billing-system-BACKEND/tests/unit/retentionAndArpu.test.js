@@ -5,6 +5,7 @@
 const dashboardController = require('../../src/controllers/dashboardController');
 const { getSmsBalance } = require('../../src/services/sms/smsClient');
 const { Subscription, DataPlan, Payment, RadAcct, sequelize } = require('../../src/models');
+const { Op } = require('sequelize');
 
 jest.mock('../../src/models', () => ({
   Subscription: {
@@ -25,7 +26,7 @@ jest.mock('../../src/models', () => ({
     findAll: jest.fn().mockResolvedValue([]),
   },
   sequelize: {
-    query: jest.fn().mockResolvedValue([[]]),
+    query: jest.fn().mockImplementation(() => Promise.resolve([[]])),
   },
 }));
 
@@ -38,22 +39,24 @@ describe('Retention Rate & ARPU Unit Tests', () => {
     res = { json: jest.fn(), status: jest.fn().mockReturnThis() };
     next = jest.fn();
 
-    // Default fast mocks for raw queries
-    sequelize.query.mockResolvedValue([[]]);
+    // Reset fast default mocks
+    sequelize.query.mockImplementation(() => Promise.resolve([[]]));
+    Subscription.findAll.mockResolvedValue([]);
+    Subscription.sum.mockResolvedValue(0);
+    Payment.sum.mockResolvedValue(0);
+    RadAcct.count.mockResolvedValue(0);
   });
 
   describe('getRetentionTrend (Point-in-Time Methodology)', () => {
     test('calculates correct retention rate using point-in-time snapshot methodology', async () => {
-      // Mock 18 Subscription.count calls (3 per month for 6 months)
-      Subscription.count.mockImplementation((options) => {
-        // Return 100 for activeStart, 110 for activeEnd, 20 for newSignups
-        const where = options.where || {};
-        if (where.created_at) return Promise.resolve(20); // newSignups
-        if (where.startDate && where.startDate[Object.getOwnPropertySymbols(where.startDate)[0]] === undefined) {
-          // Op.lte -> activeEnd
-          return Promise.resolve(110);
-        }
-        return Promise.resolve(100); // activeStart
+      // Mock counts per month: activeStart=100, activeEnd=110, newSignups=20 -> retained=90 -> retention=90.0%
+      let callIndex = 0;
+      Subscription.count.mockImplementation(() => {
+        callIndex++;
+        const mod = callIndex % 3;
+        if (mod === 1) return Promise.resolve(100); // activeStart
+        if (mod === 2) return Promise.resolve(110); // activeEnd
+        return Promise.resolve(20);                 // newSignups
       });
 
       await dashboardController.getRetentionTrend(req, res, next);
@@ -75,10 +78,13 @@ describe('Retention Rate & ARPU Unit Tests', () => {
     });
 
     test('handles 0 activeStart gracefully without divide-by-zero/NaN', async () => {
-      Subscription.count.mockImplementation((options) => {
-        const where = options.where || {};
-        if (where.created_at) return Promise.resolve(5);
-        return Promise.resolve(0); // activeStart = 0
+      let callIndex = 0;
+      Subscription.count.mockImplementation(() => {
+        callIndex++;
+        const mod = callIndex % 3;
+        if (mod === 1) return Promise.resolve(0); // activeStart = 0
+        if (mod === 2) return Promise.resolve(5); // activeEnd = 5
+        return Promise.resolve(5);                // newSignups = 5
       });
 
       await dashboardController.getRetentionTrend(req, res, next);
@@ -100,7 +106,6 @@ describe('Retention Rate & ARPU Unit Tests', () => {
       Subscription.findAll.mockResolvedValue([]);
       Payment.sum.mockResolvedValue(0);
       Subscription.sum.mockResolvedValue(0);
-      RadAcct.count.mockResolvedValue(0);
 
       await dashboardController.getCentipidParityData(req, res, next);
 
