@@ -17,7 +17,8 @@ import {
   Wifi as WifiIcon,
   Settings as SettingsIcon,
   History as HistoryIcon,
-  CloudSync as CloudSyncIcon
+  CloudSync as CloudSyncIcon,
+  SyncProblem as ResyncIcon
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 import EmptyState from '../components/common/EmptyState';
@@ -54,6 +55,9 @@ const NetworkDevices = () => {
 
   // Logs dialog
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
+
+  // Resync bandwidth state
+  const [resyncing, setResyncing] = useState(false);
 
   const showAlert = (message, severity = 'info') => {
     setAlert({ show: true, message, severity });
@@ -219,6 +223,27 @@ const NetworkDevices = () => {
     setLogsDialogOpen(true);
   };
 
+  const handleResyncBandwidth = async () => {
+    if (!window.confirm(
+      'This will resync RADIUS bandwidth limits for ALL active subscriptions. ' +
+      'This fixes any upload/download rate mismatches. Continue?'
+    )) return;
+
+    try {
+      setResyncing(true);
+      const res = await api.post('/admin/resync-all-bandwidth');
+      showAlert(
+        res.data?.message || `Bandwidth resync complete. ${res.data?.updated || 0} subscriptions updated.`,
+        'success'
+      );
+    } catch (err) {
+      console.error('Resync bandwidth failed:', err);
+      showAlert(err.response?.data?.message || 'Failed to resync bandwidth', 'error');
+    } finally {
+      setResyncing(false);
+    }
+  };
+
   const getStatusColor = (device) => {
     const testResult = testResults[device.id];
     if (testResult) {
@@ -292,6 +317,22 @@ const NetworkDevices = () => {
             }}
           >
             Command Logs
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={resyncing ? <CircularProgress size={18} color="inherit" /> : <ResyncIcon />}
+            onClick={handleResyncBandwidth}
+            disabled={resyncing}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 500,
+              background: alpha(theme.palette.background.paper, 0.4),
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: `1px solid ${theme.palette.divider}`
+            }}
+          >
+            {resyncing ? 'Resyncing…' : 'Resync Bandwidth'}
           </Button>
           <Button
             variant="outlined"
