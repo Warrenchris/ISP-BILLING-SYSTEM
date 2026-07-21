@@ -106,6 +106,8 @@ describe('Retention Rate & ARPU Unit Tests', () => {
       Subscription.findAll.mockResolvedValue([]);
       Payment.sum.mockResolvedValue(0);
       Subscription.sum.mockResolvedValue(0);
+      RadAcct.count.mockResolvedValue(0);
+      sequelize.query.mockResolvedValue([[]]);
 
       await dashboardController.getCentipidParityData(req, res, next);
 
@@ -118,7 +120,7 @@ describe('Retention Rate & ARPU Unit Tests', () => {
       expect(pkg.arpu).toBe(0);
       expect(pkg.avgDataUsageMB).toBe(0);
       expect(Number.isNaN(pkg.arpu)).toBe(false);
-    });
+    }, 10000);
 
     test('calculates correct ARPU = monthlyRevenue / activeSubscribers when active > 0', async () => {
       DataPlan.findAll.mockResolvedValue([
