@@ -13,7 +13,6 @@ import {
   Error as ErrorIcon,
   Schedule as ScheduleIcon,
   AttachMoney as CostIcon,
-  Assessment as StatsIcon,
   Edit as EditIcon
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';

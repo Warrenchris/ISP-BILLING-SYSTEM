@@ -10,14 +10,12 @@ import {
 import {
   ConfirmationNumber as VoucherIcon,
   Add as AddIcon,
-  Delete as DeleteIcon,
   Download as DownloadIcon,
   Refresh as RefreshIcon,
   Block as BlockIcon,
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
-  Pending as PendingIcon,
-  Assessment as StatsIcon
+  Pending as PendingIcon
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 import EmptyState from '../components/common/EmptyState';
