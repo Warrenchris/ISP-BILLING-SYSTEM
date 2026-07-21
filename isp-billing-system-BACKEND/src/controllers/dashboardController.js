@@ -1,6 +1,4 @@
-const { Op } = require('sequelize');
-const { sequelize } = require('../config/database');
-const { DataUsage, User, Payment, Subscription, SupportTicket, Invoice } = require('../models');
+const { DataUsage, User, Payment, Subscription, SupportTicket, Invoice, DataPlan, RadAcct } = require('../models');
 const { PaymentStatus, SubscriptionStatus } = require('../config/constants');
 
 /**

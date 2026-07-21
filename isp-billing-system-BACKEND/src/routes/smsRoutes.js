@@ -13,6 +13,8 @@ const {
   getStats,
   listTemplates,
   updateTemplate,
+  getBalance,
+  getTrend,
 } = require('../controllers/smsController');
 
 router.use(authenticate, authorize(['admin']));
@@ -22,6 +24,12 @@ router.get('/logs', listLogs);
 
 // GET  /api/admin/sms/stats     - SMS costing and counts metrics
 router.get('/stats', getStats);
+
+// GET  /api/admin/sms/balance   - Fetch remaining SMS credit balance
+router.get('/balance', getBalance);
+
+// GET  /api/admin/sms/trend     - Fetch daily SMS volume trend
+router.get('/trend', getTrend);
 
 // GET  /api/admin/sms/templates - Fetch current templates
 router.get('/templates', listTemplates);
