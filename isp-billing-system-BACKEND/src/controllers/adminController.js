@@ -152,6 +152,12 @@ exports.patchSubscription = async (req, res, next) => {
           subscription.status = SubscriptionStatus.ACTIVE;
           await subscription.save();
         }
+        try {
+          const { addProvisioningJob } = require('../services/queue/queueManager');
+          await addProvisioningJob('enable', { subscriptionId: subscription.id, userId: subscription.userId });
+        } catch (jobErr) {
+          console.error('Failed to queue enable provisioning job:', jobErr.message);
+        }
         break;
       }
       case "suspend": {
@@ -172,11 +178,21 @@ exports.patchSubscription = async (req, res, next) => {
       }
       case "change_expiry": {
         if (!endDate) return res.status(400).json({ success: false, message: "endDate is required for change_expiry action" });
+        const oldStatus = subscription.status;
         subscription.endDate = new Date(endDate);
-        if (new Date() < subscription.endDate && subscription.status === SubscriptionStatus.EXPIRED) {
+        if (new Date() < subscription.endDate && (oldStatus === SubscriptionStatus.EXPIRED || oldStatus === SubscriptionStatus.SUSPENDED)) {
           subscription.status = SubscriptionStatus.ACTIVE;
         }
         await subscription.save();
+
+        if (subscription.status === SubscriptionStatus.ACTIVE) {
+          try {
+            const { addProvisioningJob } = require('../services/queue/queueManager');
+            await addProvisioningJob('enable', { subscriptionId: subscription.id, userId: subscription.userId });
+          } catch (jobErr) {
+            console.error('Failed to queue enable provisioning job on change_expiry:', jobErr.message);
+          }
+        }
         break;
       }
       default:
@@ -199,11 +215,11 @@ exports.getUserById = async (req, res, next) => {
     });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    // Fetch active subscription for user
+    // Fetch current non-cancelled subscription for user
     const activeSub = await Subscription.findOne({
       where: {
         userId: user.id,
-        status: SubscriptionStatus.ACTIVE
+        status: { [Op.ne]: SubscriptionStatus.CANCELLED }
       },
       order: [['created_at', 'DESC']],
       include: [{ model: DataPlan, as: 'plan' }]
