@@ -4,7 +4,9 @@ import {
     Chip, Button, IconButton, Tabs, Tab,
     LinearProgress, Alert, Menu, MenuItem,
     Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, Snackbar, Tooltip
+    TextField, Snackbar, Tooltip,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+    TablePagination
 } from '@mui/material';
 import {
     ArrowBack as ArrowBackIcon,
@@ -26,11 +28,14 @@ import {
     Badge as BadgeIcon,
     Key as KeyIcon,
     Speed as SpeedIcon,
-    CheckCircle as CheckIcon
+    Receipt as ReceiptIcon,
+    Sms as SmsIcon,
+    History as HistoryIcon,
+    CreditCard as CreditCardIcon
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { formatCurrency, formatDateTime } from '../utils/helpers';
+import { formatCurrency, formatDateTime, formatBytes } from '../utils/helpers';
 import { useApi } from '../contexts/ApiContext';
 
 const UserDetails = () => {
@@ -38,7 +43,7 @@ const UserDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { adminApi, subscriptionsApi, vouchersApi } = useApi();
+    const { adminApi, paymentsApi, api } = useApi();
 
     const currentTab = searchParams.get('tab') || 'general-information';
 
@@ -58,10 +63,18 @@ const UserDetails = () => {
     const [actionLoading, setActionLoading] = useState(false);
 
     const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
-    const [selectedVoucherPlan, setSelectedVoucherPlan] = useState('');
-    const [plans, setPlans] = useState([]);
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+    // Group 2 Tab Data States
+    const [payments, setPayments] = useState([]);
+    const [paymentsLoading, setPaymentsLoading] = useState(false);
+
+    const [smsLogs, setSmsLogs] = useState([]);
+    const [smsLoading, setSmsLoading] = useState(false);
+
+    const [sessions, setSessions] = useState([]);
+    const [sessionsLoading, setSessionsLoading] = useState(false);
 
     const fetchUserDetails = useCallback(async () => {
         if (!id) return;
@@ -82,6 +95,40 @@ const UserDetails = () => {
     useEffect(() => {
         fetchUserDetails();
     }, [fetchUserDetails]);
+
+    // Fetch tab-specific data when tab changes
+    useEffect(() => {
+        if (!user) return;
+
+        if (currentTab === 'payments') {
+            setPaymentsLoading(true);
+            paymentsApi.getPaymentHistory({ userId: id })
+                .then(res => {
+                    const payData = res.data?.data || res.data || [];
+                    setPayments(Array.isArray(payData) ? payData : (payData.items || []));
+                })
+                .catch(err => console.error('Failed to fetch payments:', err))
+                .finally(() => setPaymentsLoading(false));
+        } else if (currentTab === 'sms') {
+            setSmsLoading(true);
+            api.get('/admin/sms/logs', { params: { phone: user.phoneNumber } })
+                .then(res => {
+                    const logs = res.data?.data || res.data?.logs || [];
+                    setSmsLogs(Array.isArray(logs) ? logs : []);
+                })
+                .catch(err => console.error('Failed to fetch SMS logs:', err))
+                .finally(() => setSmsLoading(false));
+        } else if (currentTab === 'sessions') {
+            setSessionsLoading(true);
+            api.get(`/admin/users/${id}/sessions`)
+                .then(res => {
+                    const sessionData = res.data?.data?.sessions || res.data?.sessions || [];
+                    setSessions(Array.isArray(sessionData) ? sessionData : []);
+                })
+                .catch(err => console.error('Failed to fetch user sessions:', err))
+                .finally(() => setSessionsLoading(false));
+        }
+    }, [currentTab, user, id, paymentsApi, api]);
 
     const handleTabChange = (event, newValue) => {
         setSearchParams({ tab: newValue }, { replace: true });
@@ -170,8 +217,8 @@ const UserDetails = () => {
                                 </Typography>
                                 <Chip
                                     icon={isOnline ? <OnlineIcon style={{ color: '#fff' }} /> : <WifiIcon />}
-                                    label={isOnline ? 'Currently Online' : (user.status || 'Offline')}
-                                    color={isOnline ? 'success' : (user.status === 'active' ? 'primary' : 'default')}
+                                    label={isOnline ? 'Currently Online' : (sub?.status === 'suspended' ? 'Suspended' : (user.status || 'Offline'))}
+                                    color={isOnline ? 'success' : (sub?.status === 'suspended' ? 'warning' : 'primary')}
                                     size="small"
                                     sx={{ fontWeight: 700, px: 0.5 }}
                                 />
@@ -384,11 +431,163 @@ const UserDetails = () => {
                 </Grid>
             )}
 
-            {/* Placeholder for future tabs (Group 2, 3, 4) */}
-            {currentTab !== 'general-information' && (
+            {/* Tab 3: Payments */}
+            {currentTab === 'payments' && (
+                <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <ReceiptIcon color="primary" /> Transaction & Payment History
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {paymentsLoading ? (
+                        <LinearProgress color="primary" />
+                    ) : payments.length === 0 ? (
+                        <Typography color="text.secondary" align="center" py={4}>No payment transactions recorded for this customer.</Typography>
+                    ) : (
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>Transaction ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Method</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {payments.map(p => (
+                                        <TableRow key={p.id} hover>
+                                            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{p.transactionId || p.invoiceId || p.id.slice(0, 8)}</TableCell>
+                                            <TableCell>{formatDateTime(p.createdAt || p.paymentDate || p.date)}</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</TableCell>
+                                            <TableCell>
+                                                <Chip label={p.paymentMethod || p.method || 'M-Pesa'} size="small" variant="outlined" />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={p.status || 'Paid'}
+                                                    color={p.status === 'completed' || p.status === 'paid' || p.status === 'Paid' ? 'success' : 'warning'}
+                                                    size="small"
+                                                    sx={{ fontWeight: 700 }}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </Paper>
+            )}
+
+            {/* Tab 4: Sms */}
+            {currentTab === 'sms' && (
+                <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SmsIcon color="primary" /> Outbound SMS History
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {smsLoading ? (
+                        <LinearProgress color="primary" />
+                    ) : smsLogs.length === 0 ? (
+                        <Typography color="text.secondary" align="center" py={4}>No SMS notifications sent to this customer yet.</Typography>
+                    ) : (
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>Timestamp</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Category / Tag</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Recipient Phone</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Message</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {smsLogs.map(log => (
+                                        <TableRow key={log.id} hover>
+                                            <TableCell>{formatDateTime(log.createdAt || log.created_at)}</TableCell>
+                                            <TableCell>
+                                                <Chip label={log.tag || 'notification'} size="small" color="secondary" variant="outlined" />
+                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>{log.recipientPhone}</TableCell>
+                                            <TableCell sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {log.messageBody || log.message}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={log.status}
+                                                    color={log.status === 'sent' || log.status === 'delivered' ? 'success' : 'error'}
+                                                    size="small"
+                                                    sx={{ fontWeight: 700 }}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </Paper>
+            )}
+
+            {/* Tab 5: Sessions */}
+            {currentTab === 'sessions' && (
+                <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <HistoryIcon color="primary" /> Customer Session History (RADIUS / Broadband)
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {sessionsLoading ? (
+                        <LinearProgress color="primary" />
+                    ) : sessions.length === 0 ? (
+                        <Typography color="text.secondary" align="center" py={4}>No RADIUS accounting sessions found for this customer.</Typography>
+                    ) : (
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>Start Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>End Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Framed IP</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>MAC Address</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Data Used</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Status / Cause</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {sessions.map(s => (
+                                        <TableRow key={s.id} hover>
+                                            <TableCell>{formatDateTime(s.startTime)}</TableCell>
+                                            <TableCell>{s.endTime ? formatDateTime(s.endTime) : 'Session Active'}</TableCell>
+                                            <TableCell sx={{ fontFamily: 'monospace' }}>{s.framedIp}</TableCell>
+                                            <TableCell sx={{ fontFamily: 'monospace' }}>{s.macAddress}</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>{formatBytes(s.totalBytes)}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={s.isOnline ? 'Active Session' : s.terminateCause}
+                                                    color={s.isOnline ? 'success' : 'default'}
+                                                    size="small"
+                                                    sx={{ fontWeight: 700 }}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </Paper>
+            )}
+
+            {/* Placeholder for future tabs (Group 3, Group 4, Group 6) */}
+            {(currentTab === 'reports' || currentTab === 'notes') && (
                 <Paper sx={{ p: 4, textAlign: 'center', border: `1px solid ${theme.palette.divider}` }}>
                     <Typography variant="h6" color="text.secondary">
-                        {currentTab.toUpperCase()} tab view is being assembled.
+                        {currentTab.toUpperCase()} tab view will be built in the next step.
                     </Typography>
                 </Paper>
             )}

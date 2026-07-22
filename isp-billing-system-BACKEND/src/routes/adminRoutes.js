@@ -36,6 +36,7 @@ router
   .delete (adminController.deleteUser);
 
 router.get("/users/:userId/subscription", adminController.getUserSubscription);
+router.get("/users/:id/sessions", sessionController.getCustomerSessions);
 
 // ─── System‑wide stats (optional) ─────────────────────────────
 router.get('/stats', adminController.getSystemStats); // GET /api/admin/stats

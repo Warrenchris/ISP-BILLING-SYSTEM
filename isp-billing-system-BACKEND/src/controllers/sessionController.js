@@ -240,3 +240,72 @@ exports.disconnectSessions = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * GET /api/admin/users/:id/sessions
+ * Returns customer-scoped session records from RadAcct
+ */
+exports.getCustomerSessions = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Find all network identifiers for user
+    const subs = await Subscription.findAll({ where: { userId: id } });
+    const usernames = new Set();
+    if (user.email) usernames.add(user.email);
+    if (user.phoneNumber) usernames.add(user.phoneNumber);
+    subs.forEach(s => {
+      if (s.networkIdentifier) usernames.add(s.networkIdentifier);
+    });
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
+
+    const { rows, count } = await RadAcct.findAndCountAll({
+      where: {
+        username: { [Op.in]: Array.from(usernames) }
+      },
+      order: [['acctstarttime', 'DESC']],
+      offset: (pageNum - 1) * limitNum,
+      limit: limitNum
+    });
+
+    const sessions = rows.map(r => {
+      const upload = Number(r.acctinputoctets || 0);
+      const download = Number(r.acctoutputoctets || 0);
+      return {
+        id: r.radacctid,
+        sessionId: r.acctsessionid,
+        username: r.username,
+        startTime: r.acctstarttime,
+        endTime: r.acctstoptime,
+        sessionTimeSeconds: r.acctsessiontime || 0,
+        uploadBytes: upload,
+        downloadBytes: download,
+        totalBytes: upload + download,
+        framedIp: r.framedipaddress || 'N/A',
+        macAddress: r.callingstationid || 'N/A',
+        nasIp: r.nasipaddress || 'N/A',
+        isOnline: !r.acctstoptime,
+        terminateCause: r.acctterminatecause || (!r.acctstoptime ? 'Online' : 'Session Ended')
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        sessions,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: count,
+          pages: Math.ceil(count / limitNum) || 1
+        }
+      }
+    });
+  } catch (err) { next(err); }
+};
