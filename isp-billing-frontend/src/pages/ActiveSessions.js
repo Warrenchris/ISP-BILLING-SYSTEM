@@ -15,7 +15,7 @@ import {
   FilterList as FilterIcon
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
-import moment from 'moment';
+import { getRelativeTime, formatDateTime } from '../utils/helpers';
 import { adminApi } from '../utils/api';
 
 const ActiveSessions = () => {
@@ -136,8 +136,7 @@ const ActiveSessions = () => {
 
   const formatRelativeTime = (dateStr, fallback = ' — ') => {
     if (!dateStr) return fallback;
-    const m = moment(dateStr);
-    return m.isValid() ? m.fromNow() : fallback;
+    return getRelativeTime(dateStr);
   };
 
   return (
@@ -313,7 +312,7 @@ const ActiveSessions = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Tooltip title={s.sessionStart ? moment(s.sessionStart).format('YYYY-MM-DD HH:mm:ss') : ''}>
+                        <Tooltip title={s.sessionStart ? formatDateTime(s.sessionStart) : ''}>
                           <Typography variant="body2">
                             {formatRelativeTime(s.sessionStart)}
                           </Typography>
@@ -323,8 +322,8 @@ const ActiveSessions = () => {
                         {s.isWithoutExpiry ? (
                           <Chip label="Without Expiry" size="small" variant="outlined" sx={{ fontSize: '11px', fontWeight: 600 }} />
                         ) : (
-                          <Tooltip title={s.sessionEnd ? moment(s.sessionEnd).format('YYYY-MM-DD HH:mm:ss') : ''}>
-                            <Typography variant="body2" color={moment(s.sessionEnd).isBefore(moment()) ? 'error.main' : 'text.primary'}>
+                          <Tooltip title={s.sessionEnd ? formatDateTime(s.sessionEnd) : ''}>
+                            <Typography variant="body2" color={s.sessionEnd && new Date(s.sessionEnd) < new Date() ? 'error.main' : 'text.primary'}>
                               {formatRelativeTime(s.sessionEnd, 'Without Expiry')}
                             </Typography>
                           </Tooltip>
