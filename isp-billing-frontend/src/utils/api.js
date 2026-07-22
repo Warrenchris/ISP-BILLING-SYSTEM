@@ -110,6 +110,12 @@ export const adminApi = {
     getRevenue: (params = {}) => api.get('/admin/stats/revenue', { params }),
     getUsage: (params = {}) => api.get('/admin/stats/usage', { params }) },
 
+  // Active Sessions management
+  sessions: {
+    getActive: (params = {}) => api.get('/admin/sessions/active', { params }),
+    disconnect: (payload) => api.post('/admin/sessions/disconnect', payload),
+  },
+
   // System management
   system: {
     getHealth: () => api.get('/health'),
