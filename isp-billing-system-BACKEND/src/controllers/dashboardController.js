@@ -423,21 +423,6 @@ exports.getCentipidParityData = async (req, res, next) => {
       connectionTypeUsage = [];
     }
 
-    // Fallback generator for connectionTypeUsage if database has no records
-    if (connectionTypeUsage.length === 0) {
-      for (let i = 13; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateKey = d.toISOString().slice(0, 10);
-        connectionTypeUsage.push({
-          date: dateKey,
-          pppoe: Math.round((120 + Math.random() * 80) * 10) / 10,
-          hotspot: Math.round((80 + Math.random() * 60) * 10) / 10,
-          address_list: Math.round((30 + Math.random() * 20) * 10) / 10,
-        });
-      }
-    }
-
     // 4. Download vs Upload Weekly Bandwidth Totals (Past 7 days)
     let weeklyBandwidth = [];
     try {
@@ -462,22 +447,6 @@ exports.getCentipidParityData = async (req, res, next) => {
       weeklyBandwidth = [];
     }
 
-    if (weeklyBandwidth.length === 0) {
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateKey = d.toISOString().slice(0, 10);
-        const dl = Math.round((4.5 + Math.random() * 3) * 100) / 100;
-        const ul = Math.round((1.2 + Math.random() * 1) * 100) / 100;
-        weeklyBandwidth.push({
-          date: dateKey,
-          downloadGB: dl,
-          uploadGB: ul,
-          totalGB: Math.round((dl + ul) * 100) / 100,
-        });
-      }
-    }
-
     // 5. Live Active RADIUS Users & Peak Count
     let liveActiveCount = 0;
     try {
@@ -491,9 +460,10 @@ exports.getCentipidParityData = async (req, res, next) => {
     });
 
     const liveUsers = {
-      liveNow: liveActiveCount > 0 ? liveActiveCount : Math.max(1, Math.round(totalActiveSubscribers * 0.4)),
-      avgActive: Math.round(totalActiveSubscribers * 0.35),
-      weeklyPeak: Math.round(totalActiveSubscribers * 0.65),
+      liveNow: liveActiveCount,
+      totalActiveSubscribers,
+      avgActive: liveActiveCount,
+      weeklyPeak: liveActiveCount,
     };
 
     res.json({
