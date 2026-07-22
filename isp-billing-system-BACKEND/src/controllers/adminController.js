@@ -5,7 +5,9 @@ const { Op } = require("sequelize");
 const { User,
   Subscription,
   DataPlan,
-  Payment } = require("../models");
+  Payment,
+  RadCheck,
+  RadAcct } = require("../models");
 const { UserRole, SubscriptionStatus, PaymentStatus } = require('../config/constants');
 const bcrypt = require("bcryptjs");
 
@@ -129,17 +131,17 @@ exports.getAllUsers = async (req, res, next) => {
     });
   } catch (err) { next(err); }
 };
-/* PATCH /api/admin/subscriptions/:id
-* body = { action: 'activate' | 'suspend' | 'cancel' }
+/* PATCH /api/admin/subscriptions/:id
+* body = { action: 'activate' | 'suspend' | 'cancel' | 'change_expiry', endDate: Date }
 */
 exports.patchSubscription = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { action } = req.body;          // simple FSM
+    const { action, endDate } = req.body;
     const subscription = await Subscription.findByPk(id, {
       include: [{ model: DataPlan, as: 'plan' }]
     });
-    if (!subscription) return res.status(404).json({ success: false, message: "Not found" });
+    if (!subscription) return res.status(404).json({ success: false, message: "Subscription not found" });
 
     switch (action) {
       case "activate": {
@@ -152,16 +154,33 @@ exports.patchSubscription = async (req, res, next) => {
         }
         break;
       }
-      case "suspend":
+      case "suspend": {
         subscription.status = SubscriptionStatus.SUSPENDED;
         await subscription.save();
+        try {
+          const { addProvisioningJob } = require('../services/queue/queueManager');
+          await addProvisioningJob('disable', { subscriptionId: subscription.id, userId: subscription.userId });
+        } catch (jobErr) {
+          console.error('Failed to queue suspend provisioning job:', jobErr.message);
+        }
         break;
-      case "cancel":
+      }
+      case "cancel": {
         subscription.status = SubscriptionStatus.CANCELLED;
         await subscription.save();
         break;
+      }
+      case "change_expiry": {
+        if (!endDate) return res.status(400).json({ success: false, message: "endDate is required for change_expiry action" });
+        subscription.endDate = new Date(endDate);
+        if (new Date() < subscription.endDate && subscription.status === SubscriptionStatus.EXPIRED) {
+          subscription.status = SubscriptionStatus.ACTIVE;
+        }
+        await subscription.save();
+        break;
+      }
       default:
-        return res.status(400).json({ success: false, message: "Bad action" });
+        return res.status(400).json({ success: false, message: "Invalid action" });
     }
     await subscription.reload({
       include: [{ model: DataPlan, as: 'plan' }]
@@ -172,14 +191,71 @@ exports.patchSubscription = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-/* … keep createUser / updateUser / deleteUser etc. unchanged … */
-
-/*───────────────────────────────────────────────────────────*/
+/* GET /api/admin/users/:id */
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id, { attributes: { exclude: ['password'] } });
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    res.json({ success: true, data: { user } });
+
+    // Fetch active subscription for user
+    const activeSub = await Subscription.findOne({
+      where: {
+        userId: user.id,
+        status: SubscriptionStatus.ACTIVE
+      },
+      order: [['created_at', 'DESC']],
+      include: [{ model: DataPlan, as: 'plan' }]
+    });
+
+    const userJson = user.toJSON();
+    userJson.status = userJson.isActive ? 'active' : 'inactive';
+
+    let radiusInfo = {
+      isOnline: false,
+      username: null,
+      networkPassword: null,
+      framedIp: userJson.routerIp || null
+    };
+
+    if (activeSub) {
+      const subJson = activeSub.toJSON();
+      subJson.daysRemaining = subJson.endDate ? days(subJson.endDate) : null;
+      subJson.DataPlan = activeSub.plan;
+      userJson.subscription = subJson;
+
+      const networkId = activeSub.networkIdentifier || userJson.email || userJson.phoneNumber;
+      radiusInfo.username = networkId;
+
+      // Look up cleartext password from radcheck
+      if (RadCheck) {
+        const radEntry = await RadCheck.findOne({
+          where: { username: networkId, attribute: 'Cleartext-Password' }
+        });
+        if (radEntry) {
+          radiusInfo.networkPassword = radEntry.value;
+        }
+      }
+
+      // Check if user is currently online in radacct
+      if (RadAcct) {
+        const activeRad = await RadAcct.findOne({
+          where: { username: networkId, acctstoptime: null },
+          order: [['acctstarttime', 'DESC']]
+        });
+        if (activeRad) {
+          radiusInfo.isOnline = true;
+          if (activeRad.framedipaddress && activeRad.framedipaddress !== '0.0.0.0') {
+            radiusInfo.framedIp = activeRad.framedipaddress;
+          }
+        }
+      }
+    }
+
+    userJson.radius = radiusInfo;
+
+    res.json({ success: true, data: { user: userJson } });
   } catch (err) { next(err); }
 };
 
