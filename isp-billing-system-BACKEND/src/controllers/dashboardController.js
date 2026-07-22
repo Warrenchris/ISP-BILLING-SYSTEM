@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
 const { DataUsage, User, Payment, Subscription, SupportTicket, Invoice, DataPlan, RadAcct } = require('../models');
 const { PaymentStatus, SubscriptionStatus } = require('../config/constants');
+const cacheService = require('../services/cacheService');
 
 /**
  * GET /api/dashboard/stats
@@ -516,60 +517,63 @@ exports.getCentipidParityData = async (req, res, next) => {
  */
 exports.getRetentionTrend = async (req, res, next) => {
   try {
-    const now = new Date();
-    const trendData = [];
+    const trendData = await cacheService.getOrCompute('dashboard:retention_trend_6m', async () => {
+      const now = new Date();
+      const data = [];
 
-    for (let i = 5; i >= 0; i--) {
-      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
-      const monthLabel = monthStart.toLocaleString('default', { month: 'short' });
+      for (let i = 5; i >= 0; i--) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+        const monthLabel = monthStart.toLocaleString('default', { month: 'short' });
 
-      // 1. Active subscribers at START of month
-      const activeStart = await Subscription.count({
-        where: {
-          startDate: { [Op.lt]: monthStart },
-          [Op.or]: [
-            { endDate: null },
-            { endDate: { [Op.gte]: monthStart } }
-          ]
-        }
-      });
+        // 1. Active subscribers at START of month
+        const activeStart = await Subscription.count({
+          where: {
+            startDate: { [Op.lt]: monthStart },
+            [Op.or]: [
+              { endDate: null },
+              { endDate: { [Op.gte]: monthStart } }
+            ]
+          }
+        });
 
-      // 2. Active subscribers at END of month
-      const activeEnd = await Subscription.count({
-        where: {
-          startDate: { [Op.lte]: monthEnd },
-          [Op.or]: [
-            { endDate: null },
-            { endDate: { [Op.gt]: monthEnd } }
-          ]
-        }
-      });
+        // 2. Active subscribers at END of month
+        const activeEnd = await Subscription.count({
+          where: {
+            startDate: { [Op.lte]: monthEnd },
+            [Op.or]: [
+              { endDate: null },
+              { endDate: { [Op.gt]: monthEnd } }
+            ]
+          }
+        });
 
-      // 3. New signups during the month
-      const newSignups = await Subscription.count({
-        where: {
-          created_at: { [Op.between]: [monthStart, monthEnd] }
-        }
-      });
+        // 3. New signups during the month
+        const newSignups = await Subscription.count({
+          where: {
+            created_at: { [Op.between]: [monthStart, monthEnd] }
+          }
+        });
 
-      // 4. Retained subscribers = activeEnd - newSignups
-      const retainedCount = Math.max(0, activeEnd - newSignups);
-      const retentionRate = activeStart === 0
-        ? 100.0
-        : Math.min(100, Math.round((retainedCount / activeStart) * 1000) / 10);
-      const churnRate = Math.round((100 - retentionRate) * 10) / 10;
+        // 4. Retained subscribers = activeEnd - newSignups
+        const retainedCount = Math.max(0, activeEnd - newSignups);
+        const retentionRate = activeStart === 0
+          ? 100.0
+          : Math.min(100, Math.round((retainedCount / activeStart) * 1000) / 10);
+        const churnRate = Math.round((100 - retentionRate) * 10) / 10;
 
-      trendData.push({
-        month: monthLabel,
-        year: monthStart.getFullYear(),
-        retentionRate,
-        churnRate,
-        activeStart,
-        activeEnd,
-        newSignups,
-      });
-    }
+        data.push({
+          month: monthLabel,
+          year: monthStart.getFullYear(),
+          retentionRate,
+          churnRate,
+          activeStart,
+          activeEnd,
+          newSignups,
+        });
+      }
+      return data;
+    }, 3600);
 
     res.json({
       success: true,
