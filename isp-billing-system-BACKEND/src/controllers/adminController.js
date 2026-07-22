@@ -20,18 +20,24 @@ const MIN_LEN = 8; // Minimum password length
 /* GET /api/admin/users?search=&page=&limit= */
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const { search = "", page = 1, limit = 25 } = req.query;
+    const { search = "", role, page = 1, limit = 25 } = req.query;
 
-    const where = search
-      ? {
-        [Op.or]: [
-          { firstName: { [Op.like]: `%${search}%` } },
-          { lastName: { [Op.like]: `%${search}%` } },
-          { email: { [Op.like]: `%${search}%` } },
-          { phoneNumber: { [Op.like]: `%${search}%` } },
-        ],
-      }
-      : {};
+    const where = {};
+    if (search) {
+      where[Op.or] = [
+        { firstName: { [Op.like]: `%${search}%` } },
+        { lastName: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { phoneNumber: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    if (role && role !== 'all') {
+      where.role = role;
+    } else if (!role) {
+      // Customer Management view defaults to excluding administrative staff
+      where.role = { [Op.ne]: 'admin' };
+    }
 
     const { rows, count } = await User.findAndCountAll({
       where,
