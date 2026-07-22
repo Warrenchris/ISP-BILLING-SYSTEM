@@ -171,9 +171,11 @@ const queryPaymentStatus = async (req, res) => {
  * Get user payment history
  */
 const getPaymentHistory = async (req, res) => {
-  // Keep original read-only logic
+  // NOTE: This function is exported but NOT mounted on any route.
+  // Customer self-service uses the inline handler at GET /payments/history (paymentRoutes.js:109).
+  // Admin per-customer view uses getAllPayments at GET /payments/ (admin-only, paymentRoutes.js:35).
   try {
-    const userId = req.query.userId || req.userId || req.user?.id;
+    const userId = req.userId || req.user?.id;
     const { page = 1, limit = 10, status, paymentType } = req.query;
     // ... (Standard findAndCountAll)
     const offset = (page - 1) * limit;
