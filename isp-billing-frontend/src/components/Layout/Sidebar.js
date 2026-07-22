@@ -14,6 +14,7 @@ import {
     RouterOutlined,
     AdminPanelSettingsOutlined,
     ConfirmationNumberOutlined,
+    WifiTetheringOutlined,
     SmsOutlined,
     StorageOutlined,
     HistoryOutlined,
