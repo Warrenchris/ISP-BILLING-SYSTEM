@@ -6,6 +6,7 @@
  */
 
 const { SmsLog, SmsTemplate, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const logger = require('../config/logger');
 
 /**
@@ -16,7 +17,11 @@ const listLogs = async (req, res) => {
   try {
     const { phone, tag, status, page = 1, limit = 50 } = req.query;
     const where = {};
-    if (phone) where.recipientPhone = phone;
+    if (phone) {
+      const clean = String(phone).replace(/\D/g, '');
+      const suffix = clean.length >= 9 ? clean.slice(-9) : clean;
+      where.recipientPhone = { [Op.like]: `%${suffix}` };
+    }
     if (tag) where.tag = tag;
     if (status) where.status = status;
 
