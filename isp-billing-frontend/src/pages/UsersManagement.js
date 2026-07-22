@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Chip, IconButton, Button, Menu, MenuItem,
-    Avatar, TextField, InputAdornment, LinearProgress, Alert, Snackbar
+    Avatar, TextField, InputAdornment, LinearProgress, Alert, Snackbar,
+    Tabs, Tab
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -32,6 +33,7 @@ const UsersManagement = () => {
     const navigate = useNavigate();
     const { adminApi } = useApi();
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('all');
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -39,7 +41,6 @@ const UsersManagement = () => {
     const [currentUser, setCurrentUser] = useState(emptyUser);
 
     // Use the new hook
-    // Note: adminApi.users.getAll must accept { page, limit, search }
     const {
         data: users,
         loading,
@@ -47,11 +48,17 @@ const UsersManagement = () => {
         page,
         limit,
         total,
+        counts,
         setPage,
         setLimit,
         setParams,
         refresh
-    } = usePaginatedFetch(adminApi.users.getAll, 1, 10);
+    } = usePaginatedFetch(adminApi.users.getAll, 1, 10, { tab: 'all' });
+
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+        setParams({ tab: newValue });
+    };
 
     // Debounce search update
     useEffect(() => {
@@ -202,6 +209,34 @@ const UsersManagement = () => {
                     Add New User
                 </Button>
             </Box>
+
+            {/* Filter Tabs */}
+            <Paper sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    indicatorColor="primary"
+                    textColor="primary"
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    sx={{
+                        px: 2,
+                        '& .MuiTab-root': {
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            textTransform: 'none',
+                            minHeight: 48,
+                        }
+                    }}
+                >
+                    <Tab label={`All (${counts.all || 0})`} value="all" />
+                    <Tab label={`Hotspot (${counts.hotspot || 0})`} value="hotspot" />
+                    <Tab label={`PPPoE (${counts.pppoe || 0})`} value="pppoe" />
+                    <Tab label={`Without Expiry (${counts.withoutExpiry || 0})`} value="withoutExpiry" />
+                    <Tab label={`Active (${counts.active || 0})`} value="active" />
+                    <Tab label={`Inactive (${counts.inactive || 0})`} value="inactive" />
+                </Tabs>
+            </Paper>
 
             {/* Filters */}
             <Paper sx={{
