@@ -6,6 +6,7 @@ const DEFAULT_TTL_SECONDS = 3600; // 1 hour default TTL for dashboard analytics
 /**
  * Helper to get cached data or compute and cache result.
  * Gracefully degrades to computing live if Redis is unreachable.
+ * Bypasses caching in test environments.
  *
  * @param {string} key Cache key
  * @param {Function} computeFn Async function computing the fresh data
@@ -13,6 +14,10 @@ const DEFAULT_TTL_SECONDS = 3600; // 1 hour default TTL for dashboard analytics
  * @returns {Promise<any>}
  */
 async function getOrCompute(key, computeFn, ttlSeconds = DEFAULT_TTL_SECONDS) {
+  if (process.env.NODE_ENV === 'test') {
+    return await computeFn();
+  }
+
   const client = getRedisClient();
   try {
     const cached = await client.get(key);
@@ -39,6 +44,7 @@ async function getOrCompute(key, computeFn, ttlSeconds = DEFAULT_TTL_SECONDS) {
  * @param {string} key
  */
 async function invalidateKey(key) {
+  if (process.env.NODE_ENV === 'test') return;
   try {
     const client = getRedisClient();
     await client.del(key);
