@@ -27,6 +27,18 @@ const createSubscription = async (req, res) => {
     const { planId, autoRenew } = req.body;
     const userId = req.userId;
 
+    // Verify user role — Admin and technical staff accounts are barred from subscribing
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (user.role === 'admin' || user.role === 'support') {
+      return res.status(403).json({
+        success: false,
+        message: 'Administrative and technical staff accounts cannot subscribe to data plans.'
+      });
+    }
+
     // Check if data plan exists and is active
     const dataPlan = await DataPlan.findByPk(planId);
     if (!dataPlan) {

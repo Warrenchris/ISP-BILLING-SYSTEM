@@ -138,6 +138,10 @@ async function redeemVoucher(code, customerId, options = {}) {
       await transaction.rollback();
       throw new Error('Customer not found');
     }
+    if (customer.role === 'admin' || customer.role === 'support') {
+      await transaction.rollback();
+      throw new Error('Administrative and technical staff accounts cannot subscribe to or redeem data plan vouchers');
+    }
 
     const plan = voucher.plan;
 
