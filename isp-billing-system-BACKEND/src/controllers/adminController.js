@@ -17,10 +17,10 @@ const days = (end) => Math.max(Math.ceil((new Date(end) - now()) / 8.64e7), 0);
 const hash = (pw) => bcrypt.hash(pw, Number(process.env.BCRYPT_ROUNDS) || 12);
 const MIN_LEN = 8; // Minimum password length
 
-/* GET /api/admin/users?search=&page=&limit= */
+/* GET /api/admin/users?search=&role=&tab=&page=&limit= */
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const { search = "", role, page = 1, limit = 25 } = req.query;
+    const { search = "", role, tab = "all", page = 1, limit = 25 } = req.query;
 
     const where = {};
     if (search) {
@@ -39,10 +39,9 @@ exports.getAllUsers = async (req, res, next) => {
       where.role = { [Op.ne]: 'admin' };
     }
 
-    const { rows, count } = await User.findAndCountAll({
+    // Fetch all matching users for exact count calculations & tab filtering
+    const allUsers = await User.findAll({
       where,
-      offset: (page - 1) * limit,
-      limit: Number(limit),
       order: [["created_at", "DESC"]],
       attributes: { exclude: ["password"] },
       include: [
@@ -51,28 +50,68 @@ exports.getAllUsers = async (req, res, next) => {
           as: "activeSubscription",
           where: {
             status: SubscriptionStatus.ACTIVE,
-            endDate: { [Op.gte]: new Date() },
+            [Op.or]: [
+              { endDate: { [Op.gte]: new Date() } },
+              { endDate: null }
+            ]
           },
           required: false,
           include: [
             {
               model: DataPlan,
               as: "plan",
-              attributes: ["id", "name", "dataLimit", "price", "validityPeriod"], // Ensure these are included
+              attributes: ["id", "name", "dataLimit", "price", "validityPeriod"],
             },
           ],
         },
       ],
     });
 
-    /* decorate with daysRemaining and derived status on the fly */
-    const users = rows.map((u) => {
+    const counts = {
+      all: allUsers.length,
+      hotspot: 0,
+      pppoe: 0,
+      withoutExpiry: 0,
+      active: 0,
+      inactive: 0
+    };
+
+    allUsers.forEach((u) => {
+      const sub = u.activeSubscription;
+      const isActive = u.isActive;
+      if (isActive && sub) {
+        counts.active += 1;
+        if (sub.connectionType === 'hotspot') counts.hotspot += 1;
+        if (sub.connectionType === 'pppoe') counts.pppoe += 1;
+        if (!sub.endDate || sub.connectionType === 'address_list') counts.withoutExpiry += 1;
+      } else {
+        counts.inactive += 1;
+      }
+    });
+
+    let filtered = allUsers;
+    if (tab === 'hotspot') {
+      filtered = allUsers.filter(u => u.activeSubscription?.connectionType === 'hotspot');
+    } else if (tab === 'pppoe') {
+      filtered = allUsers.filter(u => u.activeSubscription?.connectionType === 'pppoe');
+    } else if (tab === 'withoutExpiry') {
+      filtered = allUsers.filter(u => u.activeSubscription && (!u.activeSubscription.endDate || u.activeSubscription.connectionType === 'address_list'));
+    } else if (tab === 'active') {
+      filtered = allUsers.filter(u => u.isActive && u.activeSubscription);
+    } else if (tab === 'inactive') {
+      filtered = allUsers.filter(u => !u.isActive || !u.activeSubscription);
+    }
+
+    const total = filtered.length;
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const paginated = filtered.slice((pageNum - 1) * limitNum, pageNum * limitNum);
+
+    const users = paginated.map((u) => {
       const json = u.toJSON();
-      // Derive a status string from the isActive boolean (User model has no status column)
       json.status = json.isActive ? 'active' : 'inactive';
       if (json.activeSubscription) {
-        json.activeSubscription.daysRemaining = days(json.activeSubscription.endDate);
-        // Ensure plan data is properly attached under both keys
+        json.activeSubscription.daysRemaining = json.activeSubscription.endDate ? days(json.activeSubscription.endDate) : null;
         if (!json.activeSubscription.DataPlan && json.activeSubscription.plan) {
           json.activeSubscription.DataPlan = json.activeSubscription.plan;
         }
@@ -84,7 +123,8 @@ exports.getAllUsers = async (req, res, next) => {
       success: true,
       data: {
         users,
-        pagination: { page: Number(page), limit: Number(limit), total: count },
+        counts,
+        pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) || 1 },
       },
     });
   } catch (err) { next(err); }

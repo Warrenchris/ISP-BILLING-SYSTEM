@@ -8,6 +8,7 @@ const usePaginatedFetch = (fetchFunction, initialPage = 1, initialLimit = 10, in
     const [limit, setLimit] = useState(initialLimit);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [counts, setCounts] = useState({});
 
     // Additional parameters (e.g., search, filters)
     const [params, setParams] = useState(initialParams);
@@ -45,10 +46,12 @@ const usePaginatedFetch = (fetchFunction, initialPage = 1, initialLimit = 10, in
             const pagination = resData.pagination || resData.data?.pagination || {};
             totalCount = pagination.total || items.length;
             totalPgs = pagination.pages || Math.ceil(totalCount / limit);
+            const countsInfo = resData.counts || resData.data?.counts || {};
 
             setData(items);
             setTotal(totalCount);
             setTotalPages(totalPgs);
+            setCounts(countsInfo);
 
         } catch (err) {
             console.error('Paginated fetch error:', err);
@@ -89,6 +92,7 @@ const usePaginatedFetch = (fetchFunction, initialPage = 1, initialLimit = 10, in
         limit,
         total,
         totalPages,
+        counts,
         setPage: handlePageChange,
         setLimit: handleLimitChange,
         setParams: handleFilterChange,
