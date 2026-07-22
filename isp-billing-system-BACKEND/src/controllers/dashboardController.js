@@ -107,9 +107,9 @@ exports.getAdminOverview = async (req, res, next) => {
       pendingInvoices,
       overdueInvoices,
     ] = await Promise.all([
-      User.count(),
-      User.count({ where: { isActive: true } }),
-      User.count({ where: { created_at: { [Op.between]: [start, end] } } }),
+      User.count({ where: { role: { [Op.ne]: 'admin' } } }),
+      User.count({ where: { isActive: true, role: { [Op.ne]: 'admin' } } }),
+      User.count({ where: { created_at: { [Op.between]: [start, end] }, role: { [Op.ne]: 'admin' } } }),
       Payment.sum('amount', { where: { status: PaymentStatus.COMPLETED } }),
       Payment.sum('amount', { where: { status: PaymentStatus.COMPLETED, created_at: { [Op.between]: [start, end] } } }),
       Subscription.count({
