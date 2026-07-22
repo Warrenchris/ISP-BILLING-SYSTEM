@@ -173,7 +173,7 @@ const queryPaymentStatus = async (req, res) => {
 const getPaymentHistory = async (req, res) => {
   // Keep original read-only logic
   try {
-    const userId = req.userId || req.user?.id;
+    const userId = req.query.userId || req.userId || req.user?.id;
     const { page = 1, limit = 10, status, paymentType } = req.query;
     // ... (Standard findAndCountAll)
     const offset = (page - 1) * limit;
