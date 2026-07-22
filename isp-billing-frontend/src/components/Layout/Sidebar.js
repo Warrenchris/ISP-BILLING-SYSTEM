@@ -83,6 +83,7 @@ const SIDEBAR_SECTIONS = [
         items: [
             { text: 'Staff & Roles', icon: AdminPanelSettingsOutlined, path: '/staff'      },
             { text: 'Network Devices', icon: RouterOutlined,           path: '/network-devices' },
+            { text: 'Active Sessions', icon: WifiTetheringOutlined,    path: '/active-sessions' },
             { text: 'Vouchers',       icon: ConfirmationNumberOutlined, path: '/vouchers'   },
             { text: 'SMS Logs',       icon: SmsOutlined,                path: '/sms-logs'   },
             { text: 'Queue Health',   icon: StorageOutlined,            path: '/queue-health' },
