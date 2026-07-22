@@ -14,9 +14,14 @@ const { authenticate, restrictTo } = require('../middleware/auth');
 
 // ─── Controller functions ─────────────────────────────────────
 const adminController = require('../controllers/adminController');
+const sessionController = require('../controllers/sessionController');
 
 // Apply JWT auth + role guard to *everything* below this line
 router.use(authenticate, restrictTo('admin'));
+
+// ─── Active Sessions (Live Operational View) ──────────────────
+router.get('/sessions/active', sessionController.getActiveSessions);
+router.post('/sessions/disconnect', sessionController.disconnectSessions);
 
 // ─── User management ──────────────────────────────────────────
 router
