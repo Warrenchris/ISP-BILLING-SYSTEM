@@ -47,13 +47,13 @@ const AdminPersonalAccount = ({ subscription, recentPaymentsCount, pendingInvoic
                     <AccountStatBox
                         icon={<DataUsageIcon />}
                         title="Current Plan"
-                        value={subscription?.DataPlan?.name || 'No Plan'}
+                        value={subscription?.DataPlan?.name || 'Staff Admin'}
                         color={theme.palette.info.main}
                     />
                     <AccountStatBox
                         icon={<SpeedIcon />}
                         title="Data Usage"
-                        value={`${formattedUsage}%`}
+                        value={subscription ? `${formattedUsage}%` : 'N/A (Staff)'}
                         color={theme.palette.success.main}
                     />
                     <AccountStatBox

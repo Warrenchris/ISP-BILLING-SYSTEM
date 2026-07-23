@@ -13,6 +13,7 @@ from services.data_fetcher import (
     fetch_revenue_vs_predicted,
     fetch_payments_for_anomaly,
     fetch_usage_profiles,
+    fetch_active_subscriptions_count,
     cached_fetch,
     check_data_sufficiency,
 )
@@ -97,7 +98,8 @@ def get_dashboard_summary():
         pred_val = current.get("predicted", 0) or 0
         
         variance = actual_val - pred_val
-        variance_pct = round(variance / pred_val * 100, 2) if pred_val else 0
+        # Item 3: If predicted is 0 / not run yet, variance_pct is None (renders N/A)
+        variance_pct = round(variance / pred_val * 100, 2) if (pred_val and pred_val > 0) else None
 
         # Build forecast inputs from latest data (current or most recent month)
         revenue_data = churn_training.get("revenue_data", [])
@@ -107,16 +109,23 @@ def get_dashboard_summary():
             revenue_data[-1] if revenue_data else {}
         )
 
+        real_active_subscribers = fetch_active_subscriptions_count()
+
+        # Item 2: Sanity check / clamp totalAtRisk so it never exceeds total customers count
+        total_at_risk = len(high_risk)
+        total_customers = len(customers)
+        clamped_at_risk = min(total_at_risk, total_customers) if total_customers > 0 else total_at_risk
+
         dashboard_data = {
             "period": period_str,
             "revenue": {
                 "predicted": pred_val if sufficiency["revenue_months"]["ready"] else None,
                 "actual": actual_val,
-                "variance": round(variance, 2),
+                "variance": round(variance, 2) if (pred_val and pred_val > 0) else None,
                 "variancePct": variance_pct,
             },
             "churn": {
-                "totalAtRisk": len(high_risk) if sufficiency["churn_customers"]["ready"] else None,
+                "totalAtRisk": clamped_at_risk if sufficiency["churn_customers"]["ready"] else None,
                 "mediumRisk": len(medium_risk) if sufficiency["churn_customers"]["ready"] else None,
                 "top5AtRisk": top5,
                 "status": "ready" if sufficiency["churn_customers"]["ready"] else "insufficient_data"
@@ -130,7 +139,7 @@ def get_dashboard_summary():
                 "status": anomaly_report.get("status", "ready")
             },
             "forecastInputs": {
-                "activeSubscribers": latest_rev.get("active_subscribers"),
+                "activeSubscribers": real_active_subscribers if real_active_subscribers > 0 else latest_rev.get("active_subscribers"),
                 "averageUsage": latest_rev.get("avg_data_usage_mb"),
                 "averagePaymentDelay": latest_rev.get("payment_delays"),
                 "planDistribution": latest_rev.get("plan_distribution", {}),

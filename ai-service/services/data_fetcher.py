@@ -77,7 +77,7 @@ def _execute(sql: str, params: tuple = ()) -> int:
 # ── Simple Request-Level Cache ─────────────────────────────────────────────
 _cache: dict = {}  # key → {value, expires_at}
 
-def cached_fetch(cache_key: str, fetch_fn, ttl_seconds: int = 300, **kwargs):
+def cached_fetch(cache_key: str, fetch_fn, ttl_seconds: int = 15, **kwargs):
     """
     Call fetch_fn(**kwargs) at most once per ttl_seconds window.
     Avoids redundant DB round-trips when the same endpoint is called
@@ -375,7 +375,7 @@ def fetch_training_data(months: int = 12) -> dict:
             for r in revenue_rows
         ]
 
-        # Churn features per customer
+        # Churn features per customer (strictly 1 row per customer)
         churn_rows = _query(
             """SELECT
                  u.id,
@@ -384,16 +384,15 @@ def fetch_training_data(months: int = 12) -> dict:
                    WHEN p.status = 'failed' OR (i.paid_at > i.due_date) THEN i.id 
                  END) AS payment_delay_count,
                  COUNT(DISTINCT st.id) AS ticket_count,
-                 DATEDIFF(NOW(), s.created_at) AS subscription_age_days,
-                 s.status AS sub_status
+                 COALESCE(DATEDIFF(NOW(), MIN(s.created_at)), 30) AS subscription_age_days,
+                 COALESCE(MAX(CASE WHEN s.status = 'active' THEN 1 ELSE 0 END), 0) AS has_active_sub
                FROM users u
                LEFT JOIN subscriptions s ON s.user_id = u.id
                LEFT JOIN payments p ON p.user_id = u.id
                LEFT JOIN invoices i ON i.user_id = u.id
                LEFT JOIN support_tickets st ON st.user_id = u.id
                WHERE u.role = 'customer' AND u.deleted_at IS NULL
-               GROUP BY u.id, u.first_name, u.last_name, u.email,
-                        s.status, s.created_at"""
+               GROUP BY u.id, u.first_name, u.last_name, u.email"""
         )
 
         churn_data = [
@@ -406,7 +405,7 @@ def fetch_training_data(months: int = 12) -> dict:
                 "ticket_count": int(r["ticket_count"] or 0),
                 "usage_trend": 0.0,  # computed from usage time-series separately
                 "subscription_age_days": int(r["subscription_age_days"] or 30),
-                "churned": 1 if r["sub_status"] in ("cancelled", "expired") else 0,
+                "churned": 0 if int(r["has_active_sub"] or 0) == 1 else 1,
             }
             for r in churn_rows
         ]
@@ -416,6 +415,16 @@ def fetch_training_data(months: int = 12) -> dict:
     except MySQLError as e:
         logger.error(f"[data_fetcher] fetch_training_data error: {e}")
         raise
+
+
+def fetch_active_subscriptions_count() -> int:
+    """Fetch real count of currently active subscriptions."""
+    try:
+        rows = _query("SELECT COUNT(*) AS count FROM subscriptions WHERE status = 'active'")
+        return int(rows[0]["count"]) if rows else 0
+    except MySQLError as e:
+        logger.error(f"[data_fetcher] fetch_active_subscriptions_count error: {e}")
+        return 0
 
 
 # ── Payments for Anomaly Detection ─────────────────────────────────────────

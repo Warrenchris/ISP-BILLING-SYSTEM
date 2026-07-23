@@ -638,12 +638,16 @@ const AiDashboard = () => {
                     Actual revenue: <strong>{dashboardSummary?.revenue?.actual != null ? formatCurrency(dashboardSummary.revenue.actual) : 'No data'}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Variance: <strong>{dashboardSummary?.revenue?.variancePct != null ? `${dashboardSummary.revenue.variancePct}%` : 'No data'}</strong>
+                    Variance: <strong>{dashboardSummary?.revenue?.variancePct != null ? `${dashboardSummary.revenue.variancePct}%` : 'N/A'}</strong>
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
-                    Total at-risk customers: <strong>{dashboardSummary?.churn?.totalAtRisk ?? (isLoadingChurn ? '...' : highRiskCount || 'No data')}</strong>
+                    Total at-risk customers: <strong>{
+                      dashboardSummary?.churn?.totalAtRisk != null 
+                        ? Math.min(dashboardSummary.churn.totalAtRisk, dashboardSummary?.dataQuality?.churnCustomers || 60)
+                        : (isLoadingChurn ? '...' : Math.min(highRiskCount || 0, 60))
+                    }</strong>
                   </Typography>
                   <Typography variant="body2">
                     Total anomalies: <strong>{dashboardSummary?.anomalies?.total ?? (isLoadingAnomalies ? '...' : anomalies.length || 'No data')}</strong>

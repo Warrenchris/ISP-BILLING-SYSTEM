@@ -287,14 +287,14 @@ exports.getCentipidParityData = async (req, res, next) => {
           u.id, 
           CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) AS name,
           u.email, 
-          u.phone,
+          u.phone_number AS phone,
           COALESCE(SUM(du.total_bytes), 0) AS total_bytes,
-          COALESCE(SUM(du.bytes_in), 0) AS download_bytes,
-          COALESCE(SUM(du.bytes_out), 0) AS upload_bytes
+          COALESCE(SUM(du.bytes_downloaded), 0) AS download_bytes,
+          COALESCE(SUM(du.bytes_uploaded), 0) AS upload_bytes
         FROM users u
         JOIN data_usage du ON du.user_id = u.id
-        WHERE du.start_time >= NOW() - INTERVAL '30 days'
-        GROUP BY u.id, u.first_name, u.last_name, u.email, u.phone
+        WHERE du.start_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY u.id, u.first_name, u.last_name, u.email, u.phone_number
         ORDER BY total_bytes DESC
         LIMIT 10
       `);
@@ -310,6 +310,7 @@ exports.getCentipidParityData = async (req, res, next) => {
         totalGB: Math.round((Number(r.total_bytes) / (1024 * 1024 * 1024)) * 100) / 100,
       }));
     } catch (e) {
+      console.error('[getCentipidParityData] Error fetching mostActiveUsers:', e.message);
       mostActiveUsers = [];
     }
 
@@ -372,7 +373,7 @@ exports.getCentipidParityData = async (req, res, next) => {
       const totalUsedBytes = Number(totalDataUsed || 0);
 
       const avgDataUsageMB = activeSubsCount > 0
-        ? Math.round((totalUsedBytes / activeSubsCount / (1024 * 1024)) * 10) / 10
+        ? Math.round((totalUsedBytes / activeSubsCount / (1024 * 1024)) * 100) / 100
         : 0;
 
       const arpu = activeSubsCount > 0
@@ -400,7 +401,7 @@ exports.getCentipidParityData = async (req, res, next) => {
           COALESCE(SUM(du.total_bytes), 0) / (1024 * 1024) AS usage_mb
         FROM data_usage du
         LEFT JOIN subscriptions s ON du.subscription_id = s.id
-        WHERE du.start_time >= NOW() - INTERVAL '14 days'
+        WHERE du.start_time >= DATE_SUB(NOW(), INTERVAL 14 DAY)
         GROUP BY DATE(du.start_time), COALESCE(s.connection_type, 'hotspot')
         ORDER BY date ASC
       `);
@@ -420,6 +421,7 @@ exports.getCentipidParityData = async (req, res, next) => {
 
       connectionTypeUsage = Object.values(byDateMap);
     } catch (e) {
+      console.error('[getCentipidParityData] Error fetching connectionTypeUsage:', e.message);
       connectionTypeUsage = [];
     }
 
@@ -429,10 +431,10 @@ exports.getCentipidParityData = async (req, res, next) => {
       const [rows] = await sequelize.query(`
         SELECT 
           DATE(start_time) AS date,
-          COALESCE(SUM(bytes_in), 0) / (1024 * 1024 * 1024) AS download_gb,
-          COALESCE(SUM(bytes_out), 0) / (1024 * 1024 * 1024) AS upload_gb
+          COALESCE(SUM(bytes_downloaded), 0) / (1024 * 1024 * 1024) AS download_gb,
+          COALESCE(SUM(bytes_uploaded), 0) / (1024 * 1024 * 1024) AS upload_gb
         FROM data_usage
-        WHERE start_time >= NOW() - INTERVAL '7 days'
+        WHERE start_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         GROUP BY DATE(start_time)
         ORDER BY date ASC
       `);
@@ -444,6 +446,7 @@ exports.getCentipidParityData = async (req, res, next) => {
         totalGB: Math.round((Number(r.download_gb) + Number(r.upload_gb)) * 100) / 100,
       }));
     } catch (e) {
+      console.error('[getCentipidParityData] Error fetching weeklyBandwidth:', e.message);
       weeklyBandwidth = [];
     }
 

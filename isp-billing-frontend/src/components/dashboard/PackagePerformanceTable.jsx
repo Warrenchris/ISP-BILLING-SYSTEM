@@ -85,7 +85,7 @@ export default function PackagePerformanceTable({ packages = [] }) {
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" color="text.secondary">
-                        {pkg.avgDataUsageMB ? `${pkg.avgDataUsageMB} MB` : '0 MB'}
+                        {pkg.avgDataUsageMB != null ? `${Number(pkg.avgDataUsageMB).toFixed(2)} MB` : '0 MB'}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
