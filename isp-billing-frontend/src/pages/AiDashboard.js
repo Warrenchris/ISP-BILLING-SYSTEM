@@ -271,10 +271,13 @@ const AiDashboard = () => {
 
   const handleClearCache = async () => {
     setCacheClearLoading(true);
+    // Reset any AI failure lock first — otherwise fetchDashboardSummary
+    // bails early with "unavailable" if a prior failure tripped the guard,
+    // making the cache bust silently do nothing on the UI side.
+    resetAiFailureLock();
     try {
-      await aiService.clearCache();
-      // Immediately re-fetch so the dashboard reflects fresh DB data.
-      await fetchDashboardSummary();
+      await aiService.clearCache();     // resolves only after Python _cache.clear() completes
+      await fetchDashboardSummary();    // guaranteed to hit an empty cache → fresh DB query
     } catch (error) {
       console.error('Error clearing AI cache:', error);
     } finally {
@@ -673,9 +676,19 @@ const AiDashboard = () => {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
                     Total at-risk customers: <strong>{
-                      dashboardSummary?.churn?.totalAtRisk != null 
-                        ? Math.min(dashboardSummary.churn.totalAtRisk, dashboardSummary?.dataQuality?.churnCustomers || 60)
-                        : (isLoadingChurn ? '...' : Math.min(highRiskCount || 0, 60))
+                      dashboardSummary?.churn?.totalAtRisk != null
+                        // Python already clamps server-side (clamped_at_risk); the frontend
+                        // cap here just guards against a stale payload arriving before
+                        // dataQuality is populated. Use dataQuality.churnCustomers — never
+                        // a hardcoded literal — so the cap stays accurate as client count grows.
+                        ? Math.min(
+                            dashboardSummary.churn.totalAtRisk,
+                            dashboardSummary?.dataQuality?.churnCustomers ?? dashboardSummary.churn.totalAtRisk
+                          )
+                        : (isLoadingChurn ? '...' : Math.min(
+                            highRiskCount || 0,
+                            dashboardSummary?.dataQuality?.churnCustomers ?? (highRiskCount || 0)
+                          ))
                     }</strong>
                   </Typography>
                   <Typography variant="body2">
