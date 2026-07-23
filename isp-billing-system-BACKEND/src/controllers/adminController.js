@@ -7,7 +7,10 @@ const { User,
   DataPlan,
   Payment,
   RadCheck,
-  RadAcct } = require("../models");
+  RadAcct,
+  DataUsage,
+  AIInsight,
+  sequelize } = require("../models");
 const { UserRole, SubscriptionStatus, PaymentStatus } = require('../config/constants');
 const bcrypt = require("bcryptjs");
 
@@ -661,3 +664,195 @@ exports.getQueueStats = async (req, res, next) => {
     next(err);
   }
 };
+
+/* GET /api/admin/users/:id/reports */
+exports.getUserReports = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // 1. Fetch active subscription info
+    const activeSub = await Subscription.findOne({
+      where: { userId: id, status: { [Op.ne]: SubscriptionStatus.CANCELLED } },
+      order: [['updated_at', 'DESC'], ['created_at', 'DESC']],
+      include: [{ model: DataPlan, as: 'plan' }]
+    });
+
+    const daysRemaining = activeSub && activeSub.endDate ? days(activeSub.endDate) : null;
+    const dataUsedBytes = activeSub ? (activeSub.dataUsed ? activeSub.dataUsed * 1024 * 1024 : 0) : 0;
+
+    // 2. Fetch all payments for Payment Reliability & Lifetime Value
+    const allPayments = await Payment.findAll({
+      where: { userId: id },
+      include: [{ model: Subscription, as: 'subscription' }],
+      order: [['created_at', 'ASC']]
+    });
+
+    const completedPayments = allPayments.filter(p => p.status === 'completed');
+    const lifetimeValue = completedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    let onTimeCount = 0;
+    allPayments.forEach(p => {
+      if (p.status !== 'completed') return;
+      const subEnd = p.subscription?.endDate ? new Date(p.subscription.endDate) : null;
+      const payTime = p.completedAt ? new Date(p.completedAt) : new Date(p.createdAt || p.created_at);
+      if (!subEnd) {
+        onTimeCount += 1;
+      } else {
+        const graceEnd = new Date(subEnd.getTime() + 3 * 86400 * 1000);
+        if (payTime <= graceEnd) {
+          onTimeCount += 1;
+        }
+      }
+    });
+
+    const paymentReliability = allPayments.length > 0
+      ? parseFloat(((onTimeCount / allPayments.length) * 100).toFixed(1))
+      : 100.0;
+
+    // 3. Value Rank using CTE Window Function
+    let valueRank = {
+      rankPosition: 1,
+      totalCustomers: 1,
+      percentile: 100,
+      label: 'Top 100%'
+    };
+
+    try {
+      const [rankResults] = await sequelize.query(`
+        WITH customer_spend AS (
+          SELECT user_id, SUM(amount) AS total_spend
+          FROM payments
+          WHERE status = 'completed'
+          GROUP BY user_id
+        ),
+        ranked AS (
+          SELECT user_id, total_spend,
+                 PERCENT_RANK() OVER (ORDER BY total_spend DESC) AS pct_rank,
+                 RANK() OVER (ORDER BY total_spend DESC) AS rank_position,
+                 COUNT(*) OVER () AS total_customers
+          FROM customer_spend
+        )
+        SELECT total_spend, pct_rank, rank_position, total_customers
+        FROM ranked
+        WHERE user_id = :userId
+      `, { replacements: { userId: id } });
+
+      if (rankResults && rankResults.length > 0) {
+        const r = rankResults[0];
+        const pct = parseFloat(((parseFloat(r.pct_rank || 0)) * 100).toFixed(1));
+        valueRank = {
+          rankPosition: parseInt(r.rank_position, 10),
+          totalCustomers: parseInt(r.total_customers, 10),
+          percentile: pct,
+          label: pct <= 10 ? 'Top 10%' : pct <= 25 ? 'Top 25%' : pct <= 50 ? 'Top 50%' : `Top ${pct}%`
+        };
+      }
+    } catch (err) {
+      console.error('Value rank query error:', err.message);
+    }
+
+    // 4. Churn Risk from AIInsight
+    let churnRisk = {
+      score: null,
+      riskLevel: 'N/A',
+      isFlagged: false,
+      reasons: [],
+      assessedAt: null
+    };
+
+    if (AIInsight) {
+      const latestInsight = await AIInsight.findOne({
+        where: { userId: id, predictionType: 'churn_risk' },
+        order: [['created_at', 'DESC']]
+      });
+
+      if (latestInsight) {
+        let reasons = [];
+        if (latestInsight.insightData) {
+          try {
+            const parsed = typeof latestInsight.insightData === 'string'
+              ? JSON.parse(latestInsight.insightData)
+              : latestInsight.insightData;
+            reasons = parsed.reasons || (parsed.top_reason ? [parsed.top_reason] : []);
+          } catch (e) {}
+        }
+        churnRisk = {
+          score: latestInsight.score != null ? parseFloat(latestInsight.score) : null,
+          riskLevel: parseFloat(latestInsight.score) >= 0.7 ? 'HIGH' : parseFloat(latestInsight.score) >= 0.4 ? 'MEDIUM' : 'LOW',
+          isFlagged: Boolean(latestInsight.isFlagged),
+          reasons,
+          assessedAt: latestInsight.createdAt || latestInsight.created_at
+        };
+      }
+    }
+
+    // 5. 30-Day Data Usage History for Chart
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400 * 1000);
+    const recentUsage = await DataUsage.findAll({
+      where: {
+        userId: id,
+        startTime: { [Op.gte]: thirtyDaysAgo }
+      },
+      order: [['startTime', 'ASC']]
+    });
+
+    const usageByDate = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400 * 1000).toISOString().split('T')[0];
+      usageByDate[d] = { date: d, downloaded: 0, uploaded: 0, usageMB: 0 };
+    }
+
+    recentUsage.forEach(row => {
+      const dateStr = new Date(row.startTime).toISOString().split('T')[0];
+      if (usageByDate[dateStr]) {
+        const downMB = Math.round((parseFloat(row.bytesDownloaded || row.bytesIn || 0)) / (1024 * 1024));
+        const upMB = Math.round((parseFloat(row.bytesUploaded || row.bytesOut || 0)) / (1024 * 1024));
+        usageByDate[dateStr].downloaded += downMB;
+        usageByDate[dateStr].uploaded += upMB;
+        usageByDate[dateStr].usageMB += downMB + upMB;
+      }
+    });
+
+    const dataUsageHistory = Object.values(usageByDate);
+
+    // 6. Monthly Payments History for Chart
+    const paymentsByMonth = {};
+    completedPayments.forEach(p => {
+      const pDate = p.createdAt || p.created_at;
+      if (!pDate) return;
+      const monthStr = new Date(pDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      paymentsByMonth[monthStr] = (paymentsByMonth[monthStr] || 0) + (parseFloat(p.amount) || 0);
+    });
+
+    const paymentHistoryMonthly = Object.keys(paymentsByMonth).map(m => ({
+      month: m,
+      amount: paymentsByMonth[m]
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        cards: {
+          dataUsedBytes,
+          daysRemaining,
+          paymentReliability,
+          lifetimeValue,
+          valueRank,
+          churnRisk
+        },
+        charts: {
+          dataUsageHistory,
+          paymentHistoryMonthly
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+

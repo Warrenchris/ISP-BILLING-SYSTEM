@@ -37,6 +37,7 @@ router
 
 router.get("/users/:userId/subscription", adminController.getUserSubscription);
 router.get("/users/:id/sessions", sessionController.getCustomerSessions);
+router.get("/users/:id/reports", adminController.getUserReports);
 
 // ─── System‑wide stats (optional) ─────────────────────────────
 router.get('/stats', adminController.getSystemStats); // GET /api/admin/stats

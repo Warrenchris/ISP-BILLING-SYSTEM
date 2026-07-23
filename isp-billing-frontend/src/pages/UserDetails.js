@@ -31,10 +31,21 @@ import {
     Receipt as ReceiptIcon,
     Sms as SmsIcon,
     History as HistoryIcon,
-    CreditCard as CreditCardIcon
+    CreditCard as CreditCardIcon,
+    DataUsage as DataUsageIcon,
+    Assessment as AssessmentIcon,
+    Verified as VerifiedIcon,
+    TrendingUp as TrendingUpIcon,
+    Warning as WarningIcon,
+    PieChart as PieChartIcon,
+    AccountBalanceWallet as WalletIcon
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+    ResponsiveContainer, BarChart, Bar, LineChart, Line,
+    XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend
+} from 'recharts';
 import { formatCurrency, formatDateTime, formatBytes } from '../utils/helpers';
 import { useApi } from '../contexts/ApiContext';
 
@@ -75,6 +86,9 @@ const UserDetails = () => {
 
     const [sessions, setSessions] = useState([]);
     const [sessionsLoading, setSessionsLoading] = useState(false);
+
+    const [reportsData, setReportsData] = useState(null);
+    const [reportsLoading, setReportsLoading] = useState(false);
 
     const fetchUserDetails = useCallback(async () => {
         if (!id) return;
@@ -127,6 +141,14 @@ const UserDetails = () => {
                 })
                 .catch(err => console.error('Failed to fetch user sessions:', err))
                 .finally(() => setSessionsLoading(false));
+        } else if (currentTab === 'reports') {
+            setReportsLoading(true);
+            api.get(`/admin/users/${id}/reports`)
+                .then(res => {
+                    setReportsData(res.data?.data || null);
+                })
+                .catch(err => console.error('Failed to fetch user reports:', err))
+                .finally(() => setReportsLoading(false));
         }
     }, [currentTab, user, id, paymentsApi, api]);
 
@@ -429,6 +451,181 @@ const UserDetails = () => {
                         </Paper>
                     </Grid>
                 </Grid>
+            )}
+
+            {/* Tab 2: Reports */}
+            {currentTab === 'reports' && (
+                <Box>
+                    {reportsLoading ? (
+                        <LinearProgress color="primary" sx={{ mb: 3 }} />
+                    ) : !reportsData ? (
+                        <Alert severity="info" sx={{ mb: 3 }}>Could not load customer reports data.</Alert>
+                    ) : (
+                        <Grid container spacing={3}>
+                            {/* Card 1: Data Used */}
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper sx={{ p: 2.5, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>DATA USED THIS CYCLE</Typography>
+                                        <DataUsageIcon color="primary" />
+                                    </Box>
+                                    <Typography variant="h5" fontWeight={800}>
+                                        {formatBytes(reportsData.cards?.dataUsedBytes || 0)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Current billing period total
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+
+                            {/* Card 2: Expiry Countdown */}
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper sx={{ p: 2.5, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>SUBSCRIPTION EXPIRY</Typography>
+                                        <ScheduleIcon color="secondary" />
+                                    </Box>
+                                    <Typography variant="h5" fontWeight={800} color={reportsData.cards?.daysRemaining < 3 ? 'error.main' : 'text.primary'}>
+                                        {reportsData.cards?.daysRemaining !== null ? `${reportsData.cards.daysRemaining} Days` : 'Unlimited / Active'}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Time remaining until renewal
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+
+                            {/* Card 3: Payment Reliability */}
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper sx={{ p: 2.5, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>PAYMENT RELIABILITY</Typography>
+                                        <VerifiedIcon color="success" />
+                                    </Box>
+                                    <Box display="flex" alignItems="baseline" gap={1}>
+                                        <Typography variant="h5" fontWeight={800} color={reportsData.cards?.paymentReliability >= 80 ? 'success.main' : 'warning.main'}>
+                                            {reportsData.cards?.paymentReliability}%
+                                        </Typography>
+                                        <Chip
+                                            label={reportsData.cards?.paymentReliability >= 80 ? 'Reliable' : 'At-Risk'}
+                                            color={reportsData.cards?.paymentReliability >= 80 ? 'success' : 'warning'}
+                                            size="small"
+                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                                        />
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">
+                                        On-time vs grace period payments
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+
+                            {/* Card 4: Lifetime Value (LTV) */}
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper sx={{ p: 2.5, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>LIFETIME VALUE (LTV)</Typography>
+                                        <WalletIcon color="action" />
+                                    </Box>
+                                    <Typography variant="h5" fontWeight={800}>
+                                        {formatCurrency(reportsData.cards?.lifetimeValue || 0)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Total completed payments
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+
+                            {/* Card 5: Value Rank */}
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper sx={{ p: 2.5, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>VALUE RANK</Typography>
+                                        <TrendingUpIcon color="primary" />
+                                    </Box>
+                                    <Typography variant="h5" fontWeight={800} color="primary.main">
+                                        {reportsData.cards?.valueRank?.label || 'Top 100%'}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Rank #{reportsData.cards?.valueRank?.rankPosition || 1} of {reportsData.cards?.valueRank?.totalCustomers || 1} customers
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+
+                            {/* Card 6: Churn Risk */}
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper sx={{ p: 2.5, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>CHURN RISK</Typography>
+                                        <WarningIcon color={reportsData.cards?.churnRisk?.riskLevel === 'HIGH' ? 'error' : reportsData.cards?.churnRisk?.riskLevel === 'MEDIUM' ? 'warning' : 'success'} />
+                                    </Box>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                        <Typography variant="h5" fontWeight={800}>
+                                            {reportsData.cards?.churnRisk?.score !== null ? `${Math.round(reportsData.cards.churnRisk.score * 100)}%` : 'N/A'}
+                                        </Typography>
+                                        <Chip
+                                            label={reportsData.cards?.churnRisk?.riskLevel || 'Not Assessed'}
+                                            color={reportsData.cards?.churnRisk?.riskLevel === 'HIGH' ? 'error' : reportsData.cards?.churnRisk?.riskLevel === 'MEDIUM' ? 'warning' : 'success'}
+                                            size="small"
+                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                                        />
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {reportsData.cards?.churnRisk?.assessedAt
+                                            ? `Assessed: ${formatDateTime(reportsData.cards.churnRisk.assessedAt)}`
+                                            : 'Not yet assessed by AI model'}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+
+                            {/* Chart 1: Data Usage This Month */}
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
+                                    <Typography variant="h6" fontWeight={700} mb={2} display="flex" alignItems="center" gap={1}>
+                                        <PieChartIcon color="primary" /> Data Usage This Month (MB)
+                                    </Typography>
+                                    <Divider sx={{ mb: 2 }} />
+                                    {reportsData.charts?.dataUsageHistory?.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <BarChart data={reportsData.charts.dataUsageHistory}>
+                                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(val) => val.slice(5)} />
+                                                <YAxis tick={{ fontSize: 11 }} />
+                                                <RechartsTooltip />
+                                                <Legend />
+                                                <Bar dataKey="downloaded" name="Downloaded (MB)" fill={theme.palette.primary.main} />
+                                                <Bar dataKey="uploaded" name="Uploaded (MB)" fill={theme.palette.secondary.main} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <Typography color="text.secondary" align="center" py={4}>No usage history recorded for this period.</Typography>
+                                    )}
+                                </Paper>
+                            </Grid>
+
+                            {/* Chart 2: Payments Over Time */}
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
+                                    <Typography variant="h6" fontWeight={700} mb={2} display="flex" alignItems="center" gap={1}>
+                                        <AssessmentIcon color="primary" /> Payments History (KES)
+                                    </Typography>
+                                    <Divider sx={{ mb: 2 }} />
+                                    {reportsData.charts?.paymentHistoryMonthly?.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <LineChart data={reportsData.charts.paymentHistoryMonthly}>
+                                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                                <YAxis tick={{ fontSize: 11 }} />
+                                                <RechartsTooltip />
+                                                <Line type="monotone" dataKey="amount" name="Amount (KES)" stroke={theme.palette.success.main} strokeWidth={3} dot={{ r: 4 }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <Typography color="text.secondary" align="center" py={4}>No completed payments history found.</Typography>
+                                    )}
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    )}
+                </Box>
             )}
 
             {/* Tab 3: Payments */}
