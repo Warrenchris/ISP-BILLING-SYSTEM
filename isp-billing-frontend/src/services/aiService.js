@@ -16,6 +16,10 @@ const aiService = {
   retrain: () =>
     api.post('/ai/retrain'),
 
+  /** Flush the Python AI service's in-memory cache. Admin-only. */
+  clearCache: () =>
+    api.post('/ai/cache/clear'),
+
   getChatSessions: () =>
     api.get('/ai/chat/sessions'),
 };

@@ -99,6 +99,7 @@ const AiDashboard = () => {
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState('');
   const [retrainLoading, setRetrainLoading] = useState(false);
+  const [cacheClearLoading, setCacheClearLoading] = useState(false);
 
   /** One-time hydrate from AI dashboard summary when `forecastInputs` is present */
   const forecastHydratedRef = useRef(false);
@@ -268,6 +269,19 @@ const AiDashboard = () => {
     }
   };
 
+  const handleClearCache = async () => {
+    setCacheClearLoading(true);
+    try {
+      await aiService.clearCache();
+      // Immediately re-fetch so the dashboard reflects fresh DB data.
+      await fetchDashboardSummary();
+    } catch (error) {
+      console.error('Error clearing AI cache:', error);
+    } finally {
+      setCacheClearLoading(false);
+    }
+  };
+
   const isHealthOnline = health?.status === 'ok' && health?.db === 'connected';
 
   return (
@@ -300,15 +314,26 @@ const AiDashboard = () => {
             Refresh All
           </Button>
           {user?.role === 'admin' && (
-            <Button
-              variant="contained"
-              color="warning"
-              startIcon={<AutorenewIcon />}
-              onClick={handleRetrain}
-              disabled={retrainLoading}
-            >
-              {retrainLoading ? 'Retraining...' : 'Retrain Models'}
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleClearCache}
+                disabled={cacheClearLoading}
+                title="Flush the 15-second AI data cache so the dashboard shows fresh DB data immediately"
+              >
+                {cacheClearLoading ? 'Clearing...' : 'Clear AI Cache'}
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                startIcon={<AutorenewIcon />}
+                onClick={handleRetrain}
+                disabled={retrainLoading}
+              >
+                {retrainLoading ? 'Retraining...' : 'Retrain Models'}
+              </Button>
+            </>
           )}
         </Box>
       </Box>
@@ -638,7 +663,11 @@ const AiDashboard = () => {
                     Actual revenue: <strong>{dashboardSummary?.revenue?.actual != null ? formatCurrency(dashboardSummary.revenue.actual) : 'No data'}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    Variance: <strong>{dashboardSummary?.revenue?.variancePct != null ? `${dashboardSummary.revenue.variancePct}%` : 'N/A'}</strong>
+                    Variance: <strong>{
+                      dashboardSummary?.revenue?.hasForecast
+                        ? (dashboardSummary.revenue.variancePct != null ? `${dashboardSummary.revenue.variancePct}%` : 'N/A')
+                        : 'N/A — no forecast run yet'
+                    }</strong>
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
