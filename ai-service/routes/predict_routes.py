@@ -1,5 +1,5 @@
 """
-predict_routes.py – /api/ai/predict-revenue  and  /api/ai/retrain
+predict_routes.py – /api/ai/predict-revenue, /api/ai/retrain, /api/ai/cache/clear
 """
 
 import logging
@@ -128,48 +128,49 @@ def retrain():
 
     except Exception as e:
         logger.exception("[retrain] Error")
-        return jsonify({\"success\": False, \"message\": str(e)}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
 
     return jsonify({
-        \"success\": True,
-        \"message\": \"Retrain completed\",
-        \"results\": results,
-        \"retrained_at\": datetime.now(timezone.utc).isoformat(),
+        "success": True,
+        "message": "Retrain completed",
+        "results": results,
+        "retrained_at": datetime.now(timezone.utc).isoformat(),
     })
 
 
-@predict_bp.route(\"/cache/clear\", methods=[\"POST\"])
+@predict_bp.route("/cache/clear", methods=["POST"])
 def clear_cache():
-    \"\"\"
+    """
     POST /api/ai/cache/clear
 
     Flush the in-process data-fetcher cache immediately.
     Should be called by the Node backend after any write that would make
-    cached AI data stale (new payment, subscription change, churn model run, etc.).
+    cached AI data stale (new payment, subscription change, churn model
+    run, etc.).
 
     NOTE: This route must be protected by an admin-only JWT check in the
     Node proxy (adminRoutes.js) — the Python service itself does not
     authenticate callers.
 
-    The default TTL is 15 seconds, which is an acceptable staleness window
-    for a live dashboard but should not be a surprise after a bulk write.
-    \"\"\"
+    Design note: the default TTL is 15 seconds, which is an acceptable
+    staleness window for a live dashboard. This endpoint is the documented
+    escape hatch when you need an immediate refresh after a bulk write.
+    """
     try:
         cleared = list(_cache.keys())
         _cache.clear()
-        logger.info(f\"[cache/clear] Flushed {len(cleared)} cache entries: {cleared}\")
+        logger.info(f"[cache/clear] Flushed {len(cleared)} cache entries: {cleared}")
         return jsonify({
-            \"success\": True,
-            \"message\": f\"Flushed {len(cleared)} cache entries\",
-            \"cleared_keys\": cleared,
-            \"cleared_at\": datetime.now(timezone.utc).isoformat(),
-            \"note\": (
-                \"Dashboard data is refreshed immediately. \"\
-                \"The default cache TTL is 15 seconds — \"\
-                \"call this endpoint after bulk writes to avoid stale numbers.\"
+            "success": True,
+            "message": f"Flushed {len(cleared)} cache entries",
+            "cleared_keys": cleared,
+            "cleared_at": datetime.now(timezone.utc).isoformat(),
+            "note": (
+                "Dashboard data will be refreshed from DB on the next request. "
+                "The default cache TTL is 15 seconds — call this endpoint after "
+                "bulk writes to avoid stale numbers on the AI dashboard."
             ),
         })
     except Exception as e:
-        logger.exception(\"[cache/clear] Error\")
-        return jsonify({\"success\": False, \"message\": str(e)}), 500
-
+        logger.exception("[cache/clear] Error")
+        return jsonify({"success": False, "message": str(e)}), 500

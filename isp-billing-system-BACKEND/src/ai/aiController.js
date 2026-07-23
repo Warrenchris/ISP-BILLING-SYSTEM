@@ -230,6 +230,18 @@ const retrain = async (req, res) => {
 };
 
 /* ──────────────────────────────────────────────────────────────
+   CACHE CLEAR (Admin-only)
+   POST /api/ai/cache/clear
+   Flushes the Python AI service in-memory data-fetcher cache.
+   Call this after writes (new payment, subscription change, etc.)
+   so the AI dashboard reflects fresh data immediately instead of
+   waiting up to 15 s for the TTL to expire.
+   ────────────────────────────────────────────────────────────── */
+const clearAiCache = async (req, res) => {
+  await proxy(res, 'POST', '/api/ai/cache/clear', {});
+};
+
+/* ──────────────────────────────────────────────────────────────
    HEALTH
    GET /api/ai/health
    ────────────────────────────────────────────────────────────── */
@@ -246,5 +258,6 @@ module.exports = {
   getChatSessions,
   getDashboardSummary,
   retrain,
+  clearAiCache,
   getHealth,
 };

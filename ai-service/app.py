@@ -81,6 +81,7 @@ def create_app() -> Flask:
                 "chat_sessions":   "GET  /api/ai/chat/sessions",
                 "dashboard":       "GET  /api/ai/dashboard-summary",
                 "retrain":         "POST /api/ai/retrain",
+                "cache_clear":     "POST /api/ai/cache/clear  (admin-only via Node proxy)",
                 "health":          "GET  /api/ai/health",
             },
         })

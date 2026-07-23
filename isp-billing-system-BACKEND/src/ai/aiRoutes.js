@@ -18,9 +18,11 @@ const {
   getChurnRisks,
   getAnomalies,
   aiChat,
+  getChatSessions,
   getDashboardSummary,
   retrain,
-  getChatSessions
+  clearAiCache,
+  getHealth,
 } = aiController;
 
 /* ──────────────────────────────────────────────────────────────
@@ -106,6 +108,19 @@ router.post(
   authenticate,
   authorize(['admin']),
   retrain
+);
+
+/* ──────────────────────────────────────────────────────────────
+   Cache Bust
+   POST /api/ai/cache/clear
+   Auth: Admin only — flushes the Python service's in-memory cache so
+   dashboards show fresh data immediately after bulk writes.
+   ────────────────────────────────────────────────────────────── */
+router.post(
+  '/cache/clear',
+  authenticate,
+  authorize(['admin']),
+  clearAiCache
 );
 
 /* ──────────────────────────────────────────────────────────────
