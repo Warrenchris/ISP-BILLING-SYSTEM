@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 
 from models import mlr_model, churn_model
-from services.data_fetcher import fetch_training_data, save_insight, check_data_sufficiency
+from services.data_fetcher import fetch_training_data, save_insight, check_data_sufficiency, _cache
 
 logger = logging.getLogger(__name__)
 predict_bp = Blueprint("predict", __name__)
@@ -128,11 +128,48 @@ def retrain():
 
     except Exception as e:
         logger.exception("[retrain] Error")
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({\"success\": False, \"message\": str(e)}), 500
 
     return jsonify({
-        "success": True,
-        "message": "Retrain completed",
-        "results": results,
-        "retrained_at": datetime.now(timezone.utc).isoformat(),
+        \"success\": True,
+        \"message\": \"Retrain completed\",
+        \"results\": results,
+        \"retrained_at\": datetime.now(timezone.utc).isoformat(),
     })
+
+
+@predict_bp.route(\"/cache/clear\", methods=[\"POST\"])
+def clear_cache():
+    \"\"\"
+    POST /api/ai/cache/clear
+
+    Flush the in-process data-fetcher cache immediately.
+    Should be called by the Node backend after any write that would make
+    cached AI data stale (new payment, subscription change, churn model run, etc.).
+
+    NOTE: This route must be protected by an admin-only JWT check in the
+    Node proxy (adminRoutes.js) — the Python service itself does not
+    authenticate callers.
+
+    The default TTL is 15 seconds, which is an acceptable staleness window
+    for a live dashboard but should not be a surprise after a bulk write.
+    \"\"\"
+    try:
+        cleared = list(_cache.keys())
+        _cache.clear()
+        logger.info(f\"[cache/clear] Flushed {len(cleared)} cache entries: {cleared}\")
+        return jsonify({
+            \"success\": True,
+            \"message\": f\"Flushed {len(cleared)} cache entries\",
+            \"cleared_keys\": cleared,
+            \"cleared_at\": datetime.now(timezone.utc).isoformat(),
+            \"note\": (
+                \"Dashboard data is refreshed immediately. \"\
+                \"The default cache TTL is 15 seconds — \"\
+                \"call this endpoint after bulk writes to avoid stale numbers.\"
+            ),
+        })
+    except Exception as e:
+        logger.exception(\"[cache/clear] Error\")
+        return jsonify({\"success\": False, \"message\": str(e)}), 500
+

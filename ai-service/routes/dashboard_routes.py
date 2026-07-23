@@ -96,10 +96,15 @@ def get_dashboard_summary():
         
         actual_val = current.get("actual", 0) or 0
         pred_val = current.get("predicted", 0) or 0
+        # hasForecast is True only when a real forecast has been persisted.
+        # This makes pred_val=0 unambiguous: 0 with hasForecast=False means
+        # "no forecast run yet"; 0 with hasForecast=True is a genuine prediction.
+        has_forecast = pred_val > 0
         
         variance = actual_val - pred_val
-        # Item 3: If predicted is 0 / not run yet, variance_pct is None (renders N/A)
-        variance_pct = round(variance / pred_val * 100, 2) if (pred_val and pred_val > 0) else None
+        # If no forecast has been run yet (pred_val == 0 / hasForecast=False),
+        # variance_pct is None so the frontend renders N/A, not "−100%".
+        variance_pct = round(variance / pred_val * 100, 2) if has_forecast else None
 
         # Build forecast inputs from latest data (current or most recent month)
         revenue_data = churn_training.get("revenue_data", [])
@@ -120,8 +125,10 @@ def get_dashboard_summary():
             "period": period_str,
             "revenue": {
                 "predicted": pred_val if sufficiency["revenue_months"]["ready"] else None,
+                # hasForecast lets the UI distinguish "no forecast run" from a genuine 0 prediction.
+                "hasForecast": has_forecast and sufficiency["revenue_months"]["ready"],
                 "actual": actual_val,
-                "variance": round(variance, 2) if (pred_val and pred_val > 0) else None,
+                "variance": round(variance, 2) if has_forecast else None,
                 "variancePct": variance_pct,
             },
             "churn": {
@@ -169,11 +176,18 @@ def get_dashboard_summary():
                 ai_summary = generate_dashboard_summary(dashboard_data)
             except Exception as llm_err:
                 logger.warning(f"[dashboard] LLM summary failed: {llm_err}")
-                trend = "on track" if variance_pct >= 0 else "below target"
-                ai_summary = (
-                    f"Revenue is {trend} ({variance_pct:+.1f}%) with {len(high_risk)} high-risk "
-                    f"churn customers and {anomaly_report['total_anomalies']} active anomalies."
-                )
+                if variance_pct is not None:
+                    trend = "on track" if variance_pct >= 0 else "below target"
+                    ai_summary = (
+                        f"Revenue is {trend} ({variance_pct:+.1f}%) with {len(high_risk)} high-risk "
+                        f"churn customers and {anomaly_report['total_anomalies']} active anomalies."
+                    )
+                else:
+                    ai_summary = (
+                        f"{len(high_risk)} high-risk churn customers identified. "
+                        f"{anomaly_report['total_anomalies']} active anomalies. "
+                        "Run a revenue forecast to see variance against actuals."
+                    )
         else:
             reasons = [s["label"] for s in sufficiency.values() if not s["ready"]]
             ai_summary = f"AI models are currently offline. We need more {', '.join(reasons)} to generate accurate insights."
