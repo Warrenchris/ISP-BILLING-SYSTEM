@@ -308,6 +308,86 @@ theme.components = {
       },
     },
   },
+  MuiAlert: {
+    styleOverrides: {
+      root: {
+        borderRadius: '12px',
+        fontFamily: '"Inter", sans-serif',
+        fontWeight: 500,
+        fontSize: '0.875rem',
+        alignItems: 'center',
+        boxShadow: 'none',
+      },
+      standardSuccess: {
+        backgroundColor: 'rgba(45, 106, 79, 0.08)',
+        color: '#1B4332',
+        border: '1px solid rgba(45, 106, 79, 0.25)',
+        '& .MuiAlert-icon': {
+          color: '#2D6A4F',
+        },
+      },
+      standardError: {
+        backgroundColor: 'rgba(239, 68, 68, 0.08)',
+        color: '#991B1B',
+        border: '1px solid rgba(239, 68, 68, 0.25)',
+        '& .MuiAlert-icon': {
+          color: '#EF4444',
+        },
+      },
+      standardWarning: {
+        backgroundColor: 'rgba(221, 161, 94, 0.12)',
+        color: '#7C4A03',
+        border: '1px solid rgba(221, 161, 94, 0.3)',
+        '& .MuiAlert-icon': {
+          color: '#DDA15E',
+        },
+      },
+      standardInfo: {
+        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+        color: '#1E40AF',
+        border: '1px solid rgba(59, 130, 246, 0.25)',
+        '& .MuiAlert-icon': {
+          color: '#3B82F6',
+        },
+      },
+      outlinedSuccess: {
+        borderColor: 'rgba(45, 106, 79, 0.3)',
+        color: '#2D6A4F',
+        '& .MuiAlert-icon': {
+          color: '#2D6A4F',
+        },
+      },
+      outlinedError: {
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        color: '#EF4444',
+        '& .MuiAlert-icon': {
+          color: '#EF4444',
+        },
+      },
+      outlinedWarning: {
+        borderColor: 'rgba(221, 161, 94, 0.4)',
+        color: '#BC813F',
+        '& .MuiAlert-icon': {
+          color: '#DDA15E',
+        },
+      },
+      outlinedInfo: {
+        borderColor: 'rgba(59, 130, 246, 0.3)',
+        color: '#3B82F6',
+        '& .MuiAlert-icon': {
+          color: '#3B82F6',
+        },
+      },
+    },
+  },
+  MuiBadge: {
+    styleOverrides: {
+      badge: {
+        fontFamily: '"Inter", sans-serif',
+        fontWeight: 700,
+      },
+    },
+  },
 };
 
 export default theme;

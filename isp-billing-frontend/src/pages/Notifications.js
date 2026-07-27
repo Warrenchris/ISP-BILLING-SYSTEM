@@ -72,41 +72,63 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
             <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>Notifications Log</Typography>
 
             {loading ? <LinearProgress /> : error ? <Alert severity="error">{error}</Alert> : (
-                <Paper sx={{  background: alpha(theme.palette.background.paper, 0.6) }}>
-                    <List>
+                <Paper sx={{ 
+                    background: theme.palette.background.paper,
+                    borderRadius: '16px',
+                    border: `1px solid ${theme.palette.custom.borderDefault}`,
+                    boxShadow: '0 4px 20px -2px rgba(43, 43, 43, 0.03)',
+                    overflow: 'hidden'
+                }}>
+                    <List disablePadding>
                         {notifications.length === 0 ? (
-                            <ListItem><ListItemText primary="No notifications found" /></ListItem>
+                            <ListItem sx={{ py: 4, textAlign: 'center', justifyContent: 'center' }}>
+                                <ListItemText 
+                                    primary="No notifications found" 
+                                    primaryTypographyProps={{ color: 'text.secondary', fontWeight: 500 }}
+                                />
+                            </ListItem>
                         ) : (
                             notifications.map((notif, index) => (
-                                <React.Fragment key={notif.id}>
-                                    <ListItem>
+                                <React.Fragment key={notif.id || index}>
+                                    <ListItem sx={{ py: 2, px: 3, '&:hover': { bgcolor: 'rgba(43, 43, 43, 0.02)' } }}>
                                         <ListItemAvatar>
-                                            <Avatar sx={{ bgcolor: theme.palette.primary.main, color: 'primary.contrastText' }}>
+                                            <Avatar sx={{ 
+                                                bgcolor: alpha(theme.palette.primary.main, 0.15), 
+                                                color: theme.palette.primary.dark,
+                                                fontWeight: 600
+                                            }}>
                                                 {getIcon(notif.type)}
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText
                                             primary={
-                                                <Box display="flex" justifyContent="space-between">
-                                                    <Typography fontWeight="600">{(notif.type || 'System').toUpperCase()} to {notif.recipient || notif.to || 'User'}</Typography>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+                                                    <Typography fontWeight="600" sx={{ fontSize: '0.95rem' }}>
+                                                        {(notif.type || 'System').toUpperCase()} to {notif.recipient || notif.to || 'User'}
+                                                    </Typography>
                                                     <Typography variant="caption" color="text.secondary">
                                                         {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : (notif.time || 'N/A')}
                                                     </Typography>
                                                 </Box>
                                             }
-                                            secondary={notif.message}
+                                            secondary={
+                                                <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.9 }}>
+                                                    {notif.message}
+                                                </Typography>
+                                            }
                                         />
                                         <Box ml={2}>
                                             <Chip
-                                                label={notif.status}
+                                                label={notif.status || 'Sent'}
                                                 color={getStatusColor(notif.status)}
                                                 size="small"
                                                 icon={getStatusIcon(notif.status)}
                                                 variant="outlined"
+                                                sx={{ fontWeight: 600, textTransform: 'capitalize' }}
                                             />
                                         </Box>
                                     </ListItem>
-                                    {index < notifications.length - 1 && <Divider variant="inset" component="li" />}
+                                    {index < notifications.length - 1 && <Divider component="li" />}
                                 </React.Fragment>
                             ))
                         )}
