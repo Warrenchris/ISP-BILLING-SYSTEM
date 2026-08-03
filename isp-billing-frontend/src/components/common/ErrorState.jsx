@@ -16,12 +16,12 @@ const ErrorState = ({ message, onRetry, retryLabel = 'Retry' }) => {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        py: 4,
-        px: 2,
+        py: 6,
+        px: 3,
       }}
     >
-      <WarningAmberIcon sx={{ fontSize: 48, color: 'error.main', mb: 2 }} aria-hidden />
-      <Typography variant="subtitle1" sx={{ color: 'error.main', fontWeight: 600 }}>
+      <WarningAmberIcon sx={{ fontSize: 40, color: '#DC2626', mb: 2.5 }} aria-hidden />
+      <Typography sx={{ fontSize: '0.9375rem', fontWeight: 500, color: '#DC2626' }}>
         {message}
       </Typography>
       {typeof onRetry === 'function' ? (
@@ -29,7 +29,7 @@ const ErrorState = ({ message, onRetry, retryLabel = 'Retry' }) => {
           variant="contained"
           color="primary"
           onClick={onRetry}
-          sx={{ mt: 2, textTransform: 'none' }}
+          sx={{ mt: 3, textTransform: 'none' }}
         >
           {retryLabel}
         </Button>

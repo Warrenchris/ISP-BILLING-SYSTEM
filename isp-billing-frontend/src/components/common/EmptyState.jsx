@@ -16,27 +16,27 @@ const EmptyState = ({ icon, title, subtitle, action }) => {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        py: 4,
-        px: 2,
+        py: 6,
+        px: 3,
       }}
     >
       {icon && (
         <Box
           sx={{
-            mb: 2,
-            color: 'text.secondary',
+            mb: 2.5,
+            color: '#A8A29E',
             display: 'flex',
-            '& .MuiSvgIcon-root': { fontSize: 48 },
+            '& .MuiSvgIcon-root': { fontSize: 40 },
           }}
         >
           {icon}
         </Box>
       )}
-      <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 600 }}>
+      <Typography sx={{ fontSize: '0.9375rem', fontWeight: 500, color: '#1C1917' }}>
         {title}
       </Typography>
       {subtitle ? (
-        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, maxWidth: 420 }}>
+        <Typography sx={{ fontSize: '0.8125rem', color: '#78716C', mt: 1, maxWidth: 360 }}>
           {subtitle}
         </Typography>
       ) : null}
@@ -45,7 +45,7 @@ const EmptyState = ({ icon, title, subtitle, action }) => {
           variant="outlined"
           color="primary"
           onClick={action.onClick}
-          sx={{ mt: 2, textTransform: 'none' }}
+          sx={{ mt: 3, textTransform: 'none' }}
         >
           {action.label}
         </Button>
