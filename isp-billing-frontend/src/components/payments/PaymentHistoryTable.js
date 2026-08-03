@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     IconButton,
     Tooltip,
     CircularProgress,
     Button,
+    Box,
+    Typography,
     useTheme } from '@mui/material';
 import {
     Visibility as VisibilityIcon,
@@ -16,26 +18,27 @@ import {
     Payment as PaymentIcon,
     Refresh as RefreshIcon } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/helpers';
-import CustomCard from '../common/CustomCard';
+import DataTable from '../ui/DataTable';
+import StatusBadge from '../ui/StatusBadge';
 
 const getPaymentMethodIcon = (method) => {
     switch (method?.toLowerCase()) {
         case 'mpesa':
         case 'm-pesa':
-            return <PhoneIcon className="text-sm" />;
+            return <PhoneIcon sx={{ fontSize: 16 }} />;
         case 'cash':
-            return <CashIcon className="text-sm" />;
+            return <CashIcon sx={{ fontSize: 16 }} />;
         case 'bank':
-            return <BankIcon className="text-sm" />;
+            return <BankIcon sx={{ fontSize: 16 }} />;
         case 'card':
-            return <CardIcon className="text-sm" />;
+            return <CardIcon sx={{ fontSize: 16 }} />;
         default:
-            return <PaymentIcon className="text-sm" />;
+            return <PaymentIcon sx={{ fontSize: 16 }} />;
     }
 };
 
 const PaymentHistoryTable = ({
-    payments,
+    payments = [],
     loading,
     isAdmin,
     onViewDetails,
@@ -45,176 +48,183 @@ const PaymentHistoryTable = ({
     onRefresh
 }) => {
     const theme = useTheme();
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const getStatusColor = (status) => {
-        const colors = {
-            completed: theme.palette.success.main,
-            pending: theme.palette.warning.main,
-            failed: theme.palette.error.main,
-            cancelled: theme.palette.text.secondary };
-        return colors[status] || theme.palette.text.secondary;
-    };
+    const columns = [
+        {
+            headerName: 'Transaction ID',
+            field: 'transactionId',
+            renderCell: (row) => (
+                <Box display="flex" alignItems="center" gap={1}>
+                    <IconButton
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); onViewDetails(row); }}
+                        sx={{
+                            p: 0.75,
+                            borderRadius: '8px',
+                            bgcolor: 'rgba(221, 161, 94, 0.1)',
+                            color: '#DDA15E',
+                            '&:hover': { bgcolor: 'rgba(221, 161, 94, 0.2)' }
+                        }}
+                    >
+                        <VisibilityIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                    <Typography sx={{ fontFamily: 'monospace', fontSize: '0.8125rem', fontWeight: 500, color: '#1C1917' }}>
+                        {row.transactionId}
+                    </Typography>
+                </Box>
+            )
+        },
+        {
+            headerName: 'Amount',
+            field: 'amount',
+            renderCell: (row) => (
+                <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#1C1917' }}>
+                    {formatCurrency(row.amount)}
+                </Typography>
+            )
+        },
+        {
+            headerName: 'Method',
+            field: 'method',
+            renderCell: (row) => (
+                <Box display="flex" alignItems="center" gap={1} color="#78716C">
+                    {getPaymentMethodIcon(row.method)}
+                    <Typography sx={{ textTransform: 'capitalize', fontSize: '0.8125rem' }}>
+                        {row.method || 'Cash'}
+                    </Typography>
+                </Box>
+            )
+        },
+        {
+            headerName: 'Status',
+            field: 'status',
+            renderCell: (row) => (
+                <StatusBadge status={row.status} />
+            )
+        },
+        {
+            headerName: 'Date',
+            field: 'createdAt',
+            renderCell: (row) => (
+                <Typography sx={{ fontSize: '0.8125rem', color: '#78716C' }}>
+                    {formatDate(row.createdAt)}
+                </Typography>
+            )
+        },
+        ...(isAdmin ? [{
+            headerName: 'Customer',
+            field: 'customerInfo',
+            renderCell: (row) => (
+                <Box>
+                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#1C1917' }}>
+                        {row.customerInfo?.name || 'Unknown'}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.6875rem', color: '#A8A29E' }}>
+                        {row.customerInfo?.email}
+                    </Typography>
+                </Box>
+            )
+        }] : []),
+        {
+            headerName: 'Actions',
+            align: 'right',
+            renderCell: (row) => (
+                isAdmin && row.status === 'pending' ? (
+                    <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
+                        <Tooltip title="Confirm Payment">
+                            <span>
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => { e.stopPropagation(); onConfirm(row.id); }}
+                                    disabled={processing}
+                                    sx={{
+                                        color: '#2D6A4F',
+                                        bgcolor: 'rgba(45, 106, 79, 0.08)',
+                                        border: '1px solid rgba(45, 106, 79, 0.15)',
+                                        '&:hover': { bgcolor: 'rgba(45, 106, 79, 0.16)' },
+                                        width: 32,
+                                        height: 32
+                                    }}
+                                >
+                                    {processing ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon fontSize="small" />}
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+                        <Tooltip title="Reject Payment">
+                            <span>
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => { e.stopPropagation(); onReject(row.id); }}
+                                    disabled={processing}
+                                    sx={{
+                                        color: '#DC2626',
+                                        bgcolor: 'rgba(220, 38, 38, 0.08)',
+                                        border: '1px solid rgba(220, 38, 38, 0.15)',
+                                        '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.16)' },
+                                        width: 32,
+                                        height: 32
+                                    }}
+                                >
+                                    {processing ? <CircularProgress size={16} color="inherit" /> : <CancelIcon fontSize="small" />}
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+                    </Box>
+                ) : (
+                    <Typography sx={{ fontSize: '0.75rem', color: '#A8A29E', fontStyle: 'italic' }}>
+                        No actions
+                    </Typography>
+                )
+            )
+        }
+    ];
+
     return (
-        <CustomCard>
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-text-primary">
-                        Payment History
-                    </h2>
+        <Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h5" sx={{ fontWeight: 600, fontSize: '1.125rem', color: '#1C1917' }}>
+                    Payment History
+                </Typography>
+                {onRefresh && (
                     <Button
                         variant="outlined"
                         size="small"
                         startIcon={<RefreshIcon />}
                         onClick={onRefresh}
                         sx={{
-                            borderColor: theme.palette.custom.borderDefault,
-                            color: theme.palette.text.secondary,
+                            borderColor: 'rgba(28, 25, 23, 0.12)',
+                            color: '#78716C',
+                            textTransform: 'none',
+                            fontWeight: 500,
                             '&:hover': {
-                                borderColor: theme.palette.primary.main,
-                                background: 'rgba(221, 161, 94, 0.04)' } }}
+                                borderColor: '#DDA15E',
+                                background: 'rgba(221, 161, 94, 0.04)'
+                            }
+                        }}
                     >
                         Refresh
                     </Button>
-                </div>
+                )}
+            </Box>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-black/5">
-                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Transaction ID</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Amount</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Method</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
-                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Date</th>
-                                {isAdmin && <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Customer</th>}
-                                <th className="py-4 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-black/5">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} className="py-8 text-center">
-                                        <CircularProgress size={24} sx={{ color: theme.palette.primary.main }} />
-                                    </td>
-                                </tr>
-                            ) : payments.length > 0 ? (
-                                payments.map((payment) => {
-                                    const statusColor = getStatusColor(payment.status);
-                                    const isPending = payment.status === 'pending';
-
-                                    return (
-                                        <tr key={payment.id} className="hover:bg-black/5 transition-colors">
-                                            <td className="py-4 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => onViewDetails(payment)}
-                                                        className="p-1.5 rounded-lg bg-primary/10 text-primary border-0 cursor-pointer hover:bg-primary/20 transition-colors"
-                                                    >
-                                                        <VisibilityIcon sx={{ fontSize: 16 }} />
-                                                    </button>
-                                                    <span className="font-medium text-text-primary font-mono text-sm">
-                                                        {payment.transactionId}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-4 font-medium text-text-primary">
-                                                {formatCurrency(payment.amount)}
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <div className="flex items-center gap-2 text-text-secondary">
-                                                    {getPaymentMethodIcon(payment.method)}
-                                                    <span className="capitalize text-sm">{payment.method || 'Cash'}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <span
-                                                    className="px-2.5 py-1 rounded-full text-xs font-medium border"
-                                                    style={{
-                                                        backgroundColor: `${statusColor}15`, // 15% opacity hex
-                                                        color: statusColor,
-                                                        borderColor: `${statusColor}30`, // 30% opacity hex
-                                                    }}
-                                                >
-                                                    {payment.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-4 text-sm text-text-secondary">
-                                                {formatDate(payment.createdAt)}
-                                            </td>
-                                            {isAdmin && (
-                                                <td className="py-4 px-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm text-text-primary font-medium">
-                                                            {payment.customerInfo?.name || 'Unknown'}
-                                                        </span>
-                                                        <span className="text-xs text-text-muted">
-                                                            {payment.customerInfo?.email}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                            )}
-                                            <td className="py-4 px-4 text-right">
-                                                {isAdmin && isPending ? (
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Tooltip title="Confirm">
-                                                            <span>
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => onConfirm(payment.id)}
-                                                                    disabled={processing}
-                                                                    sx={{
-                                                                        color: theme.palette.success.main,
-                                                                        bgcolor: 'rgba(45, 106, 79, 0.08)',
-                                                                        border: '1px solid rgba(45, 106, 79, 0.15)',
-                                                                        '&:hover': { bgcolor: 'rgba(45, 106, 79, 0.16)' },
-                                                                        width: 32,
-                                                                        height: 32 }}
-                                                                >
-                                                                    {processing ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon fontSize="small" />}
-                                                                </IconButton>
-                                                            </span>
-                                                        </Tooltip>
-                                                        <Tooltip title="Reject">
-                                                            <span>
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => onReject(payment.id)}
-                                                                    disabled={processing}
-                                                                    sx={{
-                                                                        color: theme.palette.error.main,
-                                                                        bgcolor: 'rgba(239, 68, 68, 0.08)',
-                                                                        border: '1px solid rgba(239, 68, 68, 0.15)',
-                                                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.16)' },
-                                                                        width: 32,
-                                                                        height: 32 }}
-                                                                >
-                                                                    {processing ? <CircularProgress size={16} color="inherit" /> : <CancelIcon fontSize="small" />}
-                                                                </IconButton>
-                                                            </span>
-                                                        </Tooltip>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-text-muted italic">No actions</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} className="py-12 text-center text-text-secondary">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <PaymentIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                                            <p>No payment records found</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </CustomCard>
+            <DataTable
+                columns={columns}
+                rows={payments}
+                loading={loading}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                onPageChange={(e, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                }}
+                emptyTitle="No payment records found"
+                emptySubtitle="Payment history will appear here once transactions are recorded."
+                emptyIcon={<PaymentIcon sx={{ fontSize: 40, color: '#A8A29E' }} />}
+            />
+        </Box>
     );
 };
 
