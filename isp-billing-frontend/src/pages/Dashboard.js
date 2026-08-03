@@ -600,7 +600,7 @@ const Dashboard = () => {
             <Typography
               variant="h3"
               sx={{
-                fontWeight: 800,
+                fontWeight: 600,
                 color: 'text.primary',
                 mb: 1 }}
             >
@@ -615,7 +615,7 @@ const Dashboard = () => {
               icon={<AdminIcon />}
               label="Administrator"
               sx={{
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+                background: theme.palette.primary.main,
                 color: theme.palette.primary.contrastText,
                 fontWeight: 500 }}
             />
@@ -1051,7 +1051,7 @@ const Dashboard = () => {
         <Typography
           variant="h3"
           sx={{
-            fontWeight: 800,
+            fontWeight: 600,
             color: 'text.primary',
             mb: 1 }}
         >
@@ -1139,9 +1139,9 @@ const Dashboard = () => {
                     sx={{
                       height: 12,
                       
-                      backgroundColor: 'rgba(43, 43, 43, 0.06)',
+                      backgroundColor: 'rgba(28, 25, 23, 0.06)',
                       '& .MuiLinearProgress-bar': {
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)` } }}
+                        background: theme.palette.primary.main } }}
                   />
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                     {getUsagePercentage().toFixed(1)}% used
@@ -1237,7 +1237,7 @@ const Dashboard = () => {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={usageHistorySeries}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(43, 43, 43, 0.08)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(28, 25, 23, 0.06)" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tickFormatter={(v) =>

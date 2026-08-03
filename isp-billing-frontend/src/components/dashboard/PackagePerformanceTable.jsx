@@ -48,12 +48,12 @@ export default function PackagePerformanceTable({ packages = [] }) {
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Package / Plan</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Price (KES)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Active Subscribers</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Monthly Revenue</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Avg Usage / User</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">ARPU (KES)</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>Package / Plan</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Price (KES)</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Active Subscribers</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Monthly Revenue</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Avg Usage / User</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">ARPU (KES)</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

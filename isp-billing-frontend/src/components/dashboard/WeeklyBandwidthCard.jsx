@@ -23,7 +23,7 @@ export default function WeeklyBandwidthCard({ data = [] }) {
                 width: 38,
                 height: 38,
                 borderRadius: '10px',
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.primary.dark, 0.12)} 100%)`,
+                background: alpha(theme.palette.primary.main, 0.12),
                 color: theme.palette.primary.main,
                 display: 'flex',
                 alignItems: 'center',

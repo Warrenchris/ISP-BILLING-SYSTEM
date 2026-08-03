@@ -181,9 +181,7 @@ const UsersManagement = () => {
                 <Box>
                     <Typography variant="h3" sx={{
                         fontWeight: 700,
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
+                        color: 'text.primary',
                         mb: 1
                     }}>
                         Users Management
@@ -197,7 +195,7 @@ const UsersManagement = () => {
                     startIcon={<AddIcon />}
                     sx={{
                         
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                        background: theme.palette.primary.main,
                         color: 'primary.contrastText',
                         fontWeight: 600
                     }}

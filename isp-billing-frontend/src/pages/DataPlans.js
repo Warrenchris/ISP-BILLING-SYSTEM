@@ -309,7 +309,7 @@ const DataPlans = () => {
       <Box
         sx={{
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          background: theme.palette.primary.main,
           position: 'relative',
           '&::before': {
             content: '""',
@@ -365,7 +365,7 @@ const DataPlans = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+        background: theme.palette.primary.main,
         position: 'relative',
         '&::before': {
           content: '""',
@@ -428,9 +428,8 @@ const DataPlans = () => {
                     py: 1.5,
                     boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
                     '&:hover': {
-                      transform: 'translateY(-2px)',
                       boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}` },
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   Add New Plan
@@ -708,7 +707,6 @@ const DataPlans = () => {
                           minHeight: 44, // FIXED: Ensure consistent button height
                           boxShadow: `0 8px 32px ${config.shadowColor}`,
                           '&:hover': {
-                            transform: 'translateY(-2px)',
                             boxShadow: `0 12px 40px ${config.shadowColor}` },
                           '&:active': {
                             transform: 'translateY(0)' },

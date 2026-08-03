@@ -48,7 +48,7 @@ export default function SystemHealthBanner({ routerCount = 1, queueHealth = 'Hea
             <Typography variant="subtitle1" fontWeight={700} color="text.primary">
               System Operations & Network Status: Healthy
             </Typography>
-            <Chip label="v2.0 Active" size="small" color="success" sx={{ height: 20, fontSize: '10px', fontWeight: 700 }} />
+            <Chip label="v2.0 Active" size="small" color="success" sx={{ height: 20, fontSize: '10px', fontWeight: 500 }} />
           </Box>
           <Typography variant="caption" color="text.secondary">
             FreeRADIUS Gateway · BullMQ Workers ({queueHealth}) · {routerCount} MikroTik Router(s) Online

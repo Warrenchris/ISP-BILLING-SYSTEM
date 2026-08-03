@@ -19,7 +19,7 @@ export default function LiveUsersCard({ liveData }) {
                 width: 38,
                 height: 38,
                 borderRadius: '10px',
-                background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(theme.palette.success.dark, 0.15)} 100%)`,
+                background: alpha(theme.palette.success.main, 0.15),
                 color: theme.palette.success.main,
                 display: 'flex',
                 alignItems: 'center',
@@ -41,7 +41,7 @@ export default function LiveUsersCard({ liveData }) {
             label="LIVE"
             color="success"
             size="small"
-            sx={{ fontWeight: 800, fontSize: '10px', animation: 'pulse 2s infinite' }}
+            sx={{ fontWeight: 600, fontSize: '10px', animation: 'pulse 2s infinite' }}
           />
         </Box>
 

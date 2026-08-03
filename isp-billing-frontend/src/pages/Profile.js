@@ -64,10 +64,9 @@ const Profile = () => {
         border: `1px solid ${theme.palette.divider}`,
         
         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'visible',
         '&:hover': {
-          transform: 'translateY(-2px)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           borderColor: 'rgba(255, 255, 255, 0.15)' },
         ...sx }}
@@ -162,9 +161,7 @@ const Profile = () => {
           variant="h3"
           sx={{
             fontWeight: 700,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: 'text.primary',
             backgroundClip: 'text',
             mb: 1 }}
         >
@@ -227,7 +224,7 @@ const Profile = () => {
                     textTransform: 'none',
                     fontWeight: 500,
                     ...(editing ? {} : {
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)` })
+                      background: theme.palette.primary.main })
                   }}
                 >
                   {editing ? (loading ? <CircularProgress size={20} /> : 'Save Changes') : 'Edit Profile'}
@@ -389,7 +386,7 @@ const Profile = () => {
                     sx={{
                       width: 100,
                       height: 100,
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                      background: theme.palette.primary.main,
                       fontSize: '2.5rem',
                       boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.4)}`,
                       border: '4px solid rgba(255, 255, 255, 0.1)'
@@ -629,7 +626,7 @@ const Profile = () => {
               passwordData.newPassword !== passwordData.confirmPassword
             }
             sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              background: theme.palette.primary.main,
               
               px: 3,
               boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'

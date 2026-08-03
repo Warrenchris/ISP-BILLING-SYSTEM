@@ -280,9 +280,8 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     ? `drop-shadow(0 8px 16px ${alpha(theme.palette.primary.main, 0.3)})`
                     : `drop-shadow(0 8px 16px ${alpha(theme.palette.primary.main, 0.2)})`,
                   animation: `${floatAnimation} 8s ease-in-out infinite`,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    transform: 'scale(1.05)',
                     filter: darkMode
                       ? `drop-shadow(0 12px 24px ${alpha(theme.palette.primary.main, 0.4)})`
                       : `drop-shadow(0 12px 24px ${alpha(theme.palette.primary.main, 0.3)})` } }}
@@ -292,7 +291,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 variant="h3"
                 sx={{
                   fontSize: '2.5rem',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   mb: 2,
                   color: 'secondary.main',
                   letterSpacing: '-0.025em' }}
@@ -330,10 +329,10 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     sx={{
                       textAlign: 'center',
                       opacity: 0.8,
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         opacity: 1,
-                        transform: 'translateY(-2px)' } }}
+                        } }}
                   >
                     <Typography variant="h4" sx={{ mb: 1 }}>
                       {feature.icon}
@@ -389,11 +388,10 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                 height: '1px',
                 background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)' },
               '&:hover': {
-                transform: 'translateY(-2px)',
                 boxShadow: darkMode
                   ? '0 25px 70px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
                   : '0 25px 70px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9)' },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
+              transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
           >
             <Fade in={mounted} timeout={1000}>
               <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -401,9 +399,9 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   sx={{
                     width: 72,
                     height: 72,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    background: theme.palette.primary.main,
                     margin: '0 auto 24px',
-                    boxShadow: '0 8px 25px rgba(221, 161, 94, 0.3)',
+                    boxShadow: 'none',
                     animation: `${pulseAnimation} 4s ease-in-out infinite` }}
                 >
                   <LockIcon sx={{ fontSize: '32px', color: '#FFFFFF' }} />
@@ -606,7 +604,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     fontSize: '1rem',
                     fontWeight: 600,
                     
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    background: theme.palette.primary.main,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                     position: 'relative',
                     overflow: 'hidden',
@@ -624,7 +622,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     '&:hover': {
                       background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                       boxShadow: '0 12px 35px rgba(102, 126, 234, 0.4)',
-                      transform: 'translateY(-2px)' },
+                      },
                     '&:disabled': {
                       background: 'rgba(102, 126, 234, 0.3)',
                       color: 'text.secondary' } }}

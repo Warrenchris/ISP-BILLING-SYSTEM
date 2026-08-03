@@ -209,9 +209,7 @@ const Vouchers = () => {
 
   const pageTitleSx = {
     fontWeight: 700,
-    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    color: 'text.primary',
     backgroundClip: 'text',
     mb: 4
   };
@@ -277,7 +275,7 @@ const Vouchers = () => {
             sx={{
               textTransform: 'none',
               fontWeight: 600,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+              background: theme.palette.primary.main
             }}
           >
             Generate Vouchers
@@ -319,7 +317,7 @@ const Vouchers = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.primary.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -348,7 +346,7 @@ const Vouchers = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.success.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -377,7 +375,7 @@ const Vouchers = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.info.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -406,7 +404,7 @@ const Vouchers = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.error.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -562,7 +560,7 @@ const Vouchers = () => {
                   <Card
                     sx={{
                       border: `1px solid ${theme.palette.divider}`,
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`
@@ -577,7 +575,7 @@ const Vouchers = () => {
                               width: 48,
                               height: 48,
                               borderRadius: '12px',
-                              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`,
+                              background: alpha(theme.palette.primary.main, 0.1),
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center'
@@ -687,7 +685,7 @@ const Vouchers = () => {
             onClick={handleGenerate}
             disabled={generating}
             sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+              background: theme.palette.primary.main
             }}
           >
             {generating ? <CircularProgress size={20} color="inherit" /> : 'Generate'}

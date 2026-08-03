@@ -109,7 +109,7 @@ const ResetPassword = () => {
                 sx={{
                   width: 64,
                   height: 64,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  background: theme.palette.primary.main,
                   mb: 2,
                   boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)' }}
               >
@@ -194,11 +194,11 @@ const ResetPassword = () => {
                     fontSize: '1rem',
                     fontWeight: 600,
                     
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    background: theme.palette.primary.main,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                     '&:hover': {
                       background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
-                      transform: 'translateY(-2px)' }
+                      }
                   }}
                 >
                   {loading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}

@@ -358,7 +358,7 @@ const Payments = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 700, background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1 }}>
+          <Typography variant="h3" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
             Payments
           </Typography>
           <Typography variant="body1" color="text.secondary">Manage your payment transactions</Typography>
@@ -403,7 +403,7 @@ const Payments = () => {
             sx={{
               
               textTransform: 'none',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+              background: theme.palette.primary.main
             }}
           >
             M-Pesa Payment

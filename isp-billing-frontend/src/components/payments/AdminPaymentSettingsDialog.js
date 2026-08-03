@@ -44,7 +44,7 @@ const AdminPaymentSettingsDialog = ({
                     sx={{
                         width: 64,
                         height: 64,
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                        background: theme.palette.primary.main,
                         margin: '0 auto 16px' }}
                 >
                     <SettingsIcon sx={{ fontSize: 32 }} />
@@ -96,7 +96,7 @@ const AdminPaymentSettingsDialog = ({
                     onClick={onSave}
                     sx={{
                         
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                        background: theme.palette.primary.main,
                         color: 'text.primary',
                         '&:hover': {
                             background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)` }

@@ -73,9 +73,7 @@ const QueueHealth = () => {
 
   const pageTitleSx = {
     fontWeight: 700,
-    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    color: 'text.primary',
     backgroundClip: 'text',
     mb: 4
   };
@@ -222,7 +220,7 @@ const QueueHealth = () => {
                 <Card
                   sx={{
                     border: `1px solid ${theme.palette.divider}`,
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`
@@ -237,7 +235,7 @@ const QueueHealth = () => {
                             width: 48,
                             height: 48,
                             borderRadius: '12px',
-                            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`,
+                            background: alpha(theme.palette.primary.main, 0.1),
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
@@ -352,7 +350,7 @@ const QueueHealth = () => {
                               width: 40,
                               height: 40,
                               borderRadius: '10px',
-                              background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.dark, 0.1)} 100%)`,
+                              background: alpha(theme.palette.info.main, 0.1),
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center'

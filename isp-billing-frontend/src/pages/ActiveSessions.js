@@ -236,14 +236,14 @@ const ActiveSessions = () => {
                     onChange={handleSelectAll}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Username / Account ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>IP Address</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>MAC Address</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Router</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Session Start</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Session End</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>Username / Account ID</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>IP Address</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>MAC Address</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>Router</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>Session Start</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>Session End</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 500 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -292,7 +292,7 @@ const ActiveSessions = () => {
                           label={s.connectionType.toUpperCase()}
                           size="small"
                           color={s.connectionType === 'pppoe' ? 'primary' : s.connectionType === 'hotspot' ? 'warning' : 'info'}
-                          sx={{ fontWeight: 700, fontSize: '10px' }}
+                          sx={{ fontWeight: 500, fontSize: '10px' }}
                         />
                       </TableCell>
                       <TableCell>

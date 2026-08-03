@@ -464,9 +464,7 @@ const SupportTickets = () => {
                         variant="h3"
                         sx={{
                             fontWeight: 700, mb: 0.5,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor:  'transparent' }}
+                            color: 'text.primary', }}
                     >
                         Support Tickets
                     </Typography>
@@ -560,14 +558,14 @@ const SupportTickets = () => {
                 <Table id="tickets-table">
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Ticket ID</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Priority</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Assigned To</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Ticket ID</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Subject</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Category</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Priority</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Assigned To</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>Created</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 500 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>

@@ -189,7 +189,7 @@ const Invoices = () => {
         border: '1px solid rgba(255, 255, 255, 0.1)',
         
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -201,7 +201,6 @@ const Invoices = () => {
           height: '1px',
           background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)' },
         '&:hover': {
-          transform: 'translateY(-2px)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           borderColor: 'rgba(255, 255, 255, 0.15)' },
         ...sx }}
@@ -238,9 +237,7 @@ const Invoices = () => {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: 'text.primary',
                 backgroundClip: 'text' }}
             >
               {value}
@@ -375,9 +372,7 @@ const Invoices = () => {
             variant="h3"
             sx={{
               fontWeight: 700,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: 'text.primary',
               backgroundClip: 'text',
               mb: 1 }}
           >
@@ -517,7 +512,7 @@ const Invoices = () => {
             title="Overdue"
             value={overdueInvoices.length}
             subtitle="invoices"
-            color="#EF4444"
+            color="#DC2626"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -589,7 +584,7 @@ const Invoices = () => {
             sx={{
               width: 80,
               height: 80,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              background: theme.palette.primary.main,
               margin: '0 auto 16px' }}
           >
             <ReceiptIcon sx={{ fontSize: 40 }} />

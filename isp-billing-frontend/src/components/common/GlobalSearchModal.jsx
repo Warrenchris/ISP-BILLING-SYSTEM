@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog, DialogContent, TextField, Box, Typography, List, ListItem,
-  ListItemText, ListItemIcon, Chip, InputAdornment, useTheme, alpha
+  ListItemText, ListItemIcon, Chip, InputAdornment, alpha
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -32,7 +32,6 @@ const NAVIGATION_ITEMS = [
 ];
 
 export default function GlobalSearchModal({ open, onClose }) {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { api } = useApi();
 
@@ -178,41 +177,52 @@ export default function GlobalSearchModal({ open, onClose }) {
       maxWidth="sm"
       slotProps={{
         backdrop: {
-          sx: { backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.4)' }
+          sx: { backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0, 0, 0, 0.25)' }
         }
       }}
     >
-      <DialogContent sx={{ p: 2 }}>
+      <DialogContent sx={{ p: 2.5 }}>
         <TextField
           autoFocus
           fullWidth
           variant="outlined"
-          placeholder="Search clients, vouchers, packages, or pages... (Ctrl+K / Ctrl+F)"
+          placeholder="Search clients, vouchers, packages, or pages…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon sx={{ color: '#A8A29E', fontSize: 20 }} />
                 </InputAdornment>
               ),
               endAdornment: (
                 <InputAdornment position="end">
-                  <Chip label="ESC" size="small" variant="outlined" sx={{ fontSize: '10px' }} />
+                  <Typography
+                    sx={{
+                      fontSize: '0.625rem',
+                      color: '#A8A29E',
+                      border: '1px solid rgba(28, 25, 23, 0.1)',
+                      borderRadius: '4px',
+                      px: 0.5,
+                      py: '1px',
+                    }}
+                  >
+                    ESC
+                  </Typography>
                 </InputAdornment>
               )
             }
           }}
-          sx={{ mb: 1 }}
+          sx={{ mb: 1.5 }}
         />
 
         {query.trim() === '' ? (
-          <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
-            <Typography variant="body2" gutterBottom>
-              Quick Shortcuts:
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            <Typography sx={{ fontSize: '0.8125rem', color: '#A8A29E', mb: 1.5 }}>
+              Quick Shortcuts
             </Typography>
-            <Box display="flex" justifyContent="center" gap={1} flexWrap="wrap" mt={1}>
+            <Box display="flex" justifyContent="center" gap={1} flexWrap="wrap">
               {NAVIGATION_ITEMS.slice(0, 5).map(nav => (
                 <Chip
                   key={nav.path}
@@ -220,17 +230,21 @@ export default function GlobalSearchModal({ open, onClose }) {
                   size="small"
                   onClick={() => handleSelect({ path: nav.path })}
                   clickable
+                  sx={{
+                    bgcolor: 'rgba(28, 25, 23, 0.04)',
+                    '&:hover': { bgcolor: 'rgba(221, 161, 94, 0.08)' },
+                  }}
                 />
               ))}
             </Box>
           </Box>
         ) : searching ? (
           <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">Searching...</Typography>
+            <Typography sx={{ fontSize: '0.8125rem', color: '#A8A29E' }}>Searching…</Typography>
           </Box>
         ) : results.length === 0 ? (
           <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">No matching results found.</Typography>
+            <Typography sx={{ fontSize: '0.8125rem', color: '#A8A29E' }}>No matching results found.</Typography>
           </Box>
         ) : (
           <List dense sx={{ maxHeight: 360, overflowY: 'auto' }}>
@@ -242,21 +256,33 @@ export default function GlobalSearchModal({ open, onClose }) {
                   button
                   onClick={() => handleSelect(item)}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: '8px',
                     mb: 0.5,
+                    py: 1,
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      bgcolor: alpha('#DDA15E', 0.06),
                     }
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <IconComp color="primary" fontSize="small" />
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <IconComp sx={{ color: '#DDA15E', fontSize: 18 }} />
                   </ListItemIcon>
                   <ListItemText
                     primary={item.title}
                     secondary={item.subtitle}
+                    primaryTypographyProps={{ fontSize: '0.8125rem', fontWeight: 500 }}
+                    secondaryTypographyProps={{ fontSize: '0.6875rem' }}
                   />
-                  <Chip label={item.category} size="small" variant="outlined" sx={{ fontSize: '10px' }} />
+                  <Chip
+                    label={item.category}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      fontSize: '0.625rem',
+                      height: '22px',
+                      borderColor: 'rgba(28, 25, 23, 0.08)',
+                    }}
+                  />
                 </ListItem>
               );
             })}

@@ -124,7 +124,7 @@ const Reports = () => {
         <Box sx={{ p: 3 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, color: 'text.primary', }}>
                         Financial Reports
                     </Typography>
                     <Typography color="text.secondary">Revenue analysis and key metrics</Typography>

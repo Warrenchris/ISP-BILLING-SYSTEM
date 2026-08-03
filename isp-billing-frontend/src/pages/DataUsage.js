@@ -114,7 +114,7 @@ const DataUsage = () => {
         border: `1px solid ${theme.palette.divider}`,
         
         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.1)}`,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -126,7 +126,6 @@ const DataUsage = () => {
           height: '1px',
           background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)' },
         '&:hover': {
-          transform: 'translateY(-2px)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           borderColor: 'rgba(255, 255, 255, 0.15)' },
         ...sx }}
@@ -161,9 +160,7 @@ const DataUsage = () => {
           variant="h4"
           sx={{
             fontWeight: 700,
-            background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: 'text.primary',
             backgroundClip: 'text',
             mb: 1 }}
         >
@@ -200,9 +197,7 @@ const DataUsage = () => {
 
   const pageTitleSx = {
     fontWeight: 700,
-    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    color: 'text.primary',
     backgroundClip: 'text',
     mb: 4 };
 
@@ -613,9 +608,8 @@ const DataUsage = () => {
                     background: `${alpha(tip.color, 0.1)}`,
                     border: `1px solid ${alpha(tip.color, 0.2)}`,
                     textAlign: 'center',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
                       boxShadow: `0 8px 25px ${alpha(tip.color, 0.2)}` } }}
                 >
                   <Typography variant="h4" sx={{ mb: 1 }}>

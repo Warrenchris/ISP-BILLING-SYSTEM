@@ -140,9 +140,7 @@ const SmsLogs = () => {
 
   const pageTitleSx = {
     fontWeight: 700,
-    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    color: 'text.primary',
     backgroundClip: 'text',
     mb: 4
   };
@@ -236,7 +234,7 @@ const SmsLogs = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.primary.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -265,7 +263,7 @@ const SmsLogs = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.success.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -294,7 +292,7 @@ const SmsLogs = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.error.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -323,7 +321,7 @@ const SmsLogs = () => {
                       width: 48,
                       height: 48,
                       borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.dark, 0.1)} 100%)`,
+                      background: alpha(theme.palette.warning.main, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -515,7 +513,7 @@ const SmsLogs = () => {
             variant="contained"
             onClick={handleSaveTemplate}
             sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+              background: theme.palette.primary.main
             }}
           >
             Save Template

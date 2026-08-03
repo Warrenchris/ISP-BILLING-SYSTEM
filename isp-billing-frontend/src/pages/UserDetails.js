@@ -425,7 +425,7 @@ const UserDetails = () => {
                                         label={(sub?.connectionType || 'pppoe').toUpperCase()}
                                         color="secondary"
                                         size="small"
-                                        sx={{ fontWeight: 700, mt: 0.5 }}
+                                        sx={{ fontWeight: 500, mt: 0.5 }}
                                     />
                                 </Grid>
 
@@ -565,7 +565,7 @@ const UserDetails = () => {
                                             label={reportsData.cards?.churnRisk?.riskLevel || 'Not Assessed'}
                                             color={reportsData.cards?.churnRisk?.riskLevel === 'HIGH' ? 'error' : reportsData.cards?.churnRisk?.riskLevel === 'MEDIUM' ? 'warning' : 'success'}
                                             size="small"
-                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 500 }}
                                         />
                                     </Box>
                                     <Typography variant="caption" color="text.secondary">
@@ -645,11 +645,11 @@ const UserDetails = () => {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700 }}>Transaction ID</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Amount</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Method</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Transaction ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Method</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -657,7 +657,7 @@ const UserDetails = () => {
                                         <TableRow key={p.id} hover>
                                             <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{p.transactionId || p.invoiceId || p.id.slice(0, 8)}</TableCell>
                                             <TableCell>{formatDateTime(p.createdAt || p.paymentDate || p.date)}</TableCell>
-                                            <TableCell sx={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</TableCell>
+                                            <TableCell sx={{ fontWeight: 500 }}>{formatCurrency(p.amount)}</TableCell>
                                             <TableCell>
                                                 <Chip label={p.paymentMethod || p.method || 'M-Pesa'} size="small" variant="outlined" />
                                             </TableCell>
@@ -666,7 +666,7 @@ const UserDetails = () => {
                                                     label={p.status || 'Paid'}
                                                     color={p.status === 'completed' || p.status === 'paid' || p.status === 'Paid' ? 'success' : 'warning'}
                                                     size="small"
-                                                    sx={{ fontWeight: 700 }}
+                                                    sx={{ fontWeight: 500 }}
                                                 />
                                             </TableCell>
                                         </TableRow>
@@ -695,11 +695,11 @@ const UserDetails = () => {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700 }}>Timestamp</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Category / Tag</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Recipient Phone</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Message</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Timestamp</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Category / Tag</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Recipient Phone</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Message</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -718,7 +718,7 @@ const UserDetails = () => {
                                                     label={log.status}
                                                     color={log.status === 'sent' || log.status === 'delivered' ? 'success' : 'error'}
                                                     size="small"
-                                                    sx={{ fontWeight: 700 }}
+                                                    sx={{ fontWeight: 500 }}
                                                 />
                                             </TableCell>
                                         </TableRow>
@@ -747,12 +747,12 @@ const UserDetails = () => {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700 }}>Start Time</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>End Time</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Framed IP</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>MAC Address</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Data Used</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Status / Cause</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Start Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>End Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Framed IP</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>MAC Address</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Data Used</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>Status / Cause</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -762,13 +762,13 @@ const UserDetails = () => {
                                             <TableCell>{s.endTime ? formatDateTime(s.endTime) : 'Session Active'}</TableCell>
                                             <TableCell sx={{ fontFamily: 'monospace' }}>{s.framedIp}</TableCell>
                                             <TableCell sx={{ fontFamily: 'monospace' }}>{s.macAddress}</TableCell>
-                                            <TableCell sx={{ fontWeight: 700 }}>{formatBytes(s.totalBytes)}</TableCell>
+                                            <TableCell sx={{ fontWeight: 500 }}>{formatBytes(s.totalBytes)}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={s.isOnline ? 'Active Session' : s.terminateCause}
                                                     color={s.isOnline ? 'success' : 'default'}
                                                     size="small"
-                                                    sx={{ fontWeight: 700 }}
+                                                    sx={{ fontWeight: 500 }}
                                                 />
                                             </TableCell>
                                         </TableRow>

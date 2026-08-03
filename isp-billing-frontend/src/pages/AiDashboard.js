@@ -296,9 +296,7 @@ const AiDashboard = () => {
             sx={{
               fontWeight: 700,
               mb: 1,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: 'text.primary',
             }}
           >
             AI Dashboard
@@ -378,7 +376,7 @@ const AiDashboard = () => {
             <Chip
               label={isHealthOnline ? 'AI Service Online' : 'AI Service Offline'}
               color={isHealthOnline ? 'success' : 'error'}
-              sx={{ fontWeight: 700 }}
+              sx={{ fontWeight: 500 }}
             />
             <Typography variant="body2" color="text.secondary">
               {(health?.modules || []).join(' · ') || 'mlr · churn · anomaly · llm'}
@@ -531,12 +529,12 @@ const AiDashboard = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Customer Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Risk Score</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Risk Level</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Top Reason</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Customer Name</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Risk Score</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Risk Level</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Top Reason</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -560,7 +558,7 @@ const AiDashboard = () => {
                             <Chip
                               label={row.riskLevel || 'LOW'}
                               size="small"
-                              sx={{ bgcolor: colors.bg, color: colors.color, fontWeight: 700 }}
+                              sx={{ bgcolor: colors.bg, color: colors.color, fontWeight: 500 }}
                             />
                           </TableCell>
                           <TableCell>{topReason}</TableCell>

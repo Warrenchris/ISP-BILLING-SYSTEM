@@ -49,11 +49,11 @@ export default function MostActiveUsersTable({ users = [] }) {
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Rank & User</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Contact Phone</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Download</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Upload</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Total Usage</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>Rank & User</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>Contact Phone</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Download</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Upload</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }} align="right">Total Usage</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -65,7 +65,7 @@ export default function MostActiveUsersTable({ users = [] }) {
                           label={`#${idx + 1}`}
                           size="small"
                           color={idx < 3 ? 'primary' : 'default'}
-                          sx={{ fontWeight: 800, fontSize: '10px', height: 20, minWidth: 28 }}
+                          sx={{ fontWeight: 600, fontSize: '10px', height: 20, minWidth: 28 }}
                         />
                         <Avatar sx={{ width: 28, height: 28, fontSize: '11px', bgcolor: theme.palette.primary.light }}>
                           {u.name?.[0]?.toUpperCase() || 'U'}

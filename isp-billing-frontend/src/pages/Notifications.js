@@ -90,7 +90,7 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
                         ) : (
                             notifications.map((notif, index) => (
                                 <React.Fragment key={notif.id || index}>
-                                    <ListItem sx={{ py: 2, px: 3, '&:hover': { bgcolor: 'rgba(43, 43, 43, 0.02)' } }}>
+                                    <ListItem sx={{ py: 2, px: 3, '&:hover': { bgcolor: 'rgba(28, 25, 23, 0.02)' } }}>
                                         <ListItemAvatar>
                                             <Avatar sx={{ 
                                                 bgcolor: alpha(theme.palette.primary.main, 0.15), 

@@ -50,7 +50,7 @@ export default function PackageUtilizationForecastCard({ packages = [], predicte
               Package Utilization & AI Revenue Projection
             </Typography>
           </Box>
-          <Chip label="MLR Forecast" size="small" color="primary" sx={{ fontWeight: 700, fontSize: '10px' }} />
+          <Chip label="MLR Forecast" size="small" color="primary" sx={{ fontWeight: 500, fontSize: '10px' }} />
         </Box>
 
         <Grid container spacing={2} alignItems="center">
