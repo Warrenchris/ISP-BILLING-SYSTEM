@@ -260,11 +260,6 @@ const NetworkDevices = () => {
       setConfirmDlg({ open: false, title: '', message: '', action: null, loading: false });
     }
   };
-      showAlert(err.response?.data?.message || 'Failed to resync bandwidth', 'error');
-    } finally {
-      setResyncing(false);
-    }
-  };
 
   const getStatusColor = (device) => {
     const testResult = testResults[device.id];

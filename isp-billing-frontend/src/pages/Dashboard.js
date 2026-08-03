@@ -41,6 +41,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { useApi } from '../contexts/ApiContext';
 import aiService from '../services/aiService';
 import CustomCard from '../components/common/CustomCard';

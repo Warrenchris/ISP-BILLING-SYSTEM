@@ -18,6 +18,8 @@ import {
   Pending as PendingIcon
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
+import EmptyState from '../components/common/EmptyState';
+import ErrorState from '../components/common/ErrorState';
 import ConfirmationDialog from '../components/common/ConfirmationDialog';
 
 const Vouchers = () => {
