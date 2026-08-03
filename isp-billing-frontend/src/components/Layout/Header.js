@@ -30,7 +30,14 @@ const PAGE_META = {
     '/reports':        { title: 'Reports',            sub: 'Analytics & insights'              },
     '/staff':          { title: 'Staff & Roles',      sub: 'Team management'                  },
     '/audit-logs':     { title: 'Audit Logs',         sub: 'System activity trail'             },
-    '/settings':       { title: 'Settings',           sub: 'System configuration'              } };
+    '/settings':       { title: 'Settings',           sub: 'System configuration'              },
+    '/ai-dashboard':   { title: 'AI Dashboard',       sub: 'Intelligence & predictions'        },
+    '/network-devices':{ title: 'Network Devices',    sub: 'Router & device management'        },
+    '/vouchers':       { title: 'Vouchers',           sub: 'Access code management'            },
+    '/sms-logs':       { title: 'SMS Logs',           sub: 'Message delivery tracking'         },
+    '/queue-health':   { title: 'Queue Health',       sub: 'System job monitoring'             },
+    '/active-sessions':{ title: 'Active Sessions',    sub: 'Live user connections'             },
+};
 
 function usePageMeta() {
     const { pathname } = useLocation();
@@ -46,7 +53,6 @@ const Header = ({ onMenuClick }) => {
     const { title, sub } = usePageMeta();
 
     const [anchorEl, setAnchorEl]     = useState(null);
-    const [searchFocused, setFocused] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     
     const { notificationService } = useApi();
@@ -92,127 +98,156 @@ const Header = ({ onMenuClick }) => {
         navigate('/login');
     };
 
-    const E = 'cubic-bezier(0.4, 0, 0.2, 1)';
-
     return (
         <Box
             component="header"
+            role="banner"
             sx={{
-                position:       'sticky',
-                top:            0,
-                zIndex:         30,
-                display:        'flex',
-                alignItems:     'center',
+                position: 'sticky',
+                top: 0,
+                zIndex: 30,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                px:             { xs: 2, md: 4 },
-                py:             1.5,
-                background:     'rgba(250, 247, 242, 0.8)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                borderBottom:   '1px solid rgba(43, 43, 43, 0.06)',
-                boxShadow:      '0 2px 12px -2px rgba(43, 43, 43, 0.02)' }}
+                height: '56px',
+                px: { xs: 2, md: 3 },
+                mx: { xs: 0, md: 1 },
+                mt: { xs: 0, md: 1.5 },
+                mb: { xs: 0, md: 0 },
+                background: 'rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderRadius: { xs: 0, md: '16px' },
+                border: { xs: 'none', md: '1px solid rgba(28, 25, 23, 0.06)' },
+                boxShadow: { xs: 'none', md: '0 1px 3px rgba(0, 0, 0, 0.02)' },
+            }}
         >
             {/* ── Left: hamburger + page title ── */}
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={1.5}>
                 {/* Mobile hamburger */}
                 <IconButton
                     onClick={onMenuClick}
+                    aria-label="Open navigation menu"
                     sx={{
                         display: { md: 'none' },
-                        color:   'text.primary',
-                        '&:hover': { bgcolor: 'rgba(43, 43, 43, 0.04)' } }}
+                        color: '#1C1917',
+                        '&:hover': { bgcolor: 'rgba(28, 25, 23, 0.04)' },
+                    }}
                 >
                     <MenuIcon />
                 </IconButton>
 
-                {/* Page title block */}
-                <Box display="flex" alignItems="center" gap={1.5}>
-                    {/* Gold brand bar */}
-                    <Box
+                {/* Page title */}
+                <Box>
+                    <Typography
                         sx={{
-                            width:        3,
-                            height:       32,
-                            borderRadius: '4px',
-                            background:   '#DDA15E',
-                            flexShrink:   0 }}
-                    />
-                    <Box>
-                        <Typography
-                            sx={{
-                                fontWeight:    800,
-                                fontSize:      { xs: '1rem', md: '1.2rem' },
-                                color:         'text.primary',
-                                lineHeight:    1.1,
-                                letterSpacing: '-0.01em' }}
-                        >
-                            {title}
-                        </Typography>
-                        <Typography
-                            sx={{
-                                display:       { xs: 'none', sm: 'block' },
-                                fontSize:      '0.75rem',
-                                color:         'text.secondary',
-                                letterSpacing: '0.01em',
-                                mt:            '2px',
-                                lineHeight:    1 }}
-                        >
-                            {sub}
-                        </Typography>
-                    </Box>
+                            fontWeight: 600,
+                            fontSize: { xs: '0.9375rem', md: '1rem' },
+                            color: '#1C1917',
+                            lineHeight: 1.2,
+                            letterSpacing: '-0.01em',
+                        }}
+                    >
+                        {title}
+                    </Typography>
+                    <Typography
+                        sx={{
+                            display: { xs: 'none', sm: 'block' },
+                            fontSize: '0.75rem',
+                            color: '#A8A29E',
+                            mt: '1px',
+                            lineHeight: 1,
+                        }}
+                    >
+                        {sub}
+                    </Typography>
                 </Box>
             </Box>
 
             {/* ── Right: search + actions ── */}
-            <Box display="flex" alignItems="center" gap={{ xs: 0.5, md: 1.5 }}>
+            <Box display="flex" alignItems="center" gap={{ xs: 0.5, md: 1 }}>
 
-                {/* Search bar (desktop) */}
+                {/* Search trigger (desktop) */}
                 <Box
                     onClick={() => setSearchOpen(true)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Open search"
+                    onKeyDown={(e) => { if (e.key === 'Enter') setSearchOpen(true); }}
                     sx={{
-                        display:      { xs: 'none', md: 'flex' },
-                        alignItems:   'center',
-                        gap:          1,
-                        px:           2,
-                        py:           0.75,
-                        borderRadius: '12px',
-                        cursor:       'pointer',
-                        background:   searchFocused ? '#FFFFFF' : 'rgba(43, 43, 43, 0.03)',
-                        border:       `1.5px solid ${searchFocused ? '#DDA15E' : 'rgba(43, 43, 43, 0.06)'}`,
-                        transition:   `all 0.2s ${E}`,
-                        width:        220,
-                        boxShadow:    searchFocused ? `0 4px 15px -4px rgba(221, 161, 94, 0.2)` : 'none' }}
+                        display: { xs: 'none', md: 'flex' },
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.75,
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        background: 'rgba(28, 25, 23, 0.03)',
+                        border: '1px solid rgba(28, 25, 23, 0.06)',
+                        transition: 'all 0.15s ease-out',
+                        width: 200,
+                        '&:hover': {
+                            background: 'rgba(28, 25, 23, 0.05)',
+                            borderColor: 'rgba(28, 25, 23, 0.1)',
+                        },
+                    }}
                 >
-                    <SearchIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
-                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1, fontSize: '0.85rem' }}>
-                        Search... (Ctrl+K)
+                    <SearchIcon sx={{ color: '#A8A29E', fontSize: 16 }} />
+                    <Typography sx={{ flex: 1, fontSize: '0.8125rem', color: '#A8A29E' }}>
+                        Search…
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontSize: '0.625rem',
+                            color: '#A8A29E',
+                            border: '1px solid rgba(28, 25, 23, 0.1)',
+                            borderRadius: '4px',
+                            px: 0.5,
+                            py: '1px',
+                            fontFamily: 'monospace',
+                        }}
+                    >
+                        ⌘K
                     </Typography>
                 </Box>
+
+                {/* Mobile search */}
+                <IconButton
+                    onClick={() => setSearchOpen(true)}
+                    aria-label="Open search"
+                    sx={{
+                        display: { xs: 'inline-flex', md: 'none' },
+                        color: '#78716C',
+                    }}
+                >
+                    <SearchIcon sx={{ fontSize: 20 }} />
+                </IconButton>
 
                 {/* Notification bell */}
                 <Tooltip title="Notifications" arrow>
                     <IconButton
                         onClick={() => navigate('/notifications')}
+                        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
                         sx={{
-                            color:     'text.secondary',
-                            transition:`all 0.2s ${E}`,
-                            '&:hover': {
-                                color:  'text.primary',
-                                bgcolor:'rgba(43, 43, 43, 0.04)',
-                                transform: 'scale(1.05)' } }}
+                            color: '#78716C',
+                            transition: 'color 0.15s ease-out',
+                            '&:hover': { color: '#1C1917' },
+                        }}
                     >
                         <Badge
                             badgeContent={unreadCount}
                             sx={{
                                 '& .MuiBadge-badge': {
-                                    bgcolor:   '#EF4444',
-                                    color:     '#FFFFFF',
-                                    fontSize:  '0.65rem',
-                                    fontWeight:700,
-                                    minWidth:  16,
-                                    height:    16,
-                                    boxShadow: '0 0 6px rgba(239,68,68,0.3)' } }}
+                                    bgcolor: '#DC2626',
+                                    color: '#FFFFFF',
+                                    fontSize: '0.6rem',
+                                    fontWeight: 600,
+                                    minWidth: 16,
+                                    height: 16,
+                                },
+                            }}
                         >
-                            <BellIcon />
+                            <BellIcon sx={{ fontSize: 20 }} />
                         </Badge>
                     </IconButton>
                 </Tooltip>
@@ -221,69 +256,81 @@ const Header = ({ onMenuClick }) => {
                 <Tooltip title="Settings" arrow>
                     <IconButton
                         onClick={() => navigate('/settings')}
+                        aria-label="Settings"
                         sx={{
-                            display:   { xs: 'none', sm: 'inline-flex' },
-                            color:     'text.secondary',
-                            transition:`all 0.2s ${E}`,
-                            '&:hover': {
-                                color:   'text.primary',
-                                bgcolor: 'rgba(43, 43, 43, 0.04)',
-                                transform:'rotate(20deg)' } }}
+                            display: { xs: 'none', sm: 'inline-flex' },
+                            color: '#78716C',
+                            transition: 'color 0.15s ease-out',
+                            '&:hover': { color: '#1C1917' },
+                        }}
                     >
-                        <SettingsIcon />
+                        <SettingsIcon sx={{ fontSize: 20 }} />
                     </IconButton>
                 </Tooltip>
 
                 {/* Divider */}
-                <Box sx={{ width: '1px', height: 24, bgcolor: 'rgba(43, 43, 43, 0.08)', display: { xs: 'none', sm: 'block' } }} />
+                <Box
+                    sx={{
+                        width: '1px',
+                        height: 20,
+                        bgcolor: 'rgba(28, 25, 23, 0.08)',
+                        display: { xs: 'none', sm: 'block' },
+                        mx: 0.5,
+                    }}
+                />
 
                 {/* User avatar + dropdown */}
                 <Box
                     onClick={handleMenuOpen}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="User menu"
+                    aria-haspopup="true"
+                    aria-expanded={Boolean(anchorEl)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleMenuOpen(e); }}
                     sx={{
-                        display:     'flex',
-                        alignItems:  'center',
-                        gap:         1,
-                        cursor:      'pointer',
-                        p:           '4px 8px 4px 4px',
-                        borderRadius:'12px',
-                        border:      `1.5px solid ${Boolean(anchorEl) ? '#DDA15E' : 'rgba(43, 43, 43, 0.06)'}`,
-                        background:  Boolean(anchorEl) ? 'rgba(221, 161, 94, 0.05)' : '#FFFFFF',
-                        transition:  `all 0.2s ${E}`,
-                        boxShadow:   '0 2px 8px rgba(43, 43, 43, 0.02)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        cursor: 'pointer',
+                        p: '4px 8px 4px 4px',
+                        borderRadius: '10px',
+                        transition: 'all 0.15s ease-out',
                         '&:hover': {
-                            border:    '1.5px solid #DDA15E',
-                            background:'rgba(221, 161, 94, 0.04)' } }}
+                            bgcolor: 'rgba(28, 25, 23, 0.04)',
+                        },
+                    }}
                 >
                     <Avatar
                         sx={{
-                            width:      32,
-                            height:     32,
-                            fontSize:   '0.75rem',
-                            fontWeight: 800,
-                            bgcolor:    'primary.main',
-                            color:      '#FFFFFF',
-                            boxShadow:  `0 2px 8px rgba(221, 161, 94, 0.25)` }}
+                            width: 30,
+                            height: 30,
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            bgcolor: '#DDA15E',
+                            color: '#FFFFFF',
+                        }}
                     >
                         {initials}
                     </Avatar>
 
                     <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                        <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', lineHeight: 1.1 }}>
+                        <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#1C1917', lineHeight: 1.2 }}>
                             {user?.firstName}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', lineHeight: 1, textTransform: 'capitalize' }}>
+                        <Typography sx={{ fontSize: '0.6875rem', color: '#A8A29E', lineHeight: 1, textTransform: 'capitalize' }}>
                             {user?.role || 'user'}
                         </Typography>
                     </Box>
 
                     <ArrowDownIcon
                         sx={{
-                            display:   { xs: 'none', md: 'block' },
-                            fontSize:  16,
-                            color:     'text.secondary',
+                            display: { xs: 'none', md: 'block' },
+                            fontSize: 16,
+                            color: '#A8A29E',
                             transform: Boolean(anchorEl) ? 'rotate(180deg)' : 'none',
-                            transition:`transform 0.2s ${E}` }}
+                            transition: 'transform 0.15s ease-out',
+                        }}
                     />
                 </Box>
 
@@ -294,52 +341,49 @@ const Header = ({ onMenuClick }) => {
                     onClose={handleMenuClose}
                     transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                     anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                    PaperProps={{
-                        sx: {
-                            mt:             1,
-                            minWidth:       210,
-                            bgcolor:        '#FFFFFF',
-                            border:         '1px solid rgba(43, 43, 43, 0.08)',
-                            boxShadow:      '0 12px 30px -4px rgba(43, 43, 43, 0.08)',
-                            borderRadius:   '14px',
-                            overflow:       'hidden' } }}
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                mt: 1,
+                                minWidth: 200,
+                            }
+                        }
+                    }}
                 >
-                    {/* User card at top */}
-                    <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid rgba(43, 43, 43, 0.06)', bgcolor: 'rgba(250, 247, 242, 0.5)' }}>
-                        <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>
+                    {/* User info at top */}
+                    <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(28, 25, 23, 0.06)' }}>
+                        <Typography sx={{ fontWeight: 500, fontSize: '0.8125rem', color: '#1C1917' }}>
                             {displayName}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', textTransform: 'capitalize', mt: 0.25 }}>
+                        <Typography sx={{ fontSize: '0.6875rem', color: '#A8A29E', textTransform: 'capitalize', mt: 0.25 }}>
                             {user?.role} · {user?.email}
                         </Typography>
                     </Box>
 
-                    <Box sx={{ p: '6px' }}>
+                    <Box sx={{ p: '4px' }}>
                         <MenuItem
                             onClick={() => { handleMenuClose(); navigate('/profile'); }}
-                            sx={menuItemSx}
                         >
-                            <ProfileIcon sx={{ fontSize: 18, mr: 1.5, color: 'text.secondary' }} />
+                            <ProfileIcon sx={{ fontSize: 16, mr: 1.5, color: '#78716C' }} />
                             My Profile
                         </MenuItem>
                         <MenuItem
                             onClick={() => { handleMenuClose(); navigate('/settings'); }}
-                            sx={menuItemSx}
                         >
-                            <SettingsIcon sx={{ fontSize: 18, mr: 1.5, color: 'text.secondary' }} />
+                            <SettingsIcon sx={{ fontSize: 16, mr: 1.5, color: '#78716C' }} />
                             Account Settings
                         </MenuItem>
 
-                        <Divider sx={{ borderColor: 'rgba(43, 43, 43, 0.06)', my: '6px' }} />
+                        <Divider sx={{ my: '4px' }} />
 
                         <MenuItem
                             onClick={handleLogout}
                             sx={{
-                                ...menuItemSx,
-                                color: '#EF4444',
-                                '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.06)', color: '#EF4444' } }}
+                                color: '#DC2626',
+                                '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.06)', color: '#DC2626' },
+                            }}
                         >
-                            <LogoutIcon sx={{ fontSize: 18, mr: 1.5 }} />
+                            <LogoutIcon sx={{ fontSize: 16, mr: 1.5 }} />
                             Sign Out
                         </MenuItem>
                     </Box>
@@ -350,20 +394,5 @@ const Header = ({ onMenuClick }) => {
         </Box>
     );
 };
-
-/* Shared menu item styles */
-const menuItemSx = {
-    fontSize:     '0.85rem',
-    fontWeight:   500,
-    color:        'text.primary',
-    borderRadius: '8px',
-    py:           1,
-    px:           1.5,
-    my:           0.25,
-    transition:   'all 0.15s ease',
-    '&:hover': {
-        bgcolor:   'rgba(221, 161, 94, 0.06)',
-        color:     'text.primary',
-        transform: 'translateX(2px)' } };
 
 export default Header;
