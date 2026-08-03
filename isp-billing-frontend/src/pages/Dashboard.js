@@ -66,11 +66,15 @@ import MostActiveUsersTable from '../components/dashboard/MostActiveUsersTable';
 import PackagePerformanceTable from '../components/dashboard/PackagePerformanceTable';
 import PackageUtilizationForecastCard from '../components/dashboard/PackageUtilizationForecastCard';
 
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService } = useApi();
   const theme = useTheme();
+  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService, dashboardService } = useApi();
+  const { notifySuccess, notifyError } = useNotification();
+  const [deleteConfirmDlg, setDeleteConfirmDlg] = useState({ open: false, userId: null, loading: false });
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -452,10 +456,8 @@ const Dashboard = () => {
           await adminApi.users.update(userId, { role: 'customer' });
           break;
         case 'delete':
-          if (window.confirm('Are you sure you want to delete this user?')) {
-            await adminApi.users.delete(userId);
-          }
-          break;
+          setDeleteConfirmDlg({ open: true, userId, loading: false });
+          return;
         default:
           break;
       }
@@ -463,6 +465,22 @@ const Dashboard = () => {
       fetchAdminActivity();
     } catch (error) {
       console.error('Error performing user action:', error);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmDlg.userId) return;
+    setDeleteConfirmDlg(prev => ({ ...prev, loading: true }));
+    try {
+      await adminApi.users.delete(deleteConfirmDlg.userId);
+      notifySuccess('User deleted successfully');
+      fetchAdminOverview();
+      fetchAdminActivity();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      notifyError('Failed to delete user');
+    } finally {
+      setDeleteConfirmDlg({ open: false, userId: null, loading: false });
     }
   };
 
@@ -1311,6 +1329,17 @@ const Dashboard = () => {
           )}
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={deleteConfirmDlg.open}
+        title="Delete User Account"
+        message="Are you sure you want to delete this user? This action cannot be undone and will revoke all access."
+        confirmText="Delete User"
+        confirmColor="error"
+        loading={deleteConfirmDlg.loading}
+        onConfirm={handleDeleteConfirm}
+        onClose={() => setDeleteConfirmDlg({ open: false, userId: null, loading: false })}
+      />
     </Box>
   );
 };

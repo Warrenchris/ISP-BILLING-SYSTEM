@@ -24,6 +24,8 @@ import { useApi } from '../contexts/ApiContext';
 import EmptyState from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
 
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
+
 const NetworkDevices = () => {
   const { api } = useApi();
   const theme = useTheme();
@@ -33,6 +35,7 @@ const NetworkDevices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
+  const [confirmDlg, setConfirmDlg] = useState({ open: false, title: '', message: '', action: null, loading: false });
 
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -176,17 +179,18 @@ const NetworkDevices = () => {
     }
   };
 
-  const handleDelete = async (device) => {
-    if (!window.confirm(`Are you sure you want to delete "${device.name}"?`)) return;
-
-    try {
-      await api.delete(`/admin/network-devices/${device.id}`);
-      showAlert('Router deleted successfully', 'success');
-      fetchDevices();
-    } catch (err) {
-      console.error('Error deleting device:', err);
-      showAlert(err.response?.data?.message || 'Failed to delete router', 'error');
-    }
+  const handleDelete = (device) => {
+    setConfirmDlg({
+      open: true,
+      title: 'Delete Router Device',
+      message: `Are you sure you want to delete router "${device.name}"? Active connections using this router may be affected.`,
+      action: async () => {
+        await api.delete(`/admin/network-devices/${device.id}`);
+        showAlert('Router deleted successfully', 'success');
+        fetchDevices();
+      },
+      loading: false
+    });
   };
 
   const handleTestConnection = async (device) => {
@@ -223,21 +227,39 @@ const NetworkDevices = () => {
     setLogsDialogOpen(true);
   };
 
-  const handleResyncBandwidth = async () => {
-    if (!window.confirm(
-      'This will resync RADIUS bandwidth limits for ALL active subscriptions. ' +
-      'This fixes any upload/download rate mismatches. Continue?'
-    )) return;
+  const handleResyncBandwidth = () => {
+    setConfirmDlg({
+      open: true,
+      title: 'Resync RADIUS Bandwidth',
+      message: 'This will resync RADIUS bandwidth limits for ALL active subscriptions to fix upload/download rate mismatches. Continue?',
+      action: async () => {
+        setResyncing(true);
+        try {
+          const res = await api.post('/admin/resync-all-bandwidth');
+          showAlert(
+            res.data?.message || `Bandwidth resync complete. ${res.data?.updated || 0} subscriptions updated.`,
+            'success'
+          );
+        } finally {
+          setResyncing(false);
+        }
+      },
+      loading: false
+    });
+  };
 
+  const executeConfirmAction = async () => {
+    if (!confirmDlg.action) return;
+    setConfirmDlg(prev => ({ ...prev, loading: true }));
     try {
-      setResyncing(true);
-      const res = await api.post('/admin/resync-all-bandwidth');
-      showAlert(
-        res.data?.message || `Bandwidth resync complete. ${res.data?.updated || 0} subscriptions updated.`,
-        'success'
-      );
+      await confirmDlg.action();
     } catch (err) {
-      console.error('Resync bandwidth failed:', err);
+      console.error('Confirm action failed:', err);
+      showAlert(err.response?.data?.message || 'Action failed', 'error');
+    } finally {
+      setConfirmDlg({ open: false, title: '', message: '', action: null, loading: false });
+    }
+  };
       showAlert(err.response?.data?.message || 'Failed to resync bandwidth', 'error');
     } finally {
       setResyncing(false);

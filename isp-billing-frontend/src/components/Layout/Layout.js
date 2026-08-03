@@ -18,7 +18,7 @@ const Layout = ({ children }) => {
         <Header onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
         {/* Page Content — floating panel */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto relative">
+        <main role="main" aria-label="Main content" className="flex-1 overflow-x-hidden overflow-y-auto relative">
           <div className="p-4 md:p-6 lg:p-8">
             {children}
           </div>
