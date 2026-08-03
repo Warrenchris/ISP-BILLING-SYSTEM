@@ -1,9 +1,8 @@
 import React from 'react';
 import {
   TableContainer, Table, TableHead, TableRow, TableCell, TableBody,
-  Paper, TablePagination, Box, Typography
+  Paper, TablePagination
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import EmptyState from '../common/EmptyState';
 
 const DENSITY_PADDING = {
@@ -29,7 +28,6 @@ const DataTable = ({
   maxHeight = 600,
   onRowClick,
 }) => {
-  const theme = useTheme();
   const cellStyle = DENSITY_PADDING[density] || DENSITY_PADDING.comfortable;
 
   const displayedRows = typeof totalCount === 'number'

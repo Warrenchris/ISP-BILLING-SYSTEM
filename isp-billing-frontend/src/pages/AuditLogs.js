@@ -3,11 +3,9 @@ import {
     Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Chip, LinearProgress, Alert, TablePagination
 } from '@mui/material';
-import { useTheme, alpha } from '@mui/material/styles';
 import { useApi } from '../contexts/ApiContext';
 
 const AuditLogs = () => {
-    const theme = useTheme();
     const { auditService } = useApi();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
