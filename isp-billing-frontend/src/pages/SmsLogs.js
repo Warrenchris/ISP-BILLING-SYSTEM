@@ -4,7 +4,8 @@ import {
   DialogTitle, DialogContent, DialogActions, Alert, CircularProgress,
   Divider, IconButton, Grid, TextField, useTheme, alpha,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Tooltip, Tabs, Tab, MenuItem, Select, FormControl, InputLabel
+  TableRow, Paper, Tooltip, Tabs, Tab, MenuItem, Select, FormControl, InputLabel,
+  TablePagination
 } from '@mui/material';
 import {
   Sms as SmsIcon,
