@@ -8,7 +8,6 @@ import {
   CircularProgress,
   Link,
   InputAdornment,
-  Divider,
   Grow,
   Zoom,
   Slide,
@@ -31,7 +30,6 @@ import {
   Phone,
   Router,
   CheckCircle as CheckCircleIcon } from '@mui/icons-material';
-import { Google, Facebook } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
@@ -139,10 +137,6 @@ const Login = ({ darkMode, toggleDarkMode }) => {
     // if failed, AuthContext triggers notification.
 
     setLoading(false);
-  };
-
-  const handleSocialLogin = (provider) => {
-    console.log(`Logging in with ${provider}`);
   };
 
   const togglePasswordVisibility = () => {

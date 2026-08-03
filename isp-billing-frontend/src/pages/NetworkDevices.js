@@ -684,6 +684,17 @@ const NetworkDevices = () => {
           <Button onClick={() => setLogsDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={confirmDlg.open}
+        title={confirmDlg.title}
+        message={confirmDlg.message}
+        confirmText="Confirm"
+        confirmColor="error"
+        loading={confirmDlg.loading}
+        onConfirm={executeConfirmAction}
+        onClose={() => setConfirmDlg({ open: false, title: '', message: '', action: null, loading: false })}
+      />
     </Box>
   );
 };

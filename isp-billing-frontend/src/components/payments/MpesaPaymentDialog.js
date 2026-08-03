@@ -32,7 +32,6 @@ const MpesaPaymentDialog = ({
     amount,
     setAmount
 }) => {
-    const theme = useTheme();
     const { api } = useApi();
     const [mpesaLimits, setMpesaLimits] = useState(defaultMpesaLimits);
 

@@ -309,8 +309,8 @@ const UserDetails = () => {
               type="recommendation"
               title="AI Customer Insight & Billing Recommendation"
               insight={`Customer ${displayName} has maintained continuous subscription for over 6 months with 100% on-time M-Pesa payments. Account is eligible for automated auto-renewal loyalty discount.`}
-              actionLabel="Apply Loyalty Discount"
-              onAction={() => handleOpenSubModal()}
+              actionLabel="Extend Expiry Date"
+              onAction={() => setExpiryDialogOpen(true)}
             />
 
             {/* Persistent 6-Tabs Bar */}

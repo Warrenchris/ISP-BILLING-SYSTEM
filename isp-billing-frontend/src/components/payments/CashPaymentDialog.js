@@ -37,7 +37,6 @@ const CashPaymentDialog = ({
     cashDescription,
     setCashDescription
 }) => {
-    const theme = useTheme();
     return (
         <Dialog
             open={open}
