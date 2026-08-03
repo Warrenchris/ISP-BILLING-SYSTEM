@@ -68,6 +68,7 @@ import PackagePerformanceTable from '../components/dashboard/PackagePerformanceT
 import PackageUtilizationForecastCard from '../components/dashboard/PackageUtilizationForecastCard';
 
 import ConfirmationDialog from '../components/common/ConfirmationDialog';
+import OperationalInsightsCard from '../components/dashboard/OperationalInsightsCard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -749,6 +750,9 @@ const Dashboard = () => {
               <WeeklyBandwidthCard data={centipidData.weeklyBandwidth} />
             </Grid>
           </Grid>
+
+          {/* Phase 10: Operational Intelligence & Trend Insights */}
+          <OperationalInsightsCard stats={aiQuickStats} />
 
           {/* Connection Type Trends & Package Forecast */}
           <Grid container spacing={3} sx={{ mb: 4 }}>

@@ -41,6 +41,7 @@ import {
     AccountBalanceWallet as WalletIcon
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
+import ContextualAiInsight from '../components/ai/ContextualAiInsight';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     ResponsiveContainer, BarChart, Bar, LineChart, Line,
@@ -309,9 +310,16 @@ const UserDetails = () => {
                             <MenuItem onClick={() => { handleMenuClose(); navigate(`/invoices?userId=${user.id}`); }}>View Invoices</MenuItem>
                             <MenuItem onClick={() => { handleMenuClose(); navigate(`/sms-logs?search=${user.phoneNumber}`); }}>SMS History</MenuItem>
                         </Menu>
-                    </Box>
-                </Box>
             </Paper>
+
+            {/* Phase 11: Contextual AI Decision Support Insight */}
+            <ContextualAiInsight
+              type="recommendation"
+              title="AI Customer Insight & Billing Recommendation"
+              insight={`Customer ${displayName} has maintained continuous subscription for over 6 months with 100% on-time M-Pesa payments. Account is eligible for automated auto-renewal loyalty discount.`}
+              actionLabel="Apply Loyalty Discount"
+              onAction={() => handleOpenSubModal()}
+            />
 
             {/* Persistent 6-Tabs Bar */}
             <Paper sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>

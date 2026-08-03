@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import NetworkStatusBanner from '../common/NetworkStatusBanner';
 
 const Layout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background font-sans">
+    <div className="flex flex-col min-h-screen bg-background font-sans">
+      <NetworkStatusBanner />
+      <div className="flex flex-1 min-h-screen relative w-full overflow-hidden">
 
       {/* Sidebar Component */}
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
