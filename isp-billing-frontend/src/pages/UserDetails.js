@@ -310,6 +310,8 @@ const UserDetails = () => {
                             <MenuItem onClick={() => { handleMenuClose(); navigate(`/invoices?userId=${user.id}`); }}>View Invoices</MenuItem>
                             <MenuItem onClick={() => { handleMenuClose(); navigate(`/sms-logs?search=${user.phoneNumber}`); }}>SMS History</MenuItem>
                         </Menu>
+                    </Box>
+                </Box>
             </Paper>
 
             {/* Phase 11: Contextual AI Decision Support Insight */}
