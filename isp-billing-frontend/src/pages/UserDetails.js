@@ -5,16 +5,10 @@ import {
     LinearProgress, Alert, Menu, MenuItem,
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Snackbar, Tooltip,
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    TablePagination
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 } from '@mui/material';
 import {
     ArrowBack as ArrowBackIcon,
-    Person as PersonIcon,
-    Email as EmailIcon,
-    Phone as PhoneIcon,
-    LocationOn as LocationIcon,
-    Router as RouterIcon,
     Visibility as VisibilityIcon,
     VisibilityOff as VisibilityOffIcon,
     ContentCopy as CopyIcon,
@@ -26,12 +20,10 @@ import {
     SignalWifiStatusbar4Bar as OnlineIcon,
     Schedule as ScheduleIcon,
     Badge as BadgeIcon,
-    Key as KeyIcon,
     Speed as SpeedIcon,
     Receipt as ReceiptIcon,
     Sms as SmsIcon,
     History as HistoryIcon,
-    CreditCard as CreditCardIcon,
     DataUsage as DataUsageIcon,
     Assessment as AssessmentIcon,
     Verified as VerifiedIcon,
