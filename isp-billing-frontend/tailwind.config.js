@@ -11,52 +11,64 @@ module.exports = {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#DDA15E', // Warm wheat/gold tone
-                    light: '#F4D3B2', // Soft warm glow
-                    dark: '#BC813F', // Hover/Active gold
-                    contrast: '#2B2B2B',
+                    DEFAULT: '#DDA15E',
+                    light: '#F4D3B2',
+                    dark: '#BC813F',
+                    contrast: '#FFFFFF',
                 },
                 secondary: {
-                    DEFAULT: '#2D6A4F', // Elegant green tone
+                    DEFAULT: '#2D6A4F',
                     light: '#52B788',
                     dark: '#1B4332',
                 },
                 background: {
-                    DEFAULT: '#FAF7F2', // Very light warm cream background
-                    paper: '#FFFFFF', // White surface
-                    sidebar: '#FFFFFF', // White sidebar surface
-                    elevated: '#F3EFE9', // Light elevated surface
+                    DEFAULT: '#F5F5F4',
+                    paper: '#FFFFFF',
+                    sidebar: '#FFFFFF',
+                    elevated: '#FAFAF9',
                 },
                 text: {
-                    primary: '#2B2B2B', // Charcoal text
-                    secondary: '#5C5852', // Soft brown-gray text
-                    muted: '#8E877E', // Muted brown-gray text
-                    disabled: '#C5BEB5', // Disabled text
+                    primary: '#1C1917',
+                    secondary: '#78716C',
+                    muted: '#A8A29E',
+                    disabled: '#D6D3D1',
                 },
                 status: {
-                    success: '#2D6A4F', // Using secondary green for success
-                    warning: '#DDA15E', // Using primary yellow for warning
-                    error: '#EF4444',
-                    info: '#3B82F6',
+                    success: '#2D6A4F',
+                    warning: '#DDA15E',
+                    error: '#DC2626',
+                    info: '#2563EB',
                 },
                 charts: {
-                    blue: '#3B82F6',
+                    blue: '#2563EB',
                     green: '#2D6A4F',
                     orange: '#DDA15E',
-                    purple: '#8B5CF6',
-                    teal: '#14B8A6',
-                    pink: '#EC4899',
+                    purple: '#7C3AED',
+                    teal: '#0D9488',
+                    pink: '#DB2777',
                 },
-                glass: {
-                    DEFAULT: 'rgba(255, 255, 255, 0.7)',
-                    border: 'rgba(43, 43, 43, 0.1)',
-                }
-            },
-            backgroundImage: {
-                'gradient-primary': 'linear-gradient(135deg, #DDA15E 0%, #BC813F 100%)',
+                border: {
+                    DEFAULT: 'rgba(28, 25, 23, 0.06)',
+                    strong: 'rgba(28, 25, 23, 0.12)',
+                    brand: 'rgba(221, 161, 94, 0.25)',
+                },
             },
             fontFamily: {
-                sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+            },
+            borderRadius: {
+                'panel': '20px',
+                'sidebar': '24px',
+                'card': '20px',
+                'button': '10px',
+                'input': '10px',
+            },
+            boxShadow: {
+                'panel': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+                'panel-hover': '0 4px 12px rgba(0, 0, 0, 0.06)',
+                'sidebar': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+                'float': '0 2px 8px rgba(0, 0, 0, 0.04)',
+                'dialog': '0 24px 48px -12px rgba(0, 0, 0, 0.12)',
             },
             zIndex: {
                 'mobile-stepper': 1000,
@@ -65,7 +77,11 @@ module.exports = {
                 'modal': 1300,
                 'snackbar': 1400,
                 'tooltip': 1500,
-            }
+            },
+            spacing: {
+                '18': '4.5rem',
+                '88': '22rem',
+            },
         },
     },
     plugins: [],
