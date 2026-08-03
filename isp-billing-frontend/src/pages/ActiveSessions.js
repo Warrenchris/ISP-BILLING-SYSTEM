@@ -11,8 +11,7 @@ import {
   MoreVert as MoreVertIcon,
   PowerSettingsNew as DisconnectIcon,
   WifiTethering as LiveIcon,
-  Router as RouterIcon,
-  FilterList as FilterIcon
+  Router as RouterIcon
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { getRelativeTime, formatDateTime } from '../utils/helpers';
