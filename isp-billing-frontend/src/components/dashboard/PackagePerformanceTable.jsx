@@ -3,7 +3,7 @@ import {
   Box, CardContent, Typography, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, useTheme, alpha
 } from '@mui/material';
-import { Layers as PlansIcon, AttachMoney as RevenueIcon } from '@mui/icons-material';
+import { Layers as PlansIcon } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
 
 export default function PackagePerformanceTable({ packages = [] }) {

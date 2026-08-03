@@ -66,8 +66,6 @@ const UserDetails = () => {
     const [newExpiryDate, setNewExpiryDate] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
 
-    const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
-
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     // Group 2 Tab Data States
@@ -288,7 +286,7 @@ const UserDetails = () => {
                             variant="contained"
                             color="primary"
                             startIcon={<VoucherIcon />}
-                            onClick={() => setVoucherDialogOpen(true)}
+                            onClick={() => navigate(`/vouchers?search=${user.email || user.phoneNumber || ''}`)}
                             sx={{ fontWeight: 600 }}
                         >
                             Send Voucher
