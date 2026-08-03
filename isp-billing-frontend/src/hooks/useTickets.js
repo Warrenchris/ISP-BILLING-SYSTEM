@@ -106,7 +106,7 @@ const useTickets = ({ search = '', filters = {}, page = 1, limit = 20 } = {}) =>
 
         loadMeta();
         return () => { cancelled = true; };
-    }, [user?.role]);
+    }, [user?.role, isStaff]);
 
     // ─── Public API ───────────────────────────────────────────────────────────
     return {

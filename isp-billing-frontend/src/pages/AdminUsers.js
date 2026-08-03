@@ -192,6 +192,7 @@ export default function AdminUsers() {
         loadUsers();
       }
     }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, [userDialogOpen, userDetailsOpen]);
 
   const [deleteConfirmDlg, setDeleteConfirmDlg] = useState({ open: false, userId: null, loading: false });
