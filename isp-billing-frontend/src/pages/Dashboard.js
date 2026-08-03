@@ -74,7 +74,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService, dashboardService } = useApi();
+  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService } = useApi();
   const { notifySuccess, notifyError } = useNotification();
   const [deleteConfirmDlg, setDeleteConfirmDlg] = useState({ open: false, userId: null, loading: false });
   const [loading, setLoading] = useState(true);
@@ -139,7 +139,6 @@ const Dashboard = () => {
     weeklyBandwidth: [],
     liveUsers: { liveNow: 0, avgActive: 0, weeklyPeak: 0 }
   });
-  const [smsBalance, setSmsBalance] = useState('KES 2,450.00');
 
   // Quick actions: cash payment dialog state (reuse existing component)
   const [cashDialog, setCashDialog] = useState(false);
