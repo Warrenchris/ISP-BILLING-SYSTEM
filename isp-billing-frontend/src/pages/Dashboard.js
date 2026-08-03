@@ -272,9 +272,6 @@ const Dashboard = () => {
       if (centipidRes.status === 'fulfilled' && centipidRes.value?.data?.data) {
         setCentipidData(centipidRes.value.data.data);
       }
-      if (smsBalanceRes.status === 'fulfilled' && smsBalanceRes.value?.data?.balance) {
-        setSmsBalance(smsBalanceRes.value.data.balance);
-      }
 
       // Keep PriorityTicketsWidget from existing support endpoint (top 5)
       let pTickets = [];
