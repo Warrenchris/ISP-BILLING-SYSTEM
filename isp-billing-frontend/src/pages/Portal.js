@@ -347,7 +347,7 @@ export default function Portal() {
                   sx={{
                     py: 1.5,
                     borderRadius: '12px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     boxShadow: 'none',
                     '&:hover': { boxShadow: 'none' },
                   }}
@@ -424,7 +424,7 @@ export default function Portal() {
                   sx={{
                     py: 1.5,
                     borderRadius: '12px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                   }}
                 >
                   {actionLoading ? <CircularProgress size={24} color="inherit" /> : `Buy Now — KES ${selectedPlan?.price || 0}`}

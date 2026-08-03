@@ -34,7 +34,7 @@ const AuditLogs = () => {
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>Audit Logs</Typography>
+            <Typography variant="h3" sx={{ fontWeight: 600, mb: 4 }}>Audit Logs</Typography>
 
             {loading ? <LinearProgress /> : error ? <Alert severity="error">{error}</Alert> : (
                 <Paper sx={{  background: alpha(theme.palette.background.paper, 0.6) }}>

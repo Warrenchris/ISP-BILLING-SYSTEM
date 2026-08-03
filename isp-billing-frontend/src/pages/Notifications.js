@@ -69,7 +69,7 @@ const NotificationsLog = () => { // Renamed slightly to avoid clash if I import 
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>Notifications Log</Typography>
+            <Typography variant="h3" sx={{ fontWeight: 600, mb: 4 }}>Notifications Log</Typography>
 
             {loading ? <LinearProgress /> : error ? <Alert severity="error">{error}</Alert> : (
                 <Paper sx={{ 

@@ -180,7 +180,7 @@ const UsersManagement = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box>
                     <Typography variant="h3" sx={{
-                        fontWeight: 700,
+                        fontWeight: 600,
                         color: 'text.primary',
                         mb: 1
                     }}>
@@ -220,7 +220,7 @@ const UsersManagement = () => {
                     sx={{
                         px: 2,
                         '& .MuiTab-root': {
-                            fontWeight: 700,
+                            fontWeight: 600,
                             fontSize: '0.875rem',
                             textTransform: 'none',
                             minHeight: 48,

@@ -159,7 +159,7 @@ const DataUsage = () => {
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
             color: 'text.primary',
             backgroundClip: 'text',
             mb: 1 }}
@@ -196,7 +196,7 @@ const DataUsage = () => {
       ];
 
   const pageTitleSx = {
-    fontWeight: 700,
+    fontWeight: 600,
     color: 'text.primary',
     backgroundClip: 'text',
     mb: 4 };

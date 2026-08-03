@@ -70,7 +70,7 @@ const Settings = () => {
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>System Settings</Typography>
+            <Typography variant="h3" sx={{ fontWeight: 600, mb: 4 }}>System Settings</Typography>
 
             {error && <Alert severity="warning" sx={{ mb: 3 }}>{error}</Alert>}
 

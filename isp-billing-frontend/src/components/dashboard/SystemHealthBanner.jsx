@@ -19,7 +19,7 @@ export default function SystemHealthBanner({ routerCount = 1, queueHealth = 'Hea
         mb: 3,
         p: 2,
         borderRadius: 2,
-        background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`,
+        background: alpha(theme.palette.success.main, 0.08),
         border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
         display: 'flex',
         alignItems: 'center',

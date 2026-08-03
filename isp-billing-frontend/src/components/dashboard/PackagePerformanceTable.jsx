@@ -75,7 +75,7 @@ export default function PackagePerformanceTable({ packages = [] }) {
                         size="small"
                         color={pkg.activeSubscribers > 0 ? 'primary' : 'default'}
                         variant={pkg.activeSubscribers > 0 ? 'filled' : 'outlined'}
-                        sx={{ fontWeight: 700, fontSize: '11px' }}
+                        sx={{ fontWeight: 600, fontSize: '11px' }}
                       />
                     </TableCell>
                     <TableCell align="right">

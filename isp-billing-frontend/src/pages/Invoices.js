@@ -236,7 +236,7 @@ const Invoices = () => {
             <Typography
               variant="h5"
               sx={{
-                fontWeight: 700,
+                fontWeight: 600,
                 color: 'text.primary',
                 backgroundClip: 'text' }}
             >
@@ -371,7 +371,7 @@ const Invoices = () => {
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
               color: 'text.primary',
               backgroundClip: 'text',
               mb: 1 }}
@@ -706,7 +706,7 @@ const Invoices = () => {
                 <Typography
                   variant="h5"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',

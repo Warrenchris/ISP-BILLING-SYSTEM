@@ -72,7 +72,7 @@ const QueueHealth = () => {
   };
 
   const pageTitleSx = {
-    fontWeight: 700,
+    fontWeight: 600,
     color: 'text.primary',
     backgroundClip: 'text',
     mb: 4
@@ -170,7 +170,7 @@ const QueueHealth = () => {
                         width: 56,
                         height: 56,
                         borderRadius: '16px',
-                        background: `linear-gradient(135deg, ${alpha(theme.palette[getHealthColor(queueStats.overallHealth)].main, 0.1)} 0%, ${alpha(theme.palette[getHealthColor(queueStats.overallHealth)].dark, 0.1)} 100%)`,
+                        background: alpha(theme.palette[getHealthColor(queueStats.overallHealth)].main, 0.1),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'

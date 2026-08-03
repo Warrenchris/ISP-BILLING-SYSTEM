@@ -358,7 +358,7 @@ const Payments = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+          <Typography variant="h3" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
             Payments
           </Typography>
           <Typography variant="body1" color="text.secondary">Manage your payment transactions</Typography>

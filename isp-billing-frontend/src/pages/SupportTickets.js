@@ -90,7 +90,7 @@ function PriorityBadge({ priority, labelsConfig }) {
     const cfg = labelsConfig?.priorities?.[priority] || {};
     const hex = cfg.hex || '#6b7280';
     return (
-        <Typography variant="body2" sx={{ color: hex, fontWeight: 700, textTransform: 'capitalize' }}>
+        <Typography variant="body2" sx={{ color: hex, fontWeight: 600, textTransform: 'capitalize' }}>
             {priority}
         </Typography>
     );
@@ -231,7 +231,7 @@ function CreateTicketDialog({ open, onClose, categories, priorities, staff, onSu
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm"
             PaperProps={{ sx: { } }}>
-            <DialogTitle sx={{ fontWeight: 700 }}>Create New Ticket</DialogTitle>
+            <DialogTitle sx={{ fontWeight: 600 }}>Create New Ticket</DialogTitle>
             <DialogContent>
                 {formError && (
                     <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>
@@ -463,7 +463,7 @@ const SupportTickets = () => {
                     <Typography
                         variant="h3"
                         sx={{
-                            fontWeight: 700, mb: 0.5,
+                            fontWeight: 600, mb: 0.5,
                             color: 'text.primary', }}
                     >
                         Support Tickets
@@ -685,7 +685,7 @@ const SupportTickets = () => {
             />
 
             <Dialog open={assignOpen} onClose={() => !assignSaving && setAssignOpen(false)} fullWidth maxWidth="xs">
-                <DialogTitle sx={{ fontWeight: 700 }}>Assign ticket</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 600 }}>Assign ticket</DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         {assignTicket?.subject}
@@ -722,7 +722,7 @@ const SupportTickets = () => {
             </Dialog>
 
             <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} fullWidth maxWidth="md">
-                <DialogTitle sx={{ fontWeight: 700 }}>Ticket Details</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 600 }}>Ticket Details</DialogTitle>
                 <DialogContent>
                     {detailTicket && (
                         <Box>

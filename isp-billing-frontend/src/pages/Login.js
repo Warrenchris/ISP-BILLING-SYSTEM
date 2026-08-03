@@ -182,8 +182,8 @@ const Login = ({ darkMode, toggleDarkMode }) => {
         minHeight: '100vh',
         display: 'flex',
         background: theme.palette.mode === 'dark'
-          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`
-          : `linear-gradient(135deg, ${theme.palette.grey[50]} 0%, ${theme.palette.grey[200]} 100%)`,
+          ? theme.palette.background.default
+          : theme.palette.background.default,
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
         position: 'relative',
         overflow: 'hidden',
@@ -214,8 +214,8 @@ const Login = ({ darkMode, toggleDarkMode }) => {
             sx={{
               position: 'absolute',
               background: darkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`
-                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
+                ? alpha(theme.palette.primary.main, 0.1)
+                : alpha(theme.palette.primary.main, 0.05),
               
               animation: `${floatAnimation} ${12 + i * 2}s ease-in-out infinite`,
               animationDelay: `${i * 1.5}s`,
@@ -411,7 +411,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   variant="h4"
                   sx={{
                     fontSize: '2rem',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     mb: 1,
                     color: theme.palette.text.primary,
                     letterSpacing: '-0.025em' }}
@@ -602,7 +602,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                   sx={{
                     py: 1.75,
                     fontSize: '1rem',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     
                     background: theme.palette.primary.main,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
@@ -620,7 +620,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
                     '&:hover::before': {
                       left: '100%' },
                     '&:hover': {
-                      background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                      background: theme.palette.primary.light,
                       boxShadow: '0 12px 35px rgba(102, 126, 234, 0.4)',
                       },
                     '&:disabled': {

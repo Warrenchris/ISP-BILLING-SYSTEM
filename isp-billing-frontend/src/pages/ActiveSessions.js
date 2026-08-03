@@ -154,7 +154,7 @@ const ActiveSessions = () => {
               size="small"
               color="success"
               variant="outlined"
-              sx={{ fontWeight: 700, fontSize: '11px' }}
+              sx={{ fontWeight: 600, fontSize: '11px' }}
             />
           </Box>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
@@ -170,7 +170,7 @@ const ActiveSessions = () => {
               startIcon={disconnecting ? <CircularProgress size={16} color="inherit" /> : <DisconnectIcon />}
               onClick={() => handleDisconnect(selectedIds)}
               disabled={disconnecting}
-              sx={{ textTransform: 'none', fontWeight: 700 }}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
             >
               Terminate Selected ({selectedIds.length})
             </Button>
@@ -197,7 +197,7 @@ const ActiveSessions = () => {
           sx={{
             px: 2,
             borderBottom: `1px solid ${theme.palette.divider}`,
-            '& .MuiTab-root': { fontWeight: 700, textTransform: 'none', fontSize: '0.9rem' }
+            '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '0.9rem' }
           }}
         >
           <Tab value="all" label={`All (${counts.all})`} />

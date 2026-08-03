@@ -139,7 +139,7 @@ const SmsLogs = () => {
   };
 
   const pageTitleSx = {
-    fontWeight: 700,
+    fontWeight: 600,
     color: 'text.primary',
     backgroundClip: 'text',
     mb: 4

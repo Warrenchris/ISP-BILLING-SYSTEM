@@ -76,7 +76,7 @@ const DataPlans = () => {
       basic: {
         color: 'default',
         gradient: `linear-gradient(135deg, ${theme.palette.text.secondary} 0%, ${theme.palette.text.disabled} 100%)`,
-        bgGradient: `linear-gradient(135deg, ${alpha(theme.palette.text.secondary, 0.1)} 0%, ${alpha(theme.palette.text.disabled, 0.1)} 100%)`,
+        bgGradient: alpha(theme.palette.text.secondary, 0.1),
         borderColor: theme.palette.text.secondary,
         icon: <DataUsageIcon fontSize="small" />,
         popular: false,
@@ -85,7 +85,7 @@ const DataPlans = () => {
       standard: {
         color: 'primary',
         gradient: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
-        bgGradient: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.dark, 0.1)} 100%)`,
+        bgGradient: alpha(theme.palette.info.main, 0.1),
         borderColor: theme.palette.info.main,
         icon: <WifiIcon fontSize="small" />,
         popular: false,
@@ -94,7 +94,7 @@ const DataPlans = () => {
       premium: {
         color: 'secondary',
         gradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
-        bgGradient: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.dark, 0.1)} 100%)`,
+        bgGradient: alpha(theme.palette.secondary.main, 0.1),
         borderColor: theme.palette.secondary.main,
         icon: <StarIcon fontSize="small" />,
         popular: true,
@@ -103,7 +103,7 @@ const DataPlans = () => {
       enterprise: {
         color: 'warning',
         gradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
-        bgGradient: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.15)} 0%, ${alpha(theme.palette.warning.dark, 0.15)} 100%)`,
+        bgGradient: alpha(theme.palette.warning.main, 0.15),
         borderColor: theme.palette.warning.main,
         icon: <TrendingUpIcon fontSize="small" />,
         popular: false,

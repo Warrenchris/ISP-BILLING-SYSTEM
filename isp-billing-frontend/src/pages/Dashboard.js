@@ -768,13 +768,13 @@ const Dashboard = () => {
           <CustomCard className="mb-8">
             <CardContent sx={{ p: 3 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Recent Activity
                 </Typography>
                 <Button
                   variant="text"
                   onClick={fetchAdminActivity}
-                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                  sx={{ textTransform: 'none', fontWeight: 500 }}
                 >
                   Refresh
                 </Button>
@@ -831,19 +831,19 @@ const Dashboard = () => {
               <Grid container spacing={2} mt={0.5}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Churn Risk</Typography>
-                  <Typography variant="h5" sx={{ color: aiQuickStats.atRiskCustomers > 0 && aiQuickStats.atRiskCustomers !== 'no_data' ? theme.palette.error.main : 'text.primary', fontWeight: 700 }}>
+                  <Typography variant="h5" sx={{ color: aiQuickStats.atRiskCustomers > 0 && aiQuickStats.atRiskCustomers !== 'no_data' ? theme.palette.error.main : 'text.primary', fontWeight: 600 }}>
                     {aiQuickStats.atRiskCustomers === 'no_data' ? 'No data' : `${aiQuickStats.atRiskCustomers} customers at churn risk`}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Anomalies</Typography>
-                  <Typography variant="h5" sx={{ color: aiQuickStats.totalAnomalies > 0 && aiQuickStats.totalAnomalies !== 'no_data' ? theme.palette.warning.main : 'text.primary', fontWeight: 700 }}>
+                  <Typography variant="h5" sx={{ color: aiQuickStats.totalAnomalies > 0 && aiQuickStats.totalAnomalies !== 'no_data' ? theme.palette.warning.main : 'text.primary', fontWeight: 600 }}>
                     {aiQuickStats.totalAnomalies === 'no_data' ? 'No data' : `${aiQuickStats.totalAnomalies} active anomalies`}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" color="text.secondary">Predicted Revenue</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
                     {aiQuickStats.predictedRevenue === 'no_data' ? 'No data' : formatCurrency(aiQuickStats.predictedRevenue)}
                   </Typography>
                 </Grid>

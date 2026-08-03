@@ -137,7 +137,7 @@ const ChatWidget = () => {
             px: 2,
             py: 1.1,
             textTransform: 'none',
-            fontWeight: 700,
+            fontWeight: 600,
             boxShadow: theme.shadows[8],
           }}
         >
@@ -168,10 +168,10 @@ const ChatWidget = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              background: theme.palette.primary.main,
             }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: theme.palette.primary.contrastText }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.palette.primary.contrastText }}>
               AI Support Assistant
             </Typography>
             <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: theme.palette.primary.contrastText }}>

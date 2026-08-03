@@ -234,7 +234,7 @@ const UserDetails = () => {
 
                         <Box>
                             <Box display="flex" alignItems="center" gap={1.5} mb={0.5}>
-                                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                                <Typography variant="h4" sx={{ fontWeight: 600 }}>
                                     {displayName}
                                 </Typography>
                                 <Chip
@@ -242,7 +242,7 @@ const UserDetails = () => {
                                     label={isOnline ? 'Currently Online' : (sub?.status === 'suspended' ? 'Suspended' : (user.status || 'Offline'))}
                                     color={isOnline ? 'success' : (sub?.status === 'suspended' ? 'warning' : 'primary')}
                                     size="small"
-                                    sx={{ fontWeight: 700, px: 0.5 }}
+                                    sx={{ fontWeight: 600, px: 0.5 }}
                                 />
                             </Box>
 
@@ -325,7 +325,7 @@ const UserDetails = () => {
                     sx={{
                         px: 2,
                         '& .MuiTab-root': {
-                            fontWeight: 700,
+                            fontWeight: 600,
                             fontSize: '0.875rem',
                             textTransform: 'none',
                             minHeight: 48,
@@ -347,7 +347,7 @@ const UserDetails = () => {
                     {/* Account Identity & Credentials */}
                     <Grid size={{ xs: 12, md: 6 }}>
                         <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <BadgeIcon color="primary" /> Account Credentials & Profile
                             </Typography>
                             <Divider sx={{ mb: 2.5 }} />
@@ -403,7 +403,7 @@ const UserDetails = () => {
                     {/* Subscription & Service Details */}
                     <Grid size={{ xs: 12, md: 6 }}>
                         <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}`, height: '100%' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <SpeedIcon color="primary" /> Subscription & Technical Details
                             </Typography>
                             <Divider sx={{ mb: 2.5 }} />
@@ -509,7 +509,7 @@ const UserDetails = () => {
                                             label={reportsData.cards?.paymentReliability >= 80 ? 'Reliable' : 'At-Risk'}
                                             color={reportsData.cards?.paymentReliability >= 80 ? 'success' : 'warning'}
                                             size="small"
-                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600 }}
                                         />
                                     </Box>
                                     <Typography variant="caption" color="text.secondary">
@@ -631,7 +631,7 @@ const UserDetails = () => {
             {/* Tab 3: Payments */}
             {currentTab === 'payments' && (
                 <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <ReceiptIcon color="primary" /> Transaction & Payment History
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -681,7 +681,7 @@ const UserDetails = () => {
             {/* Tab 4: Sms */}
             {currentTab === 'sms' && (
                 <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <SmsIcon color="primary" /> Outbound SMS History
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -733,7 +733,7 @@ const UserDetails = () => {
             {/* Tab 5: Sessions */}
             {currentTab === 'sessions' && (
                 <Paper sx={{ p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <HistoryIcon color="primary" /> Customer Session History (RADIUS / Broadband)
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -791,7 +791,7 @@ const UserDetails = () => {
 
             {/* Change Expiry Modal */}
             <Dialog open={expiryDialogOpen} onClose={() => setExpiryDialogOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle sx={{ fontWeight: 700 }}>Change Expiry Date</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 600 }}>Change Expiry Date</DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" mb={2}>
                         Set a new expiration date for {displayName}&apos;s subscription.

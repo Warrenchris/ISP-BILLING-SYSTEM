@@ -294,7 +294,7 @@ const AiDashboard = () => {
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
               mb: 1,
               color: 'text.primary',
             }}
@@ -347,7 +347,7 @@ const AiDashboard = () => {
 
       {dashboardSummary?.models_ready === false && (
         <Alert severity="info" icon={<WarningAmberIcon />} sx={{ mb: 3, bgcolor: alpha(theme.palette.info.main, 0.1) }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
             ⚠ Some AI models are awaiting more data to reach full accuracy.
             {dashboardSummary?.dataQuality?.completenessScore != null && (
               <> &nbsp;Data completeness: <strong>{dashboardSummary.dataQuality.completenessScore}%</strong></>
@@ -395,7 +395,7 @@ const AiDashboard = () => {
 
       <Card ref={revenueRef} sx={{ mb: 3, background: alpha(theme.palette.background.paper, 0.7) }}>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
             Revenue Forecast
           </Typography>
           <Box component="form" onSubmit={handleForecastSubmit}>
@@ -474,7 +474,7 @@ const AiDashboard = () => {
                   Low confidence — model trained on only {forecastResult.modelStats?.training_samples ?? forecastResult.modelStats?.trainingSpamples ?? '?'} months of data.
                 </Alert>
               )}
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              <Typography variant="h4" sx={{ fontWeight: 600 }}>
                 {forecastResult.predictedRevenue != null ? formatCurrency(forecastResult.predictedRevenue) : 'No data'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -514,7 +514,7 @@ const AiDashboard = () => {
 
       <Card ref={churnRef} sx={{ mb: 3, background: alpha(theme.palette.background.paper, 0.7) }}>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
             Customer Churn Risks
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -585,7 +585,7 @@ const AiDashboard = () => {
 
       <Card ref={anomaliesRef} sx={{ mb: 3, background: alpha(theme.palette.background.paper, 0.7) }}>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
             Billing Anomalies
           </Typography>
           {isLoadingAnomalies ? (
@@ -603,7 +603,7 @@ const AiDashboard = () => {
                   <Grid key={anomaly.id || index} size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 2, background: alpha(theme.palette.background.paper, 0.5) }}>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                           {isCritical ? '🔴' : '⚠️'} {getAnomalyTypeLabel(anomaly.type || anomaly.category)}
                         </Typography>
                         <Chip
@@ -632,7 +632,7 @@ const AiDashboard = () => {
 
       <Card sx={{ background: alpha(theme.palette.info.main, 0.08), border: `1px solid ${alpha(theme.palette.info.main, 0.25)}` }}>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
             AI Insights Summary
           </Typography>
           {isLoadingDashboard ? (

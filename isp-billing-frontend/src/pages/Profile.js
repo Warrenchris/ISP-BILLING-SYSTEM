@@ -160,7 +160,7 @@ const Profile = () => {
         <Typography
           variant="h3"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
             color: 'text.primary',
             backgroundClip: 'text',
             mb: 1 }}
@@ -508,7 +508,7 @@ const Profile = () => {
                     sx={{
                       width: '85%',
                       height: '100%',
-                      background: `linear-gradient(90deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)` }}
+                      background: theme.palette.success.main }}
                   />
                 </Box>
               </Box>

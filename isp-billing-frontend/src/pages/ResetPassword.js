@@ -97,8 +97,8 @@ const ResetPassword = () => {
         alignItems: 'center',
         justifyContent: 'center',
         background: theme.palette.mode === 'dark'
-          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`
-          : `linear-gradient(135deg, ${theme.palette.grey[50]} 0%, ${theme.palette.grey[200]} 100%)`,
+          ? theme.palette.background.default
+          : theme.palette.background.default,
         p: 3 }}
     >
       <Grow in={mounted} timeout={800}>
@@ -192,12 +192,12 @@ const ResetPassword = () => {
                   sx={{
                     py: 1.5,
                     fontSize: '1rem',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     
                     background: theme.palette.primary.main,
                     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                     '&:hover': {
-                      background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                      background: theme.palette.primary.light,
                       }
                   }}
                 >

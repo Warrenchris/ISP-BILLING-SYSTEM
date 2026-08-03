@@ -99,7 +99,7 @@ const AdminPaymentSettingsDialog = ({
                         background: theme.palette.primary.main,
                         color: 'text.primary',
                         '&:hover': {
-                            background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)` }
+                            background: theme.palette.primary.light }
                     }}
                 >
                     Save Settings
