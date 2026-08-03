@@ -1,17 +1,13 @@
 import React from 'react';
-import { useTheme } from '@mui/material';
 
 const CustomCard = ({ children, className = '', ...props }) => {
-    const theme = useTheme();
-    const isDark = theme.palette.mode === 'dark';
-
     return (
         <div
             className={`
-                relative overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-                rounded-2xl border
-                ${isDark ? 'bg-background-paper border-white/10 hover:shadow-[0_12px_24px_rgba(0,0,0,0.5)]' : 'bg-white border-black/10 hover:shadow-[0_12px_24px_rgba(0,0,0,0.1)]'}
-                hover:-translate-y-1 hover:border-primary
+                relative overflow-hidden transition-shadow duration-150 ease-out
+                rounded-[20px] border border-[rgba(28,25,23,0.06)] bg-white
+                shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.02)]
+                hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]
                 ${className}
             `}
             {...props}

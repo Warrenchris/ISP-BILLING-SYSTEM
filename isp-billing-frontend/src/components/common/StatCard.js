@@ -8,28 +8,28 @@ const StatCard = ({
     title,
     value,
     subtitle,
-    color = 'primary.main', // Default to Primary Yellow
+    color = '#DDA15E',
     trend,
 }) => {
     return (
         <CustomCard>
-            <div className="p-6 pb-6">
+            <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">
+                        <p className="text-xs font-medium uppercase tracking-wider text-text-secondary mb-1.5">
                             {title}
                         </p>
-                        <h4 className="text-2xl font-bold tracking-tight text-text-primary">
+                        <h4 className="text-2xl font-semibold tracking-tight text-text-primary">
                             {value}
                         </h4>
                     </div>
                     <div
-                        className="flex items-center justify-center w-12 h-12 rounded-xl"
+                        className="flex items-center justify-center w-10 h-10 rounded-xl"
                         style={{
-                            backgroundColor: alpha(color, 0.12),
+                            backgroundColor: alpha(color, 0.08),
                             color: color }}
                     >
-                        {React.cloneElement(icon, { sx: { fontSize: 24, color: 'inherit' } })}
+                        {React.cloneElement(icon, { sx: { fontSize: 20, color: 'inherit' } })}
                     </div>
                 </div>
 
@@ -39,7 +39,7 @@ const StatCard = ({
                             <GrowthIndicator value={trend} />
                         )}
                         {subtitle && (
-                            <span className="text-sm text-text-secondary">
+                            <span className="text-xs text-text-secondary">
                                 {subtitle}
                             </span>
                         )}
