@@ -59,7 +59,7 @@ const CashPaymentDialog = ({
                     sx={{
                         width: 64,
                         height: 64,
-                        background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`, // Blue-ish for Cash
+                        background: `theme.palette.info.main`, // Blue-ish for Cash
                         margin: '0 auto 16px' }}
                 >
                     <CashIcon sx={{ fontSize: 32 }} />
@@ -183,11 +183,11 @@ const CashPaymentDialog = ({
                     disabled={processing || !selectedUser || !cashAmount || !cashReference}
                     sx={{
                         
-                        background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)`,
+                        background: `theme.palette.info.light`,
                         color: 'text.primary',
                         px: 3,
                         '&:hover': {
-                            background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)` }
+                            background: `theme.palette.info.light` }
                     }}
                 >
                     {processing ? <CircularProgress size={20} color="inherit" /> : 'Record Payment'}
