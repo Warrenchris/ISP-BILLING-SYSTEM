@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     Menu as MenuIcon,
+    MenuOpen as MenuOpenIcon,
+    ChevronRight as ChevronRightIcon,
     NotificationsOutlined as BellIcon,
     SettingsOutlined as SettingsIcon,
     Search as SearchIcon,
@@ -47,7 +49,7 @@ function usePageMeta() {
 }
 
 /* ─── Header Component ─────────────────────────────────────────────────────── */
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, collapsed, onToggleCollapse }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { title, sub } = usePageMeta();
@@ -136,6 +138,24 @@ const Header = ({ onMenuClick }) => {
                 >
                     <MenuIcon />
                 </IconButton>
+
+                {/* Desktop sidebar collapse toggle */}
+                {onToggleCollapse && (
+                    <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} arrow>
+                        <IconButton
+                            onClick={onToggleCollapse}
+                            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            sx={{
+                                display: { xs: 'none', md: 'inline-flex' },
+                                color: '#78716C',
+                                transition: 'all 0.15s ease-out',
+                                '&:hover': { bgcolor: 'rgba(28, 25, 23, 0.04)', color: '#1C1917' },
+                            }}
+                        >
+                            {collapsed ? <ChevronRightIcon /> : <MenuOpenIcon />}
+                        </IconButton>
+                    </Tooltip>
+                )}
 
                 {/* Page title */}
                 <Box>
