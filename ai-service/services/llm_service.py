@@ -18,7 +18,7 @@ from services.data_fetcher import fetch_customer_context
 logger = logging.getLogger(__name__)
 
 # ── Config ───────────────────────────────────────────────────────────────────
-_MODEL = os.environ.get("LLM_MODEL", "llama-3.3-70b-versatile")
+_MODEL = os.environ.get("LLM_MODEL", "llama-3.1-8b-instant")
 _MAX_TOKENS = 1024
 _TEMPERATURE = 0.7
 
@@ -165,7 +165,7 @@ def chat(customer_id: str, message: str, session_id: str) -> dict | tuple[dict, 
     groq_client = _get_client()
     try:
         response = groq_client.chat.completions.create(
-            model=os.getenv('LLM_MODEL', 'llama-3.3-70b-versatile'),
+            model=os.getenv('LLM_MODEL', 'llama-3.1-8b-instant'),
             messages=messages_payload,
             max_tokens=1000,
             temperature=0.7
