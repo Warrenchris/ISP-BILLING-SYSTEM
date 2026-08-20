@@ -7,6 +7,9 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
+    "test:unit": "jest tests/unit tests/services --runInBand",
+    "test:integration": "jest tests/integration --runInBand",
+    "test:ci": "jest --runInBand --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
     "migrate": "npx sequelize-cli db:migrate",
     "seed": "node scripts/seed.js"
