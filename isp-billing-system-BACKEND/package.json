@@ -7,6 +7,9 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
+    "test:unit": "jest tests/unit tests/services --runInBand",
+    "test:integration": "jest tests/integration --runInBand",
+    "test:ci": "jest --runInBand --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
     "migrate": "npx sequelize-cli db:migrate",
     "seed": "node scripts/seed.js"
@@ -34,7 +37,6 @@
     "helmet": "^8.0.0",
     "ioredis": "^5.11.1",
     "jest-sonar-reporter": "^2.0.0",
-    "jest-watch-typeahead": "^3.0.1",
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
     "morgan": "^1.10.0",
@@ -53,6 +55,7 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
+    "sequelize-cli": "^6.6.2",
     "supertest": "^7.0.0"
   }
 }

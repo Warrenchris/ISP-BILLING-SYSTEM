@@ -8,8 +8,7 @@ import {
     Button,
     Typography,
     Avatar,
-    CircularProgress,
-    useTheme
+    CircularProgress
 } from '@mui/material';
 import { Phone as PhoneIcon } from '@mui/icons-material';
 import { useApi } from '../../contexts/ApiContext';
@@ -32,7 +31,6 @@ const MpesaPaymentDialog = ({
     amount,
     setAmount
 }) => {
-    const theme = useTheme();
     const { api } = useApi();
     const [mpesaLimits, setMpesaLimits] = useState(defaultMpesaLimits);
 

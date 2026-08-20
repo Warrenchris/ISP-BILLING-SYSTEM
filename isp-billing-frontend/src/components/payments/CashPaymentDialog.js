@@ -11,8 +11,7 @@ import {
     CircularProgress,
     Autocomplete,
     Grid,
-    Box,
-    useTheme
+    Box
 } from '@mui/material';
 import { MonetizationOn as CashIcon } from '@mui/icons-material';
 import { APP_DEFAULT_CURRENCY, formatCurrency } from '../../utils/helpers';
@@ -37,7 +36,6 @@ const CashPaymentDialog = ({
     cashDescription,
     setCashDescription
 }) => {
-    const theme = useTheme();
     return (
         <Dialog
             open={open}

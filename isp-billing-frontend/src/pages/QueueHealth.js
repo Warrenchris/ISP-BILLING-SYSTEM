@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Chip, Alert, CircularProgress,
-  Divider, Grid, useTheme, alpha, LinearProgress, Paper
+  Divider, Grid, useTheme, alpha, LinearProgress
 } from '@mui/material';
 import {
   Storage as QueueIcon,
@@ -9,9 +9,7 @@ import {
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
   Schedule as ScheduleIcon,
-  Speed as SpeedIcon,
-  Memory as MemoryIcon,
-  Assessment as StatsIcon
+  Speed as SpeedIcon
 } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 import EmptyState from '../components/common/EmptyState';
@@ -39,7 +37,9 @@ const QueueHealth = () => {
       setQueueStats(res.data?.data || {});
     } catch (err) {
       console.error('Error fetching queue stats:', err);
-      setError(err.response?.data?.message || 'Failed to load queue stats');
+      const msg = err.response?.data?.message || 'Failed to load queue stats';
+      setError(msg);
+      showAlert(msg, 'error');
       setQueueStats(null);
     } finally {
       setLoading(false);

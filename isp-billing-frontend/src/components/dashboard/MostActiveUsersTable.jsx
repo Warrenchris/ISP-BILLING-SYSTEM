@@ -3,7 +3,7 @@ import {
   Box, CardContent, Typography, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Avatar, Chip, useTheme, alpha
 } from '@mui/material';
-import { Person as UserIcon, DataUsage as UsageIcon } from '@mui/icons-material';
+import { DataUsage as UsageIcon } from '@mui/icons-material';
 import CustomCard from '../common/CustomCard';
 import { formatBytes } from '../../utils/helpers';
 

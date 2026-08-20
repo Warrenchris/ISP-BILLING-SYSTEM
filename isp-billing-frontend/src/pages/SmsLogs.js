@@ -4,7 +4,8 @@ import {
   DialogTitle, DialogContent, DialogActions, Alert, CircularProgress,
   Divider, IconButton, Grid, TextField, useTheme, alpha,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Tooltip, Tabs, Tab, MenuItem, Select, FormControl, InputLabel
+  TableRow, Paper, Tooltip, Tabs, Tab, MenuItem, Select, FormControl, InputLabel,
+  TablePagination
 } from '@mui/material';
 import {
   Sms as SmsIcon,
@@ -29,6 +30,8 @@ const SmsLogs = () => {
   const [templates, setTemplates] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
 
   // Edit template dialog
@@ -394,49 +397,65 @@ const SmsLogs = () => {
               icon={<SmsIcon />}
             />
           ) : (
-            <TableContainer component={Paper} sx={{ border: `1px solid ${theme.palette.divider}` }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Recipient</TableCell>
-                    <TableCell>Template</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Cost</TableCell>
-                    <TableCell>Sent At</TableCell>
-                    <TableCell>Message</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {logs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                          {log.recipient || '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{log.template || '—'}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={log.status || 'Unknown'}
-                          color={getStatusColor(log.status)}
-                          size="small"
-                          icon={getStatusIcon(log.status)}
-                        />
-                      </TableCell>
-                      <TableCell>${log.cost || 0}</TableCell>
-                      <TableCell>
-                        {log.sentAt ? new Date(log.sentAt).toLocaleString() : '—'}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {log.message || '—'}
-                        </Typography>
-                      </TableCell>
+            <Paper sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '16px', overflow: 'hidden' }}>
+              <TableContainer sx={{ maxHeight: 600 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Recipient</TableCell>
+                      <TableCell>Template</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Cost</TableCell>
+                      <TableCell>Sent At</TableCell>
+                      <TableCell>Message</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {logs
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            {log.recipient || '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{log.template || '—'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={log.status || 'Unknown'}
+                            color={getStatusColor(log.status)}
+                            size="small"
+                            icon={getStatusIcon(log.status)}
+                          />
+                        </TableCell>
+                        <TableCell>${log.cost || 0}</TableCell>
+                        <TableCell>
+                          {log.sentAt ? new Date(log.sentAt).toLocaleString() : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {log.message || '—'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={logs.length}
+                page={page}
+                onPageChange={(e, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+              />
+            </Paper>
           )}
         </>
       )}

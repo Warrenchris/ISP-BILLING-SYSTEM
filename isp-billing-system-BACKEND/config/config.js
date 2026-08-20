@@ -1,22 +1,26 @@
 require('dotenv').config(); // Load variables from .env
 
+const dbConfig = {
+  username: process.env.DB_USER || process.env.DB_USERNAME || 'root',
+  password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : '',
+  database: process.env.DB_NAME || process.env.DB_DATABASE || 'isp_billing_db',
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '3306', 10),
+  dialect: process.env.DB_DIALECT || 'mysql',
+  logging: process.env.NODE_ENV === 'production' ? false : console.log,
+};
+
 module.exports = {
-  production: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    dialect: process.env.DB_DIALECT || 'mysql',
+  development: {
+    ...dbConfig,
+    logging: console.log,
+  },
+  test: {
+    ...dbConfig,
     logging: false,
   },
-  development: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    dialect: process.env.DB_DIALECT || 'mysql',
-    logging: console.log,
+  production: {
+    ...dbConfig,
+    logging: false,
   },
 };

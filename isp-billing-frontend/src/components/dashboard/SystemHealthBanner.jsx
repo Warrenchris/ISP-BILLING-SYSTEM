@@ -2,10 +2,8 @@ import React from 'react';
 import { Box, Typography, Chip, Button, useTheme, alpha } from '@mui/material';
 import {
   CheckCircle as HealthyIcon,
-  Warning as WarningIcon,
   Router as RouterIcon,
-  Storage as QueueIcon,
-  Security as SystemIcon
+  Storage as QueueIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 

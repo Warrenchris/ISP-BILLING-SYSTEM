@@ -14,10 +14,23 @@ import { useApi } from '../contexts/ApiContext';
 import EmptyState from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
 
+import { useNotification } from '../contexts/NotificationContext';
+
 const Reports = () => {
     const theme = useTheme();
     const { reportService } = useApi();
+    const { notifySuccess } = useNotification();
     const [period, setPeriod] = useState('monthly');
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportPdf = () => {
+        setExporting(true);
+        notifySuccess(`Exporting ${period} financial report...`);
+        setTimeout(() => {
+            window.print();
+            setExporting(false);
+        }, 300);
+    };
     const [stats, setStats] = useState(null);
     const [statsLoading, setStatsLoading] = useState(true);
     const [statsError, setStatsError] = useState(null);
@@ -135,7 +148,14 @@ const Reports = () => {
                         <MenuItem value="monthly">Monthly</MenuItem>
                         <MenuItem value="yearly">Yearly</MenuItem>
                     </TextField>
-                    <Button variant="outlined" sx={{}}>Export PDF</Button>
+                    <Button
+                        variant="outlined"
+                        onClick={handleExportPdf}
+                        disabled={exporting}
+                        sx={{ textTransform: 'none', fontWeight: 500 }}
+                    >
+                        {exporting ? 'Exporting...' : 'Export PDF'}
+                    </Button>
                 </Box>
             </Box>
 

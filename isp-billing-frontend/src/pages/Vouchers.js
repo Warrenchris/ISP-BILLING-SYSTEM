@@ -5,7 +5,7 @@ import {
   Divider, IconButton, Grid, TextField, useTheme, alpha,
   Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Paper, Tooltip, MenuItem, Select, FormControl, InputLabel,
-  Tabs, Tab
+  Tabs, Tab, TablePagination
 } from '@mui/material';
 import {
   ConfirmationNumber as VoucherIcon,
@@ -20,6 +20,7 @@ import {
 import { useApi } from '../contexts/ApiContext';
 import EmptyState from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
 
 const Vouchers = () => {
   const { api } = useApi();
@@ -32,6 +33,25 @@ const Vouchers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [revokeDlg, setRevokeDlg] = useState({ open: false, voucherId: null, loading: false });
+
+  const handleRevokeConfirm = async () => {
+    if (!revokeDlg.voucherId) return;
+    setRevokeDlg(prev => ({ ...prev, loading: true }));
+    try {
+      await api.post(`/vouchers/${revokeDlg.voucherId}/revoke`);
+      showAlert('Voucher revoked successfully', 'success');
+      fetchVouchers();
+      fetchStats();
+    } catch (err) {
+      console.error('Error revoking voucher:', err);
+      showAlert(err.response?.data?.message || 'Failed to revoke voucher', 'error');
+    } finally {
+      setRevokeDlg({ open: false, voucherId: null, loading: false });
+    }
+  };
 
   // Generate dialog
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
@@ -151,18 +171,8 @@ const Vouchers = () => {
     }
   };
 
-  const handleRevoke = async (voucherId) => {
-    if (!window.confirm('Are you sure you want to revoke this voucher?')) return;
-
-    try {
-      await api.post(`/vouchers/${voucherId}/revoke`);
-      showAlert('Voucher revoked successfully', 'success');
-      fetchVouchers();
-      fetchStats();
-    } catch (err) {
-      console.error('Error revoking voucher:', err);
-      showAlert(err.response?.data?.message || 'Failed to revoke voucher', 'error');
-    }
+  const handleRevoke = (voucherId) => {
+    setRevokeDlg({ open: true, voucherId, loading: false });
   };
 
   const handleExport = async (batchId) => {
@@ -481,61 +491,77 @@ const Vouchers = () => {
               }}
             />
           ) : (
-            <TableContainer component={Paper} sx={{ border: `1px solid ${theme.palette.divider}` }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Code</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Plan</TableCell>
-                    <TableCell>Batch</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell>Expires</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {vouchers.map((voucher) => (
-                    <TableRow key={voucher.id}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
-                          {voucher.code}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={voucher.status || 'Unknown'}
-                          color={getStatusColor(voucher.status)}
-                          size="small"
-                          icon={getStatusIcon(voucher.status)}
-                        />
-                      </TableCell>
-                      <TableCell>{voucher.DataPlan?.name || '—'}</TableCell>
-                      <TableCell>{voucher.batchId || '—'}</TableCell>
-                      <TableCell>
-                        {voucher.createdAt ? new Date(voucher.createdAt).toLocaleDateString() : '—'}
-                      </TableCell>
-                      <TableCell>
-                        {voucher.expiresAt ? new Date(voucher.expiresAt).toLocaleDateString() : '—'}
-                      </TableCell>
-                      <TableCell>
-                        {voucher.status === 'active' && (
-                          <Tooltip title="Revoke">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleRevoke(voucher.id)}
-                            >
-                              <BlockIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </TableCell>
+            <Paper sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '16px', overflow: 'hidden' }}>
+              <TableContainer sx={{ maxHeight: 600 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Code</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Plan</TableCell>
+                      <TableCell>Batch</TableCell>
+                      <TableCell>Created</TableCell>
+                      <TableCell>Expires</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {vouchers
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((voucher) => (
+                      <TableRow key={voucher.id}>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                            {voucher.code}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={voucher.status || 'Unknown'}
+                            color={getStatusColor(voucher.status)}
+                            size="small"
+                            icon={getStatusIcon(voucher.status)}
+                          />
+                        </TableCell>
+                        <TableCell>{voucher.DataPlan?.name || '—'}</TableCell>
+                        <TableCell>{voucher.batchId || '—'}</TableCell>
+                        <TableCell>
+                          {voucher.createdAt ? new Date(voucher.createdAt).toLocaleDateString() : '—'}
+                        </TableCell>
+                        <TableCell>
+                          {voucher.expiresAt ? new Date(voucher.expiresAt).toLocaleDateString() : '—'}
+                        </TableCell>
+                        <TableCell>
+                          {voucher.status === 'active' && (
+                            <Tooltip title="Revoke">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleRevoke(voucher.id)}
+                              >
+                                <BlockIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={vouchers.length}
+                page={page}
+                onPageChange={(e, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+              />
+            </Paper>
           )}
         </>
       )}
@@ -692,6 +718,17 @@ const Vouchers = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={revokeDlg.open}
+        title="Revoke Voucher"
+        message="Are you sure you want to revoke this voucher? Once revoked, it cannot be used for hotspot access."
+        confirmText="Revoke Voucher"
+        confirmColor="error"
+        loading={revokeDlg.loading}
+        onConfirm={handleRevokeConfirm}
+        onClose={() => setRevokeDlg({ open: false, voucherId: null, loading: false })}
+      />
     </Box>
   );
 };

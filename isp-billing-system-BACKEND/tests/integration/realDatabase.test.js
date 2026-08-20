@@ -7,12 +7,18 @@ describe('Real Database Integration Tests', () => {
   let models;
   
   beforeAll(async () => {
+    const dbHost = process.env.DB_HOST || '127.0.0.1';
+    const dbPort = process.env.DB_PORT || '3307';
+    const dbUser = process.env.DB_USER || 'root';
+    const dbPassword = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'rootpassword';
+    const testDbName = process.env.DB_NAME || 'isp_billing_test_db';
+
     // 1. Create a fresh test database using a root connection
-    const rootSequelize = new Sequelize('mysql://root:rootpassword@127.0.0.1:3307/mysql', {
+    const rootSequelize = new Sequelize(`mysql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/mysql`, {
       logging: false,
     });
-    await rootSequelize.query('DROP DATABASE IF EXISTS isp_billing_test_db;');
-    await rootSequelize.query('CREATE DATABASE isp_billing_test_db;');
+    await rootSequelize.query(`DROP DATABASE IF EXISTS ${testDbName};`);
+    await rootSequelize.query(`CREATE DATABASE ${testDbName};`);
     await rootSequelize.close();
 
     // 2. Run actual migrations against the test database
@@ -20,11 +26,11 @@ describe('Real Database Integration Tests', () => {
     execSync('npx sequelize-cli db:migrate', {
       env: {
         ...process.env,
-        DB_HOST: '127.0.0.1',
-        DB_PORT: '3307',
-        DB_USER: 'root',
-        DB_PASSWORD: 'rootpassword',
-        DB_NAME: 'isp_billing_test_db',
+        DB_HOST: dbHost,
+        DB_PORT: dbPort,
+        DB_USER: dbUser,
+        DB_PASSWORD: dbPassword,
+        DB_NAME: testDbName,
         NODE_ENV: 'production',
       },
       stdio: 'inherit',
@@ -32,11 +38,11 @@ describe('Real Database Integration Tests', () => {
     console.log('✅ Migrations complete.');
 
     // 3. Configure env variables for test database
-    process.env.DB_HOST = '127.0.0.1';
-    process.env.DB_PORT = '3307';
-    process.env.DB_USER = 'root';
-    process.env.DB_PASSWORD = 'rootpassword';
-    process.env.DB_NAME = 'isp_billing_test_db';
+    process.env.DB_HOST = dbHost;
+    process.env.DB_PORT = dbPort;
+    process.env.DB_USER = dbUser;
+    process.env.DB_PASSWORD = dbPassword;
+    process.env.DB_NAME = testDbName;
     process.env.NODE_ENV = 'test';
 
     // 4. Force require the models using the test database

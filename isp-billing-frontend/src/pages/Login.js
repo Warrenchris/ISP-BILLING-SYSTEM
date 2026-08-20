@@ -8,7 +8,6 @@ import {
   CircularProgress,
   Link,
   InputAdornment,
-  Divider,
   Grow,
   Zoom,
   Slide,
@@ -31,7 +30,6 @@ import {
   Phone,
   Router,
   CheckCircle as CheckCircleIcon } from '@mui/icons-material';
-import { Google, Facebook } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
@@ -139,10 +137,6 @@ const Login = ({ darkMode, toggleDarkMode }) => {
     // if failed, AuthContext triggers notification.
 
     setLoading(false);
-  };
-
-  const handleSocialLogin = (provider) => {
-    console.log(`Logging in with ${provider}`);
   };
 
   const togglePasswordVisibility = () => {
@@ -432,76 +426,7 @@ const Login = ({ darkMode, toggleDarkMode }) => {
             </Fade>
 
             {/* Local Error Alert removed - global notification used */}
-
-            <Fade in={mounted} timeout={1200}>
-              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<Google />}
-                  onClick={() => handleSocialLogin('google')}
-                  sx={{
-                    py: 1.5,
-                    
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: '-100%',
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                      transition: 'left 0.5s' },
-                    '&:hover::before': {
-                      left: '100%' } }}
-                >
-                  Google
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<Facebook />}
-                  onClick={() => handleSocialLogin('facebook')}
-                  sx={{
-                    py: 1.5,
-                    
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: '-100%',
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                      transition: 'left 0.5s' },
-                    '&:hover::before': {
-                      left: '100%' } }}
-                >
-                  Facebook
-                </Button>
-              </Box>
-            </Fade>
-
-            <Fade in={mounted} timeout={1400}>
-              <Divider sx={{
-                my: 3,
-                color: theme.palette.text.secondary,
-                '&::before, &::after': {
-                  borderColor: darkMode
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(0, 0, 0, 0.1)' }
-              }}>
-                OR
-              </Divider>
-            </Fade>
+            {/* Social login buttons removed — backend integration pending */}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ mb: 2 }}>
               <Fade in={mounted} timeout={1600}>

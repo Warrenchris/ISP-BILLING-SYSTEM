@@ -1,8 +1,8 @@
-process.env.DB_HOST = '127.0.0.1';
-process.env.DB_PORT = '3307';
-process.env.DB_USER = 'root';
-process.env.DB_PASSWORD = 'rootpassword';
-process.env.DB_NAME = 'isp_billing_test_db';
+process.env.DB_HOST = process.env.DB_HOST || '127.0.0.1';
+process.env.DB_PORT = process.env.DB_PORT || '3307';
+process.env.DB_USER = process.env.DB_USER || 'root';
+process.env.DB_PASSWORD = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'rootpassword';
+process.env.DB_NAME = process.env.DB_NAME || 'isp_billing_test_db';
 process.env.NODE_ENV = 'test';
 
 // Force require the models using the test database

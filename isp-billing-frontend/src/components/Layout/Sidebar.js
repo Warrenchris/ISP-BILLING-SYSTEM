@@ -290,6 +290,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                 border: isDesktop ? '1px solid rgba(28, 25, 23, 0.06)' : 'none',
                 boxShadow: isDesktop ? '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)' : 'none',
                 overflow: 'hidden',
+                transition: 'all 0.2s ease-out',
             }}
         >
             {/* ── Logo / Brand ─────────────────────────────────────────── */}
@@ -302,32 +303,58 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                     mb: 0.5,
                 }}
             >
-                <Box display="flex" alignItems="center" gap={1.5}>
-                    <Box
-                        sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: '10px',
-                            flexShrink: 0,
-                            bgcolor: '#DDA15E',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <Typography
+                {collapsed ? (
+                    <Tooltip title="ISP Billing v2.0" placement="right" arrow>
+                        <Box
                             sx={{
-                                fontWeight: 600,
-                                fontSize: '0.8rem',
-                                color: '#FFFFFF',
-                                letterSpacing: '0.02em',
+                                width: 36,
+                                height: 36,
+                                borderRadius: '10px',
+                                flexShrink: 0,
+                                bgcolor: '#DDA15E',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
                             }}
                         >
-                            ISP
-                        </Typography>
-                    </Box>
-
-                    {!collapsed && (
+                            <Typography
+                                sx={{
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem',
+                                    color: '#FFFFFF',
+                                    letterSpacing: '0.02em',
+                                }}
+                            >
+                                ISP
+                            </Typography>
+                        </Box>
+                    </Tooltip>
+                ) : (
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                        <Box
+                            sx={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: '10px',
+                                flexShrink: 0,
+                                bgcolor: '#DDA15E',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Typography
+                                sx={{
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem',
+                                    color: '#FFFFFF',
+                                    letterSpacing: '0.02em',
+                                }}
+                            >
+                                ISP
+                            </Typography>
+                        </Box>
                         <Box>
                             <Typography
                                 sx={{
@@ -349,8 +376,8 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                                 v2.0
                             </Typography>
                         </Box>
-                    )}
-                </Box>
+                    </Box>
+                )}
 
                 {/* Mobile close */}
                 {!isDesktop && (
@@ -367,7 +394,7 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
             {/* ── Nav scroll area ──────────────────────────────────────── */}
             <Box
                 className="sidebar-scroll"
-                sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: 1, py: 0.5 }}
+                sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: collapsed ? 0.75 : 1, py: 0.5 }}
             >
                 {filteredSecs.map((section) => (
                     <SectionGroup
@@ -391,9 +418,9 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
             {/* ── Footer / User profile ─────────────────────────────────── */}
             <Box
                 sx={{
-                    px: 1.5,
+                    px: collapsed ? 1 : 1.5,
                     pt: 1,
-                    pb: 2,
+                    pb: 1.5,
                     borderTop: '1px solid rgba(28, 25, 23, 0.06)',
                     mt: 1,
                 }}
@@ -404,59 +431,92 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                     onClick={!isDesktop ? onNavigate : undefined}
                     style={{ textDecoration: 'none' }}
                 >
-                    {({ isActive }) => (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5,
-                                p: collapsed ? 1 : 1.25,
-                                mb: 0.75,
-                                borderRadius: '10px',
-                                justifyContent: collapsed ? 'center' : 'flex-start',
-                                bgcolor: isActive ? 'rgba(221, 161, 94, 0.06)' : 'transparent',
-                                transition: 'all 0.15s ease-out',
-                                cursor: 'pointer',
-                                '&:hover': {
-                                    bgcolor: 'rgba(28, 25, 23, 0.04)',
-                                },
-                            }}
-                        >
-                            <Avatar
+                    {({ isActive }) => {
+                        const card = (
+                            <Box
                                 sx={{
-                                    width: 32,
-                                    height: 32,
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    flexShrink: 0,
-                                    bgcolor: '#2D6A4F',
-                                    color: '#FFFFFF',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: collapsed ? 0 : 1.5,
+                                    p: collapsed ? 1 : 1.25,
+                                    mb: 0.75,
+                                    borderRadius: '10px',
+                                    justifyContent: collapsed ? 'center' : 'flex-start',
+                                    bgcolor: isActive ? 'rgba(221, 161, 94, 0.06)' : 'transparent',
+                                    transition: 'all 0.15s ease-out',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(28, 25, 23, 0.04)',
+                                    },
                                 }}
                             >
-                                {initials}
-                            </Avatar>
-                            {!collapsed && (
-                                <Box overflow="hidden">
-                                    <Typography
-                                        sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#1C1917' }}
-                                        noWrap
-                                    >
-                                        {displayName}
-                                    </Typography>
-                                    <Typography
-                                        sx={{ fontSize: '0.6875rem', color: '#A8A29E' }}
-                                        noWrap
-                                    >
-                                        View Account
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Box>
-                    )}
+                                <Avatar
+                                    sx={{
+                                        width: 32,
+                                        height: 32,
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        flexShrink: 0,
+                                        bgcolor: '#2D6A4F',
+                                        color: '#FFFFFF',
+                                    }}
+                                >
+                                    {initials}
+                                </Avatar>
+                                {!collapsed && (
+                                    <Box overflow="hidden">
+                                        <Typography
+                                            sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#1C1917' }}
+                                            noWrap
+                                        >
+                                            {displayName}
+                                        </Typography>
+                                        <Typography
+                                            sx={{ fontSize: '0.6875rem', color: '#A8A29E' }}
+                                            noWrap
+                                        >
+                                            View Account
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
+                        );
+
+                        return collapsed ? (
+                            <Tooltip title={`${displayName} (View Profile)`} placement="right" arrow>
+                                {card}
+                            </Tooltip>
+                        ) : card;
+                    }}
                 </NavLink>
 
                 {/* Sign out */}
-                <Tooltip title={collapsed ? 'Sign Out' : ''} placement="right" arrow>
+                {collapsed ? (
+                    <Tooltip title="Sign Out" placement="right" arrow>
+                        <Box
+                            onClick={handleLogout}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Sign out"
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleLogout(); }}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                p: 1,
+                                borderRadius: '10px',
+                                cursor: 'pointer',
+                                color: '#DC2626',
+                                transition: 'all 0.15s ease-out',
+                                '&:hover': {
+                                    bgcolor: 'rgba(220, 38, 38, 0.06)',
+                                },
+                            }}
+                        >
+                            <LogoutOutlined sx={{ fontSize: 20 }} />
+                        </Box>
+                    </Tooltip>
+                ) : (
                     <Box
                         onClick={handleLogout}
                         role="button"
@@ -466,9 +526,9 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: collapsed ? 'center' : 'flex-start',
+                            justifyContent: 'flex-start',
                             gap: 1.5,
-                            px: collapsed ? 1 : 1.5,
+                            px: 1.5,
                             py: 0.875,
                             borderRadius: '10px',
                             cursor: 'pointer',
@@ -480,13 +540,11 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         }}
                     >
                         <LogoutOutlined sx={{ fontSize: 20 }} />
-                        {!collapsed && (
-                            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500 }}>
-                                Sign Out
-                            </Typography>
-                        )}
+                        <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500 }}>
+                            Sign Out
+                        </Typography>
                     </Box>
-                </Tooltip>
+                )}
             </Box>
 
             {/* Desktop collapse toggle — inline at bottom */}
@@ -499,25 +557,27 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
                         justifyContent: collapsed ? 'center' : 'flex-end',
                     }}
                 >
-                    <IconButton
-                        onClick={() => setCollapsed(c => !c)}
-                        size="small"
-                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                        sx={{
-                            width: 28,
-                            height: 28,
-                            color: '#A8A29E',
-                            transition: 'all 0.15s ease-out',
-                            '&:hover': {
-                                bgcolor: 'rgba(28, 25, 23, 0.04)',
-                                color: '#78716C',
-                            },
-                        }}
-                    >
-                        {collapsed
-                            ? <ChevronRight sx={{ fontSize: 16 }} />
-                            : <ChevronLeft sx={{ fontSize: 16 }} />}
-                    </IconButton>
+                    <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right" arrow>
+                        <IconButton
+                            onClick={() => setCollapsed(c => !c)}
+                            size="small"
+                            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            sx={{
+                                width: 28,
+                                height: 28,
+                                color: '#A8A29E',
+                                transition: 'all 0.15s ease-out',
+                                '&:hover': {
+                                    bgcolor: 'rgba(28, 25, 23, 0.04)',
+                                    color: '#78716C',
+                                },
+                            }}
+                        >
+                            {collapsed
+                                ? <ChevronRight sx={{ fontSize: 16 }} />
+                                : <ChevronLeft sx={{ fontSize: 16 }} />}
+                        </IconButton>
+                    </Tooltip>
                 </Box>
             )}
         </Box>
@@ -525,8 +585,19 @@ const DrawerContent = ({ collapsed, setCollapsed, onNavigate, isDesktop }) => {
 };
 
 /* ─── Sidebar wrapper ───────────────────────────────────────────────────────── */
-const Sidebar = ({ mobileOpen, setMobileOpen }) => {
-    const [collapsed, setCollapsed] = useState(false);
+const Sidebar = ({ mobileOpen, setMobileOpen, collapsed: propCollapsed, setCollapsed: propSetCollapsed }) => {
+    const [localCollapsed, setLocalCollapsed] = useState(() => {
+        return localStorage.getItem('sidebar_collapsed') === 'true';
+    });
+
+    const collapsed = propCollapsed !== undefined ? propCollapsed : localCollapsed;
+    const setCollapsed = propSetCollapsed || ((val) => {
+        setLocalCollapsed(prev => {
+            const next = typeof val === 'function' ? val(prev) : val;
+            localStorage.setItem('sidebar_collapsed', String(next));
+            return next;
+        });
+    });
 
     const drawerWidth = collapsed ? 72 : 264;
 

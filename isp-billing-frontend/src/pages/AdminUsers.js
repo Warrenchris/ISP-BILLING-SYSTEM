@@ -8,6 +8,7 @@ import UsersTable from '../components/users/UsersTable';
 import UserDialog from '../components/users/UserDialog';
 import UserDetailsDialog from '../components/users/UserDetailsDialog';
 import UserSubscriptionsDialog from '../components/users/UserSubscriptionsDialog';
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
 
 
 const emptyUser = {
@@ -193,15 +194,25 @@ export default function AdminUsers() {
     }, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
   }, [userDialogOpen, userDetailsOpen]);
-  const deleteUser = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+
+  const [deleteConfirmDlg, setDeleteConfirmDlg] = useState({ open: false, userId: null, loading: false });
+
+  const handleDeleteUser = (id) => {
+    setDeleteConfirmDlg({ open: true, userId: id, loading: false });
+  };
+
+  const executeDeleteUser = async () => {
+    if (!deleteConfirmDlg.userId) return;
+    setDeleteConfirmDlg(prev => ({ ...prev, loading: true }));
     try {
-      await adminApi.users.delete(id);
+      await adminApi.users.delete(deleteConfirmDlg.userId);
       showAlert('User deleted successfully', 'success');
       loadUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
       showAlert('Failed to delete user', 'error');
+    } finally {
+      setDeleteConfirmDlg({ open: false, userId: null, loading: false });
     }
   };
 
@@ -268,7 +279,7 @@ export default function AdminUsers() {
         loading={loading}
         onUserClick={handleUserClick}
         onEdit={handleEditClick}
-        onDelete={deleteUser}
+        onDelete={handleDeleteUser}
         onManageSubscriptions={(user) => {
           setSelectedUserForSubscriptions(user);
           loadUserSubscriptions(user.id);
@@ -306,6 +317,17 @@ export default function AdminUsers() {
             loadUserSubscriptions(selectedUserForSubscriptions.id);
           }
         }}
+      />
+
+      <ConfirmationDialog
+        open={deleteConfirmDlg.open}
+        title="Delete User Account"
+        message="Are you sure you want to delete this user? All user data, subscriptions, and access credentials will be permanently removed."
+        confirmText="Delete User"
+        confirmColor="error"
+        loading={deleteConfirmDlg.loading}
+        onConfirm={executeDeleteUser}
+        onClose={() => setDeleteConfirmDlg({ open: false, userId: null, loading: false })}
       />
     </Box>
   );

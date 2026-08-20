@@ -41,6 +41,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { useApi } from '../contexts/ApiContext';
 import aiService from '../services/aiService';
 import CustomCard from '../components/common/CustomCard';
@@ -66,11 +67,16 @@ import MostActiveUsersTable from '../components/dashboard/MostActiveUsersTable';
 import PackagePerformanceTable from '../components/dashboard/PackagePerformanceTable';
 import PackageUtilizationForecastCard from '../components/dashboard/PackageUtilizationForecastCard';
 
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
+import OperationalInsightsCard from '../components/dashboard/OperationalInsightsCard';
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService } = useApi();
   const theme = useTheme();
+  const { api, subscriptionsApi, paymentsApi, invoicesApi, adminApi, supportService, reportService } = useApi();
+  const { notifySuccess, notifyError } = useNotification();
+  const [deleteConfirmDlg, setDeleteConfirmDlg] = useState({ open: false, userId: null, loading: false });
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -133,7 +139,6 @@ const Dashboard = () => {
     weeklyBandwidth: [],
     liveUsers: { liveNow: 0, avgActive: 0, weeklyPeak: 0 }
   });
-  const [smsBalance, setSmsBalance] = useState('KES 2,450.00');
 
   // Quick actions: cash payment dialog state (reuse existing component)
   const [cashDialog, setCashDialog] = useState(false);
@@ -266,9 +271,6 @@ const Dashboard = () => {
       const users = usersRes.status === 'fulfilled' ? usersRes.value?.data?.data?.users || [] : [];
       if (centipidRes.status === 'fulfilled' && centipidRes.value?.data?.data) {
         setCentipidData(centipidRes.value.data.data);
-      }
-      if (smsBalanceRes.status === 'fulfilled' && smsBalanceRes.value?.data?.balance) {
-        setSmsBalance(smsBalanceRes.value.data.balance);
       }
 
       // Keep PriorityTicketsWidget from existing support endpoint (top 5)
@@ -452,10 +454,8 @@ const Dashboard = () => {
           await adminApi.users.update(userId, { role: 'customer' });
           break;
         case 'delete':
-          if (window.confirm('Are you sure you want to delete this user?')) {
-            await adminApi.users.delete(userId);
-          }
-          break;
+          setDeleteConfirmDlg({ open: true, userId, loading: false });
+          return;
         default:
           break;
       }
@@ -463,6 +463,22 @@ const Dashboard = () => {
       fetchAdminActivity();
     } catch (error) {
       console.error('Error performing user action:', error);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmDlg.userId) return;
+    setDeleteConfirmDlg(prev => ({ ...prev, loading: true }));
+    try {
+      await adminApi.users.delete(deleteConfirmDlg.userId);
+      notifySuccess('User deleted successfully');
+      fetchAdminOverview();
+      fetchAdminActivity();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      notifyError('Failed to delete user');
+    } finally {
+      setDeleteConfirmDlg({ open: false, userId: null, loading: false });
     }
   };
 
@@ -730,6 +746,9 @@ const Dashboard = () => {
               <WeeklyBandwidthCard data={centipidData.weeklyBandwidth} />
             </Grid>
           </Grid>
+
+          {/* Phase 10: Operational Intelligence & Trend Insights */}
+          <OperationalInsightsCard stats={aiQuickStats} />
 
           {/* Connection Type Trends & Package Forecast */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -1311,6 +1330,17 @@ const Dashboard = () => {
           )}
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={deleteConfirmDlg.open}
+        title="Delete User Account"
+        message="Are you sure you want to delete this user? This action cannot be undone and will revoke all access."
+        confirmText="Delete User"
+        confirmColor="error"
+        loading={deleteConfirmDlg.loading}
+        onConfirm={handleDeleteConfirm}
+        onClose={() => setDeleteConfirmDlg({ open: false, userId: null, loading: false })}
+      />
     </Box>
   );
 };
