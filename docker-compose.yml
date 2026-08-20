@@ -13,9 +13,9 @@ services:
       - DB_HOST=db
       - DB_PORT=3306
       - DB_USER=root
-      - DB_PASSWORD=rootpassword
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       - DB_NAME=isp_billing_db
-      - JWT_SECRET=isp_billing_secure_secret_key_2025
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
       - JWT_EXPIRES_IN=7d
       - AI_SERVICE_URL=http://ai-service:5001
       # M-Pesa (Daraja): from project-root .env — same pattern as GROQ_API_KEY on ai-service
@@ -31,6 +31,7 @@ services:
       # Phase 1: Router provisioning
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - MOCK_MIKROTIK=${MOCK_MIKROTIK:-false}
       - ROUTER_ENCRYPTION_KEY=${ROUTER_ENCRYPTION_KEY:-}
       - EXPIRY_CHECK_CRON=${EXPIRY_CHECK_CRON:-*/10 * * * *}
@@ -80,7 +81,7 @@ services:
       - DB_HOST=db
       - DB_PORT=3306
       - DB_USER=root
-      - DB_PASSWORD=rootpassword
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       - DB_NAME=isp_billing_db
       - GROQ_API_KEY=${GROQ_API_KEY}
       - LLM_MODEL=${LLM_MODEL:-llama-3.1-8b-instant}
@@ -118,13 +119,13 @@ services:
     image: mysql:8.0
     container_name: isp-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       MYSQL_DATABASE: isp_billing_db
     ports:
       # Expose database port for local integration tests on host machine (do NOT expose in production environment)
       - "3307:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=rootpassword"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -138,6 +139,17 @@ services:
   redis:
     image: redis:7-alpine
     container_name: isp-redis
+    # No REDIS_PASSWORD in .env -> falls back to "" (no auth), matching previous
+    # unauthenticated behavior for local/dev use. SET REDIS_PASSWORD in .env for any
+    # deployment reachable outside your own machine — this port is mapped to the host below.
+    command: >
+      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+               redis-server --requirepass "$$REDIS_PASSWORD";
+             else
+               redis-server;
+             fi'
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     ports:
       - "6379:6379"
     volumes:
@@ -146,7 +158,7 @@ services:
     networks:
       - isp-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping; else redis-cli ping; fi"]
       interval: 10s
       timeout: 5s
       retries: 5
