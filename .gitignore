@@ -4,19 +4,28 @@
 .env.*
 !.env.example
 
-# Python
+# Database dumps and backups
+*.sql
+*.sql.gz
+*.dump
+
+# Python & Virtual Environments
+.venv/
+venv/
 __pycache__/
 *.py[cod]
+*.pyc
 *.pyo
 ai-service/data/model_coefficients.json
 
-# Node
+# Node & Dependencies
 node_modules/
 isp-billing-system-BACKEND/node_modules/
+isp-billing-frontend/node_modules/
 
-# Frontend
-isp-billing-system-FRONTEND/node_modules/
-isp-billing-system-FRONTEND/.env
+# Build artifacts
+build/
+dist/
 
 # Logs
 *.log
