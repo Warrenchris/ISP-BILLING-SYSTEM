@@ -14,7 +14,8 @@ import {
   Avatar,
   Fade,
   Grow,
-  useTheme } from '@mui/material';
+  useTheme,
+  alpha } from '@mui/material';
 import { Lock as LockIcon, Visibility, VisibilityOff, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { useApi } from '../contexts/ApiContext';
 

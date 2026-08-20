@@ -43,7 +43,9 @@ router.get('/', authenticate, authorize(['admin']), (req, res, next) => {
 
 }, getAllPayments);
 
-// POST /api/payments/mpesa/initiate - Initiate M-Pesa payment
+const paymentService = require('../services/paymentService');
+
+// POST /api/payments/mpesa/initiate - Initiate M-Pesa payment (Creates Payment record and handles callbacks)
 router.post(
   '/mpesa/initiate',
   authenticate,
@@ -52,9 +54,8 @@ router.post(
   validateMpesaStkInitiate,
   async (req, res) => {
     try {
-      const { phoneNumber, amount, accountReference, transactionDesc, description } = req.body;
+      const { phoneNumber, amount, accountReference, transactionDesc, description, subscriptionId } = req.body;
 
-      // Add validation
       if (!phoneNumber || !amount) {
         return res.status(400).json({
           success: false,
@@ -62,17 +63,16 @@ router.post(
         });
       }
 
-      const response = await mpesaService.initiateSTKPush({
+      const result = await paymentService.initiateDirectPayment({
+        userId: req.user?.id,
         phoneNumber,
         amount,
-        accountReference: accountReference || `ISP-${Date.now()}`,
-        transactionDesc: transactionDesc || description || 'ISP Service Payment'
+        accountReference,
+        description: transactionDesc || description,
+        subscriptionId
       });
 
-      res.json({
-        success: true,
-        data: response
-      });
+      res.json(result);
     } catch (error) {
       console.error('M-Pesa initiation error:', error);
       if (error.code === 'MPESA_NOT_CONFIGURED') {
@@ -81,7 +81,7 @@ router.post(
           code: 'MPESA_NOT_CONFIGURED'
         });
       }
-      res.status(500).json({
+      res.status(error.statusCode || 500).json({
         success: false,
         message: error.message || 'Failed to initiate M-Pesa payment'
       });

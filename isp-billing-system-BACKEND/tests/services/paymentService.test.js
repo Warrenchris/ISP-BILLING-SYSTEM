@@ -165,4 +165,67 @@ describe('PaymentService', () => {
             );
         });
     });
+
+    describe('initiateDirectPayment', () => {
+        it('should create Payment record in DB before calling initiateSTKPush', async () => {
+            const { Payment, sequelize } = require('../../src/models');
+
+            const mockPaymentUpdate = jest.fn().mockResolvedValue(true);
+            const mockTransactionCommit = jest.fn();
+
+            Payment.create.mockResolvedValue({
+                id: 'payment-direct-1',
+                userId: 'user-123',
+                amount: 500,
+                phoneNumber: '254711222333',
+                reference: 'ISP-TEST-1',
+                description: 'Direct STK Payment',
+                status: PaymentStatus.PENDING,
+                getFormattedAmount: () => '500',
+                update: mockPaymentUpdate
+            });
+
+            sequelize.transaction.mockResolvedValueOnce({
+                commit: mockTransactionCommit,
+                rollback: jest.fn(),
+                finished: false
+            });
+
+            const result = await PaymentService.initiateDirectPayment({
+                userId: 'user-123',
+                phoneNumber: '0711222333',
+                amount: 500,
+                accountReference: 'ISP-TEST-1',
+                description: 'Direct STK Payment'
+            });
+
+            expect(Payment.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'user-123',
+                    amount: 500,
+                    reference: 'ISP-TEST-1'
+                }),
+                expect.any(Object)
+            );
+            expect(mockTransactionCommit).toHaveBeenCalled();
+            expect(mockPaymentUpdate).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    checkoutRequestId: 'ws_CO_123456',
+                    status: PaymentStatus.PENDING
+                })
+            );
+            expect(result.success).toBe(true);
+            expect(result.payment.checkoutRequestId).toBe('ws_CO_123456');
+        });
+
+        it('should reject invalid amount with 400 error', async () => {
+            await expect(
+                PaymentService.initiateDirectPayment({
+                    userId: 'user-123',
+                    phoneNumber: '0711222333',
+                    amount: -100
+                })
+            ).rejects.toEqual(expect.objectContaining({ statusCode: 400 }));
+        });
+    });
 });

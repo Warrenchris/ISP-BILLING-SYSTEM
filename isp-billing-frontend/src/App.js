@@ -35,6 +35,7 @@ import Vouchers from './pages/Vouchers';
 import SmsLogs from './pages/SmsLogs';
 import QueueHealth from './pages/QueueHealth';
 import ActiveSessions from './pages/ActiveSessions';
+import ResetPassword from './pages/ResetPassword';
 import ChatWidget from './components/ai/ChatWidget';
 import { useAuth } from './contexts/AuthContext';
 
@@ -47,6 +48,15 @@ function AppRoutes({ darkmode, toggleDarkMode }) {
     <Router>
       <Routes>
         <Route
+          path="/login"
+          element={
+            <Login
+              darkMode={darkmode}
+              toggleDarkMode={toggleDarkMode}
+            />
+          }
+        />
+        <Route
           path="/Login"
           element={
             <Login
@@ -54,6 +64,10 @@ function AppRoutes({ darkmode, toggleDarkMode }) {
               toggleDarkMode={toggleDarkMode}
             />
           }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
         />
         <Route
           path="/portal"

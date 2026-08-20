@@ -137,6 +137,87 @@ class PaymentService {
     }
 
     /**
+     * Initiate a direct M-Pesa payment (creates Payment record before STK dispatch)
+     */
+    async initiateDirectPayment({ userId, phoneNumber, amount, accountReference, description, subscriptionId }) {
+        if (!phoneNumber || !amount || Number(amount) <= 0) {
+            throw { statusCode: 400, message: 'Phone number and a valid amount are required' };
+        }
+
+        const transaction = await sequelize.transaction();
+
+        try {
+            const formattedPhone = mpesaService.formatPhoneNumber(phoneNumber);
+            const ref = accountReference || `ISP-${Date.now()}`;
+            const desc = description || 'ISP Service Payment';
+
+            // Create payment record before STK dispatch
+            const payment = await Payment.create({
+                userId: userId || null,
+                subscriptionId: subscriptionId || null,
+                amount: Number(amount),
+                phoneNumber: formattedPhone,
+                paymentType: subscriptionId ? 'subscription' : 'top_up',
+                description: desc,
+                reference: ref,
+                status: PaymentStatus.PENDING,
+                metadata: {
+                    source: 'direct_stk_initiate',
+                    accountReference: ref
+                }
+            }, { transaction });
+
+            await transaction.commit();
+
+            let stkPushResponse;
+            try {
+                stkPushResponse = await mpesaService.initiateSTKPush({
+                    phoneNumber: payment.phoneNumber,
+                    amount: payment.amount,
+                    accountReference: payment.reference,
+                    transactionDesc: payment.description
+                });
+            } catch (stkError) {
+                await payment.update({
+                    status: PaymentStatus.FAILED,
+                    errorMessage: stkError.message || 'Failed to initiate M-Pesa STK Push',
+                    callbackData: { stk_failed: true }
+                });
+                throw { statusCode: 500, message: stkError.message || 'Failed to initiate M-Pesa STK Push' };
+            }
+
+            payment.checkoutRequestId = stkPushResponse.CheckoutRequestID;
+            payment.merchantRequestId = stkPushResponse.MerchantRequestID;
+            payment.status = PaymentStatus.PENDING;
+
+            await payment.update({
+                checkoutRequestId: stkPushResponse.CheckoutRequestID,
+                merchantRequestId: stkPushResponse.MerchantRequestID,
+                status: PaymentStatus.PENDING
+            });
+
+            return {
+                success: true,
+                message: 'Payment initiated successfully. Please check your phone for M-Pesa prompt.',
+                data: stkPushResponse,
+                payment: {
+                    id: payment.id,
+                    reference: payment.reference,
+                    amount: payment.getFormattedAmount(),
+                    status: payment.status,
+                    checkoutRequestId: stkPushResponse.CheckoutRequestID,
+                    phoneNumber: payment.phoneNumber
+                }
+            };
+        } catch (error) {
+            if (transaction && !transaction.finished) {
+                await transaction.rollback();
+            }
+            throw error;
+        }
+    }
+
+    /**
      * Create a cash payment (Admin)
      */
     async createCashPayment(userId, amount, reference, description, subscriptionId, adminUserId) {

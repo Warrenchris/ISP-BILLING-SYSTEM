@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const crypto = require("crypto");
 const { Op } = require("sequelize");
+const { User } = require("../models");
+const { sendPasswordResetEmail } = require("../utils/email");
 
 // Import controllers
 const {
@@ -14,6 +17,7 @@ const {
 
 // Import middleware
 const { authenticate } = require("../middleware/auth");
+const { authLimiter, passwordResetLimiter } = require("../middleware/rateLimiter");
 const {
   validateUserRegistration,
   validateUserLogin,
@@ -114,7 +118,7 @@ const {
  *       500:
  *         $ref: "#/components/responses/InternalServerError"
  */
-router.post("/register", validateUserRegistration, register);
+router.post("/register", authLimiter, validateUserRegistration, register);
 
 /**
  * @swagger
@@ -175,7 +179,7 @@ router.post("/register", validateUserRegistration, register);
  *       500:
  *         $ref: "#/components/responses/InternalServerError"
  */
-router.post("/login", validateUserLogin, login);
+router.post("/login", authLimiter, validateUserLogin, login);
 
 /**
  * @swagger
@@ -405,7 +409,7 @@ router.post("/logout", authenticate, logout);
  *       500:
  *         $ref: "#/components/responses/InternalServerError"
  */
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', passwordResetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     
@@ -490,14 +494,24 @@ router.post('/forgot-password', async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/InternalServerError"
  */
-router.post('/reset-password', validatePasswordChange, async (req, res) => {
+router.post('/reset-password', passwordResetLimiter, validatePasswordChange, async (req, res) => {
   try {
     const { token, newPassword } = req.body;
     
-    // Find user by reset token (you'll need to implement this in your User model)
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token and new password are required'
+      });
+    }
+
+    // Hash token to compare with database SHA-256 hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    
+    // Find user by hashed reset token
     const user = await User.findOne({ 
       where: { 
-        passwordResetToken: token,
+        passwordResetToken: hashedToken,
         passwordResetExpires: { [Op.gt]: Date.now() }
       }
     });
@@ -509,7 +523,7 @@ router.post('/reset-password', validatePasswordChange, async (req, res) => {
       });
     }
     
-    // Update password and clear reset token
+    // Update password and clear reset token to prevent reuse
     user.password = newPassword;
     user.passwordResetToken = null;
     user.passwordResetExpires = null;

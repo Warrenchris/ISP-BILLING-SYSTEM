@@ -49,6 +49,24 @@ def create_app() -> Flask:
     app.register_blueprint(dashboard_bp, url_prefix=prefix)
     app.register_blueprint(health_bp,    url_prefix=prefix)
 
+    # ── Service-level authentication ─────────────────────────────────────────
+    @app.before_request
+    def verify_internal_secret():
+        from flask import request
+        # Allow health checks and root welcome without auth for container healthchecks
+        if request.path in ["/", "/api/ai/health"]:
+            return None
+
+        required_secret = os.environ.get("AI_INTERNAL_SECRET", "ai_secret_internal_token_2026")
+        if required_secret:
+            provided_secret = request.headers.get("X-Internal-Service-Key")
+            if not provided_secret or provided_secret != required_secret:
+                logger.warning(f"Unauthorized direct access attempt to {request.path}")
+                return jsonify({
+                    "success": False,
+                    "message": "Unauthorized: Valid X-Internal-Service-Key required"
+                }), 401
+
     # ── Global error handlers ────────────────────────────────────────────────
     @app.errorhandler(404)
     def not_found(e):

@@ -1,28 +1,30 @@
 const nodemailer = require('nodemailer');
 
-// Create reusable transporter object
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+let transporter = null;
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
 
-// Verify connection configuration
-transporter.verify((error) => {
-  if (error) {
-    console.error('❌ Email transporter error:', error);
-  } else {
-    console.log('✅ Email transporter is ready');
-  }
-});
+  transporter.verify((error) => {
+    if (error) {
+      console.warn('⚠️ Email transporter warning:', error.message);
+    } else {
+      console.log('✅ Email transporter is ready');
+    }
+  });
+}
 
 const sendPasswordResetEmail = async (email, resetToken) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
   
   const mailOptions = {
-    from: `"ISP Billing" <${process.env.EMAIL_USER}>`,
+    from: `"ISP Billing" <${process.env.EMAIL_USER || 'no-reply@ispbilling.com'}>`,
     to: email,
     subject: 'Password Reset Request',
     html: `
@@ -47,12 +49,22 @@ const sendPasswordResetEmail = async (email, resetToken) => {
     text: `You requested a password reset. Please go to this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`
   };
 
+  if (!transporter) {
+    console.log(`[DEV/MOCK EMAIL] Password reset email for ${email}. Reset URL: ${resetUrl}`);
+    return true;
+  }
+
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log('Password reset email sent:', info.messageId);
     return true;
   } catch (error) {
     console.error('Error sending password reset email:', error);
+    // If SMTP fails in non-production, log and continue
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[FALLBACK EMAIL] Reset URL: ${resetUrl}`);
+      return true;
+    }
     throw new Error('Failed to send password reset email');
   }
 };

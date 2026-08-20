@@ -38,6 +38,7 @@ function callAiService(method, path, body = null, timeoutMs = 30_000) {
     const headers = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'X-Internal-Service-Key': process.env.AI_INTERNAL_SECRET || 'ai_secret_internal_token_2026',
     };
     if (bodyStr) {
       headers['Content-Length'] = Buffer.byteLength(bodyStr);
