@@ -439,7 +439,7 @@ const UserDetails = () => {
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary" fontWeight={600}>TIME REMAINING</Typography>
                                     <Typography variant="body1" fontWeight={700} color={sub?.daysRemaining < 3 ? 'error.main' : 'success.main'}>
-                                        {sub?.daysRemaining !== null ? `${sub.daysRemaining} Days` : 'Unlimited / No Expiry'}
+                                        {sub?.daysRemaining != null ? `${sub?.daysRemaining} Days` : 'Unlimited / No Expiry'}
                                     </Typography>
                                 </Grid>
 
@@ -486,7 +486,7 @@ const UserDetails = () => {
                                         <ScheduleIcon color="secondary" />
                                     </Box>
                                     <Typography variant="h5" fontWeight={800} color={reportsData.cards?.daysRemaining < 3 ? 'error.main' : 'text.primary'}>
-                                        {reportsData.cards?.daysRemaining !== null ? `${reportsData.cards.daysRemaining} Days` : 'Unlimited / Active'}
+                                        {reportsData.cards?.daysRemaining != null ? `${reportsData.cards?.daysRemaining} Days` : 'Unlimited / Active'}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
                                         Time remaining until renewal

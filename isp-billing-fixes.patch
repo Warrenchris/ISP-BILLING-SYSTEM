@@ -1,0 +1,317 @@
+diff --git a/.env.example b/.env.example
+index f9f31d0..8e8f1d1 100644
+--- a/.env.example
++++ b/.env.example
+@@ -2,6 +2,20 @@
+ # Docker Compose reads `.env` here for variable substitution into services.
+ # Do not commit the real `.env` file.
+ 
++# Core secrets (REQUIRED — docker-compose will refuse to start without these)
++# MySQL root password, shared by the `db` and `ai-service` containers.
++# Generate with: openssl rand -base64 24
++DB_PASSWORD=
++
++# Secret used to sign/verify JWTs. Anyone with this value can forge valid login tokens.
++# Generate with: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
++JWT_SECRET=
++
++# Redis password. Optional for local-only dev, but REQUIRED if port 6379 is reachable
++# from outside your own machine (it is mapped to the host by default in docker-compose.yml).
++# Generate with: openssl rand -base64 24
++REDIS_PASSWORD=
++
+ # M-Pesa / Safaricom Daraja (injected into `isp-backend` by docker-compose.yml)
+ MPESA_CONSUMER_KEY=your_consumer_key
+ MPESA_CONSUMER_SECRET=your_consumer_secret
+diff --git a/docker-compose.yml b/docker-compose.yml
+index daf67ca..8cc5948 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -13,9 +13,9 @@ services:
+       - DB_HOST=db
+       - DB_PORT=3306
+       - DB_USER=root
+-      - DB_PASSWORD=rootpassword
++      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+       - DB_NAME=isp_billing_db
+-      - JWT_SECRET=isp_billing_secure_secret_key_2025
++      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+       - JWT_EXPIRES_IN=7d
+       - AI_SERVICE_URL=http://ai-service:5001
+       # M-Pesa (Daraja): from project-root .env — same pattern as GROQ_API_KEY on ai-service
+@@ -31,6 +31,7 @@ services:
+       # Phase 1: Router provisioning
+       - REDIS_HOST=redis
+       - REDIS_PORT=6379
++      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+       - MOCK_MIKROTIK=${MOCK_MIKROTIK:-false}
+       - ROUTER_ENCRYPTION_KEY=${ROUTER_ENCRYPTION_KEY:-}
+       - EXPIRY_CHECK_CRON=${EXPIRY_CHECK_CRON:-*/10 * * * *}
+@@ -80,7 +81,7 @@ services:
+       - DB_HOST=db
+       - DB_PORT=3306
+       - DB_USER=root
+-      - DB_PASSWORD=rootpassword
++      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+       - DB_NAME=isp_billing_db
+       - GROQ_API_KEY=${GROQ_API_KEY}
+       - LLM_MODEL=${LLM_MODEL:-llama3-8b-8192}
+@@ -118,13 +119,13 @@ services:
+     image: mysql:8.0
+     container_name: isp-mysql
+     environment:
+-      MYSQL_ROOT_PASSWORD: rootpassword
++      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+       MYSQL_DATABASE: isp_billing_db
+     ports:
+       # Expose database port for local integration tests on host machine (do NOT expose in production environment)
+       - "3307:3306"
+     healthcheck:
+-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=rootpassword"]
++      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD"]
+       interval: 10s
+       timeout: 5s
+       retries: 10
+@@ -138,6 +139,17 @@ services:
+   redis:
+     image: redis:7-alpine
+     container_name: isp-redis
++    # No REDIS_PASSWORD in .env -> falls back to "" (no auth), matching previous
++    # unauthenticated behavior for local/dev use. SET REDIS_PASSWORD in .env for any
++    # deployment reachable outside your own machine — this port is mapped to the host below.
++    command: >
++      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
++               redis-server --requirepass "$$REDIS_PASSWORD";
++             else
++               redis-server;
++             fi'
++    environment:
++      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+     ports:
+       - "6379:6379"
+     volumes:
+@@ -146,7 +158,7 @@ services:
+     networks:
+       - isp-network
+     healthcheck:
+-      test: ["CMD", "redis-cli", "ping"]
++      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping; else redis-cli ping; fi"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+diff --git a/isp-billing-system-BACKEND/src/controllers/paymentController.js b/isp-billing-system-BACKEND/src/controllers/paymentController.js
+index 8715418..ccf11e7 100644
+--- a/isp-billing-system-BACKEND/src/controllers/paymentController.js
++++ b/isp-billing-system-BACKEND/src/controllers/paymentController.js
+@@ -77,60 +77,22 @@ const queryPaymentStatus = async (req, res) => {
+       });
+     }
+ 
+-    // Logic to update status if pending remains here or moves to service. 
+-    // Moving purely transactional updates to service is best.
+-    // But for query, we often want to just check status without side-effects if possible.
+-    // The original code actively QUERY's M-Pesa if pending. This is a write-operation (update local DB).
+-    // TODO: Ideally refactor this too, but for "Fix Everything" critical path, I will stick to fixing the critical writes first.
+-    // Actually, let's leave this read-heavy logic here for now TO REDUCE REGRESSION RISK on the read path, 
+-    // as the main goal was data integrity on CREATION.
+-
+-    // ... [Keeping original query logic for safety, just minimal cleanup if needed] ...
+-    // Original logic was doing a lot of direct M-Pesa calls. 
+-    // Copying the original logic for read/query to ensure no regression in "status checking" feature.
+-
+-    if (payment.status === PaymentStatus.PENDING && payment.checkoutRequestId) {
+-      // ... (Original logic omitted for brevity in thought, but included in file write)
+-      // Actually, let's keep it safe by just returning what we have unless we implement a `syncPaymentStatus` method in service.
+-    }
+-
+-    // Re-implementing the query logic safely:
++    // If the payment is still PENDING, actively reconcile it against M-Pesa. This is the
++    // fallback for when the async webhook (handleMpesaCallback) was dropped, delayed, or
++    // blocked — without this, a payment that actually succeeded could stay stuck PENDING
++    // forever. reconcilePendingPayment() is transaction-safe and idempotent (it routes
++    // through the same logic the real webhook uses), so it's safe even if the webhook lands
++    // concurrently or right after this call.
+     if (payment.status === PaymentStatus.PENDING && payment.checkoutRequestId) {
+       try {
+-        // We can call the service or mpesaService directly. 
+-        // mpesaService is safe.
+-        const statusResponse = await mpesaService.querySTKPushStatus(payment.checkoutRequestId);
+-
+-        if (statusResponse.ResultCode === '0') {
+-          // Success
+-          // We should use the service to "complete" the payment to ensure transactions!
+-          // But querySTKPushStatus returns metadata, we need to map it.
+-          // This implies `processCallback` might be reusable if we format data, or we just do it manually here.
+-          // To be safe and compliant with "Fix Integrity", we really should wrap this update in a transaction too.
+-          // But since it's a single record update usually... actually it updates Subscription too!
+-          // SO WE MUST USE TRANSACTION.
+-
+-          // It's getting complicated to refactor `queryPaymentStatus` entirely in one go without potential bugs.
+-          // I will leave it largely as is but add a TODO or basic transaction wrap if easy.
+-          // The original code:
+-          /*
+-           await payment.markAsCompleted({...});
+-           if (payment.subscriptionId) { ... activate ... }
+-          */
+-          // This IS a risk.
+-          // I will implement a `finalizePaymentFromQuery` in service? 
+-          // Or just leave it for now as it's a "read" triggered update, less critical than the initial creation race condition?
+-          // I'll leave it but clean it up slightly.
+-        }
++        await paymentService.reconcilePendingPayment(payment);
+       } catch (e) {
+-        // ignore error on query
+-        console.error("Error syncing status", e);
++        // Don't fail the status check just because reconciliation had trouble — the user
++        // still gets the last known status below, and the next poll/webhook can retry.
++        console.error('Error reconciling payment status:', e);
+       }
+     }
+ 
+-    // Reload
+-    await payment.reload();
+-
+     res.json({
+       success: true,
+       payment: {
+diff --git a/isp-billing-system-BACKEND/src/routes/paymentRoutes.js b/isp-billing-system-BACKEND/src/routes/paymentRoutes.js
+index 8fd14cd..77d7eba 100644
+--- a/isp-billing-system-BACKEND/src/routes/paymentRoutes.js
++++ b/isp-billing-system-BACKEND/src/routes/paymentRoutes.js
+@@ -153,7 +153,7 @@ router.get('/stats', authenticate, async (req, res) => {
+   }
+ });
+ 
+-router.get('/mpesa/test-auth', async (req, res) => {
++router.get('/mpesa/test-auth', authenticate, authorize(['admin']), async (req, res) => {
+   try {
+     const token = await mpesaService.getAccessToken();
+     res.json({
+diff --git a/isp-billing-system-BACKEND/src/services/paymentService.js b/isp-billing-system-BACKEND/src/services/paymentService.js
+index f5e378d..c021da0 100644
+--- a/isp-billing-system-BACKEND/src/services/paymentService.js
++++ b/isp-billing-system-BACKEND/src/services/paymentService.js
+@@ -365,21 +365,22 @@ class PaymentService {
+             }
+ 
+             if (callbackResult.success) {
+-                await lockedPayment.markAsCompleted({
+-                    mpesaReceiptNumber: callbackResult.transactionDetails.mpesaReceiptNumber,
+-                    transactionDate: callbackResult.transactionDetails.transactionDate,
+-                    ...callbackResult.transactionDetails
+-                }, { transaction }); // Ensure markAsCompleted supports transaction options or use manual update
+-
+-                // Manual update to ensure transaction support since model method might not have it
++                // NOTE: transactionDetails (receipt number, amount, phone) only comes from
++                // the async webhook's CallbackMetadata. When this function is invoked from a
++                // status *query* response (see finalizePaymentFromStatusQuery below), there is
++                // no CallbackMetadata, so transactionDetails will be undefined. Guard against
++                // that instead of assuming it's always present.
++                const details = callbackResult.transactionDetails || {};
++
++                // Manual update (transaction-safe) — single source of truth for completion.
+                 await lockedPayment.update({
+                     status: PaymentStatus.COMPLETED,
+                     completedAt: new Date(),
+-                    mpesaReceiptNumber: callbackResult.transactionDetails.mpesaReceiptNumber,
+-                    transactionDate: callbackResult.transactionDetails.transactionDate,
++                    mpesaReceiptNumber: details.mpesaReceiptNumber || lockedPayment.mpesaReceiptNumber || null,
++                    transactionDate: details.transactionDate || lockedPayment.transactionDate || new Date(),
+                     callbackData: {
+                         ...(lockedPayment.callbackData || {}),
+-                        ...callbackResult.transactionDetails
++                        ...details
+                     }
+                 }, { transaction });
+ 
+@@ -511,6 +512,90 @@ class PaymentService {
+         }
+     }
+ 
++    /**
++     * Reconcile a PENDING payment by actively querying M-Pesa for its current status.
++     *
++     * This is the fallback path used when a user checks payment status (GET
++     * /payments/status/:paymentId) and the async webhook hasn't landed yet — e.g. it was
++     * dropped, delayed, or blocked by a network/firewall issue between Safaricom and us.
++     * Without this, a payment that actually succeeded on M-Pesa's side could stay PENDING
++     * in our DB forever, and the customer's subscription would never activate even though
++     * they paid.
++     *
++     * Reuses processCallback()'s transaction-safe, idempotent completion logic by shaping
++     * the STK-push-query response into the same structure the webhook callback uses. The
++     * query endpoint doesn't return CallbackMetadata (receipt number, amount, phone) — only
++     * the webhook does — so those fields may stay null here and get backfilled later if the
++     * webhook eventually arrives (processCallback's idempotency check makes that a safe no-op
++     * once completed, and a real update if it lands before this reconciliation runs).
++     *
++     * @param {Object} payment - Payment instance (must have checkoutRequestId, status PENDING)
++     * @returns {Promise<Object|null>} The reloaded payment, or null if nothing changed
++     */
++    async reconcilePendingPayment(payment) {
++        if (!payment || payment.status !== PaymentStatus.PENDING || !payment.checkoutRequestId) {
++            return null;
++        }
++
++        let statusResponse;
++        try {
++            statusResponse = await mpesaService.querySTKPushStatus(payment.checkoutRequestId);
++        } catch (e) {
++            // M-Pesa throws for "still being processed" / transient errors — that just means
++            // the payment is genuinely still pending. Nothing to do; not an error condition.
++            logger.info('STK status query did not resolve payment (likely still pending)', {
++                paymentId: payment.id,
++                checkoutRequestId: payment.checkoutRequestId,
++                error: e.message
++            });
++            return null;
++        }
++
++        const resultCode = statusResponse && statusResponse.ResultCode !== undefined
++            ? String(statusResponse.ResultCode)
++            : null;
++
++        if (resultCode === null) {
++            // Ambiguous response — don't guess, leave payment as-is for the next check/webhook.
++            return null;
++        }
++
++        if (resultCode === '0') {
++            // Success — synthesize a callback-shaped payload and run it through the same
++            // transaction-safe, idempotent completion path the webhook uses.
++            const syntheticCallback = {
++                Body: {
++                    stkCallback: {
++                        MerchantRequestID: statusResponse.MerchantRequestID,
++                        CheckoutRequestID: payment.checkoutRequestId,
++                        ResultCode: 0,
++                        ResultDesc: statusResponse.ResultDesc || 'Reconciled via status query'
++                        // Deliberately no CallbackMetadata — see docstring above.
++                    }
++                }
++            };
++            await this.processCallback(syntheticCallback);
++        } else {
++            // Definitive failure (e.g. 1032 cancelled by user, 1037 timeout, 1 insufficient
++            // funds) — also route through processCallback so it's transaction-safe and
++            // idempotent, same as a real failure webhook would be.
++            const syntheticCallback = {
++                Body: {
++                    stkCallback: {
++                        MerchantRequestID: statusResponse.MerchantRequestID,
++                        CheckoutRequestID: payment.checkoutRequestId,
++                        ResultCode: Number(resultCode),
++                        ResultDesc: statusResponse.ResultDesc || 'Reconciled via status query'
++                    }
++                }
++            };
++            await this.processCallback(syntheticCallback);
++        }
++
++        await payment.reload();
++        return payment;
++    }
++
+     /**
+      * Initiate M-Pesa STK push for remote voucher purchase (Captive Portal)
+      *

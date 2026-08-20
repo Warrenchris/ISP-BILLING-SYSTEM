@@ -153,7 +153,7 @@ router.get('/stats', authenticate, async (req, res) => {
   }
 });
 
-router.get('/mpesa/test-auth', async (req, res) => {
+router.get('/mpesa/test-auth', authenticate, authorize(['admin']), async (req, res) => {
   try {
     const token = await mpesaService.getAccessToken();
     res.json({

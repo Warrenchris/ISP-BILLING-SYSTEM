@@ -365,21 +365,22 @@ class PaymentService {
             }
 
             if (callbackResult.success) {
-                await lockedPayment.markAsCompleted({
-                    mpesaReceiptNumber: callbackResult.transactionDetails.mpesaReceiptNumber,
-                    transactionDate: callbackResult.transactionDetails.transactionDate,
-                    ...callbackResult.transactionDetails
-                }, { transaction }); // Ensure markAsCompleted supports transaction options or use manual update
+                // NOTE: transactionDetails (receipt number, amount, phone) only comes from
+                // the async webhook's CallbackMetadata. When this function is invoked from a
+                // status *query* response (see finalizePaymentFromStatusQuery below), there is
+                // no CallbackMetadata, so transactionDetails will be undefined. Guard against
+                // that instead of assuming it's always present.
+                const details = callbackResult.transactionDetails || {};
 
-                // Manual update to ensure transaction support since model method might not have it
+                // Manual update (transaction-safe) — single source of truth for completion.
                 await lockedPayment.update({
                     status: PaymentStatus.COMPLETED,
                     completedAt: new Date(),
-                    mpesaReceiptNumber: callbackResult.transactionDetails.mpesaReceiptNumber,
-                    transactionDate: callbackResult.transactionDetails.transactionDate,
+                    mpesaReceiptNumber: details.mpesaReceiptNumber || lockedPayment.mpesaReceiptNumber || null,
+                    transactionDate: details.transactionDate || lockedPayment.transactionDate || new Date(),
                     callbackData: {
                         ...(lockedPayment.callbackData || {}),
-                        ...callbackResult.transactionDetails
+                        ...details
                     }
                 }, { transaction });
 
@@ -509,6 +510,90 @@ class PaymentService {
             await transaction.rollback();
             throw error;
         }
+    }
+
+    /**
+     * Reconcile a PENDING payment by actively querying M-Pesa for its current status.
+     *
+     * This is the fallback path used when a user checks payment status (GET
+     * /payments/status/:paymentId) and the async webhook hasn't landed yet — e.g. it was
+     * dropped, delayed, or blocked by a network/firewall issue between Safaricom and us.
+     * Without this, a payment that actually succeeded on M-Pesa's side could stay PENDING
+     * in our DB forever, and the customer's subscription would never activate even though
+     * they paid.
+     *
+     * Reuses processCallback()'s transaction-safe, idempotent completion logic by shaping
+     * the STK-push-query response into the same structure the webhook callback uses. The
+     * query endpoint doesn't return CallbackMetadata (receipt number, amount, phone) — only
+     * the webhook does — so those fields may stay null here and get backfilled later if the
+     * webhook eventually arrives (processCallback's idempotency check makes that a safe no-op
+     * once completed, and a real update if it lands before this reconciliation runs).
+     *
+     * @param {Object} payment - Payment instance (must have checkoutRequestId, status PENDING)
+     * @returns {Promise<Object|null>} The reloaded payment, or null if nothing changed
+     */
+    async reconcilePendingPayment(payment) {
+        if (!payment || payment.status !== PaymentStatus.PENDING || !payment.checkoutRequestId) {
+            return null;
+        }
+
+        let statusResponse;
+        try {
+            statusResponse = await mpesaService.querySTKPushStatus(payment.checkoutRequestId);
+        } catch (e) {
+            // M-Pesa throws for "still being processed" / transient errors — that just means
+            // the payment is genuinely still pending. Nothing to do; not an error condition.
+            logger.info('STK status query did not resolve payment (likely still pending)', {
+                paymentId: payment.id,
+                checkoutRequestId: payment.checkoutRequestId,
+                error: e.message
+            });
+            return null;
+        }
+
+        const resultCode = statusResponse && statusResponse.ResultCode !== undefined
+            ? String(statusResponse.ResultCode)
+            : null;
+
+        if (resultCode === null) {
+            // Ambiguous response — don't guess, leave payment as-is for the next check/webhook.
+            return null;
+        }
+
+        if (resultCode === '0') {
+            // Success — synthesize a callback-shaped payload and run it through the same
+            // transaction-safe, idempotent completion path the webhook uses.
+            const syntheticCallback = {
+                Body: {
+                    stkCallback: {
+                        MerchantRequestID: statusResponse.MerchantRequestID,
+                        CheckoutRequestID: payment.checkoutRequestId,
+                        ResultCode: 0,
+                        ResultDesc: statusResponse.ResultDesc || 'Reconciled via status query'
+                        // Deliberately no CallbackMetadata — see docstring above.
+                    }
+                }
+            };
+            await this.processCallback(syntheticCallback);
+        } else {
+            // Definitive failure (e.g. 1032 cancelled by user, 1037 timeout, 1 insufficient
+            // funds) — also route through processCallback so it's transaction-safe and
+            // idempotent, same as a real failure webhook would be.
+            const syntheticCallback = {
+                Body: {
+                    stkCallback: {
+                        MerchantRequestID: statusResponse.MerchantRequestID,
+                        CheckoutRequestID: payment.checkoutRequestId,
+                        ResultCode: Number(resultCode),
+                        ResultDesc: statusResponse.ResultDesc || 'Reconciled via status query'
+                    }
+                }
+            };
+            await this.processCallback(syntheticCallback);
+        }
+
+        await payment.reload();
+        return payment;
     }
 
     /**
